@@ -7,13 +7,14 @@ Introduction
 This repo represents the work done for the first sprint aimed at creating a
 one-dimensional spectral analysis tool.
 
-This effort is driven by the JWST Data Analysis Task Force_ and is documented
-in the JWST Data Analysis Forum_.
+This effort is driven by the `JWST Data Analysis Task Force`_ and is documented
+in the `JWST Data Analysis Forum`_.
 
 Organization
 ------------
 
 - root
+
   - proto: Prototype, pre-sprint, or other code used as reference material.
 
 

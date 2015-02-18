@@ -20,6 +20,4 @@ Organization
 
 .. _JWST Data Analysis Task Force: https://confluence.stsci.edu/display/JWSTDATF/JWST+Data+Analysis+Task+Force+Home
 .. _JWST Data Analysis Forum: https://confluence.stsci.edu/display/JWSTDATF/JWST+Data+Analysis+Development+Forum
-.. _Trello Board listing possible feagures: https://trello.com/b/KX1drqCM/one-dimensional-interactive-spectral-analysis-splot
-
 

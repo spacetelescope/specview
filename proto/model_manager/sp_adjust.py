@@ -68,7 +68,7 @@ def _setattr(instance, fname, pname, value):
 # names and roles are the same as in a typical line profile, so they
 # can be adjusted in the same way.
 _adjusters = {
-    'Box1D':                      _LineProfile1DAdjuster(),
+    'Beta1D':                     _LineProfile1DAdjuster(),
     'Const1D':                    _Const1DAdjuster(),
     'Gaussian1D':                 _LineProfile1DAdjuster(),
     'GaussianAbsorption1D':       _LineProfile1DAdjuster(),
@@ -87,8 +87,8 @@ _adjusters = {
 _p_names = {
     'Gaussian1D':                 {'amplitude': 'amplitude', 'position': 'mean', 'width': 'stddev'},
     'GaussianAbsorption1D':       {'amplitude': 'amplitude', 'position': 'mean', 'width': 'stddev'},
+    'Beta1D':                     {'amplitude': 'amplitude', 'position': 'x_0'},
     'Lorentz1D':                  {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'fwhm'},
-    'Box1D':                      {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'width'},
     'MexicanHat1D':               {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'sigma'},
     'Trapezoid1D':                {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'width'},
     'PowerLaw1D':                 {'amplitude': 'amplitude', 'position': 'x_0'},

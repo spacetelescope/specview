@@ -7,7 +7,6 @@
 import astropy.modeling.models as models
 
 registry = {
-    'Box1D' :                     models.Box1D(1.0, 1.0, 1.0),
     'Gaussian1D':                 models.Gaussian1D(1.0, 1.0, 1.0),
     'GaussianAbsorption1D':       models.GaussianAbsorption1D(1.0, 1.0, 1.0),
     'Lorentz1D':                  models.Lorentz1D(1.0, 1.0, 1.0),

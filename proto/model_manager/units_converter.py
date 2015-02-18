@@ -27,8 +27,6 @@ class UnitsConverter(object):
         self._wunit = wunit
         self._funit = funit
 
-        self._other = None
-
     def convert(self, wave, flux):
         ''' Convert arrays to target units.
 

@@ -1,0 +1,117 @@
+Source files:
+-------------
+
+- sp_model_manager.py
+
+Main module where the ModelManager classes live.
+
+
+- sp_model_manager_threaded.py
+
+Threaded version of the above. Retired but kept in repo
+just in case.
+
+
+- sp_widget.py
+
+The basic widget that holds a composite spectral model. It
+is used by the model manager classes in sp_model_manager.
+
+The standard way to use it looks basically as this:
+
+manager = SpectralModelManager()
+manager.changed.connect(handlerForChangedEvents)
+manager.selected.connect(handlerForSelectedEvents)
+manager.setArrays(x, y)
+widget = manager.buildMainPanel(model)
+
+(i) build an instance; (ii) add event handlers if needed;
+(iii) add data arrays if needed; (iv) get the widget, initialized
+with a non-empty list of astropy spectral model components.
+
+
+- modelmvc.py
+
+Original code by Chris, modified in an attempt to use the
+sp_widget mechanism. Three data sets are available for
+testing:
+
+ - original: the original data points provided by Chris
+ - realistic: data points with realistic values (Angstrom, flam)
+ - NGC3516: segment of real UV spectrum
+
+Choose the one to run at the command line with
+
+'python modelmvc.py <name>'
+
+
+
+- mm_widget_demo.py
+
+Demo driver for the code in sp_model_manager.py. Run it to
+see the basic sp_widget in action (right-click on the tree
+elements brings up contextual menus).
+
+
+- models_registry.py:
+
+Dict with astropy.modeling function instances used by sp_widget.
+This should be a dictionary with classes instead of instances,
+so we could instantiate as needed. The astropy.modeling.Model
+class provides such a dictionary, so why not to use it? We
+eventually will, but for now this class exists (with the registry
+feature) only in the astropy dev version. And that version can't
+be built due to a Cython syntax error. So we temporarily resort to
+brute force and just .copy() an instance whenever it's necessary.
+
+- sp_adjust.py
+
+Code to "adjust" an astropy.modeling function instance to the
+data at hand. Instance parameters must be set to sensible values
+that depend on the specific values of wavelength and flux being
+fitted, in order for the fitting algorithms to avoid getting
+stuck in secondary minima. The nature of the "adjustment" is
+function-dependent.
+
+- test_data.py
+
+Real-world spectrum for testing purposes. You ca use it e.g. to
+see how to normalize components that are added to a ModelManager
+instance. Components added *after* the setArrays() method is
+called will have their parameters initialized to sensible values:
+
+>>> import sp_model_manager as mm
+>>> a = mm.ModelManager()
+>>> import test_data as td
+>>> wave, flux, error = td.get_data()
+>>> a.setArrays(wave, flux)
+>>>
+>>> import astropy.modeling.functional_models as models
+>>> gaussian = models.Gaussian1D(1.,1.,1.)
+>>> a.add(gaussian)
+>>> gaussian
+<Gaussian1D(amplitude=1.0920915e-12, mean=1230.12170410156, stddev=3.1752392578124)>
+>>>
+
+
+
+Caveats:
+-------
+
+- The GUI MVC mechanism cannot respond when the user changes an
+astropy object directly thru a reference to it. This happens
+because astropy objects have no built-in notification machinery
+that would broadcast changes in their internal structure. As an
+example, suppose that 'a' is a reference to a ModelManager
+instance that contains one instance of Gaussian1D. Then, doing,
+for example,
+
+>>> a.components[0].amplitude = 10.
+
+will change the amplitude parameter in the Gaussian1D instance,
+but the GUI won't refresh automatically to reflect that. It will
+still display the previous value until the 'Refresh' button is
+clicked. Aside being not as convenient as an auto refresh, it's
+also inelegant in terms of GUI design because exposes to the user
+a GUI-related functionality that should be completely hidden.
+

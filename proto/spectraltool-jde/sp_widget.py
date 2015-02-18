@@ -3,7 +3,9 @@ from __future__ import division
 import re
 import numpy as np
 from astropy.modeling import Parameter, Fittable1DModel, SummedCompositeModel
+from astropy.modeling.polynomial import PolynomialModel
 
+import signal_slot
 import models_registry
 import sp_adjust
 
@@ -63,6 +65,14 @@ class _MyQTreeView(QTreeView):
             self._handleTreeSelectionEvent(selected, deselected)
         except IndexError:
             pass
+
+    # Overrides QTreeView to capture and handle a data changed event.
+    # These data changes occur in the model associated with the tree,
+    # when a Data object gets changed, such as when the user types in
+    # a new value for a Parameter instance.
+    def dataChanged(self, top, bottom):
+        self.emit(SIGNAL("dataChanged"), 0)
+        super(_MyQTreeView, self).dataChanged(top, bottom)
 
     # Here is the logic to gray out buttons based on context.
     def _handleTreeSelectionEvent(self, selected, deselected):
@@ -344,9 +354,14 @@ class _SpectralLibraryGUI(object):
             function = models_registry.registry[key]
             # redundant test for now, but needed in case we
             # switch to introspection from the models registry.
-            # Curiously, this is rejecting the Scale and Shift
-            # models. I guess they shouldn't be allowed anyway,
-            # but who knows?
+            # if issubclass(function.__class__, Fittable1DModel) or \
+            #    issubclass(function.__class__, PolynomialModel):
+            # TODO Polynomials do not carry internal instances of
+            # Parameter. This makes the code in this module unusable.
+            # We need to add special handling tools that can get and
+            # set polynomial coefficients. Thus suggests that they
+            # were not designed t be mixed in with instances of
+            # Fittable1DModel.
             if issubclass(function.__class__, Fittable1DModel):
                 data.append(function)
 
@@ -571,7 +586,7 @@ class ActiveComponentsModel(SpectralComponentsModel):
             result.append(self.item(i).item)
         return result
 
-    def _floatItemChecked(self, item):
+    def _floatItemChanged(self, item):
         type = item.type
         substring = self._pattern.findall(item.text())
         if substring:
@@ -596,10 +611,10 @@ class ActiveComponentsModel(SpectralComponentsModel):
         if item.isCheckable():
             self._booleanItemChecked(item)
         else:
-            self._floatItemChecked(item)
+            self._floatItemChanged(item)
 
 
-class SpectralModelManager(object):
+class SpectralModelManager(QObject):
     """ Basic class to be called by external code.
 
     It is responsible for building the GUI trees and putting them together
@@ -607,6 +622,9 @@ class SpectralModelManager(object):
     model individual spectral components and to the library functions,
     as well as to the composite spectrum that results from a
     SummedCompositeModel call.
+
+    It inherits from QObject for the sole purpose of being able to
+    respond to Qt signals.
 
     Parameters
     ----------
@@ -616,13 +634,17 @@ class SpectralModelManager(object):
       the instance will be initialized with an empty list.
 
     """
-
     def __init__(self, model=None):
+        super(SpectralModelManager, self).__init__()
+
         self._model = model
         self.x = None
         self.y = None
         if not self._model:
             self._model = []
+
+        self.changed = SignalModelChanged()
+        self.selected = SignalComponentSelected()
 
     def setArrays(self, x, y):
         ''' Defines the region in spectral coordinate vs. flux
@@ -639,7 +661,7 @@ class SpectralModelManager(object):
         X and/or Y arrays are provided via this method, spectral
         components added to the SummedCompositeModel will be
         initialized to a default set of parameter values.
-
+        
         Parameters
         ----------
         x: numpy array
@@ -654,8 +676,8 @@ class SpectralModelManager(object):
         if  hasattr(self, '_library_gui'):
             self._library_gui.setArrays(self.x, self.y)
 
-    def buildSplitPanel(self, model=None):
-        """ Builds the split panel with the active and the library
+    def buildMainPanel(self, model=None):
+        """ Builds the main panel with the active and the library
         trees of spectral components.
 
         Parameters
@@ -688,7 +710,19 @@ class SpectralModelManager(object):
         splitter.addWidget(self._library_gui.window)
         splitter.setStretchFactor(0, 0)
 
+        # Tree and data change and click events must
+        # be propagated to the outside world.
+        self.connect(self.models_gui.window, SIGNAL("treeChanged"), self._broadcastChangedSignal)
+        self.connect(self.models_gui.window.treeView, SIGNAL("dataChanged"), self._broadcastChangedSignal)
+        self.models_gui.window.treeView.clicked.connect(self._broadcastSelectedSignal)
+
         return splitter
+
+    def _broadcastChangedSignal(self):
+        self.changed()
+
+    def _broadcastSelectedSignal(self):
+        self.selected()
 
     @property
     def treeWidget(self):
@@ -711,9 +745,6 @@ class SpectralModelManager(object):
 
         """
         return self.models_gui.model.items
-
-    def model(self):
-        return SummedCompositeModel(self.components)
 
     def spectrum(self, wave):
         ''' Computes the SummedCompositeModel for a given
@@ -795,3 +826,11 @@ class SpectralModelManager(object):
             for j, value in enumerate(c.parameters):
                 item = self.models_gui.model.item(i).child(j).child(0)
                 item.setData("value: " + str(value), role=Qt.DisplayRole)
+
+
+class SignalModelChanged(signal_slot.Signal):
+    ''' Signals that a change in the model took place. '''
+
+class SignalComponentSelected(signal_slot.Signal):
+    ''' Signals that a component has been selected. '''
+

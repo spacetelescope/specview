@@ -329,27 +329,16 @@ class ModelBrowser(QObject):
             initial_models = [models.Const1D(0.0)]
         self.models = initial_models
 
-        self.ui = ModelBrowserUI(self.models, self.x, self.y)
+        self.ui = ModelBrowserUI(self, self.models, self.x, self.y)
         self.plot, self.resid = _build_axes(self.ui.canvas.fig)
         self._draw(preserve_limits=False)
 
         self.mouse_handler = ModelEventHandler(self.plot, self.active_model)
         add_callback(self.mouse_handler, 'model', self.set_model)
 
-        self._connect()
-        self._sync_model_list()
-
-    def _connect(self):
-        self.connect(self.ui.manager.models_gui.window, SIGNAL("treeChanged"), self._sync_model_list)
-
-        # for some unknown reason, a new-style connection won't work here.
-        # Something to do with the SIGNAL signature emitted by a QTreeWidget,
-        # I suppose.
-        self.ui.manager.models_gui.window.treeView.clicked.connect(self._display_selected_model)
-
         self.ui.fit.pressed.connect(nonpartial(self.fit))
-#        self.ui.add.pressed.connect(nonpartial(self.add_model))
-#        self.ui.remove.pressed.connect(nonpartial(self.remove_model))
+
+        self._sync_model_list()
 
     @property
     def active_model(self):
@@ -534,7 +523,24 @@ def superposition_model(*models):
 
 class ModelBrowserUI(object):
 
-    def __init__(self, model, x, y):
+    def __init__(self, browser, model, x, y):
+        # the GUI that enables selection and manipulation of
+        # astropy spectral components is actually handled by
+        # the SpectralModelManager class.
+        self.manager = SpectralModelManager()
+        # any change in the model manager should trigger
+        # a refresh of the local spectral model. Component
+        # selection should cause the component to be painted
+        # in a distinct color.
+        self.manager.changed.connect(browser._sync_model_list)
+        self.manager.selected.connect(browser._display_selected_model)
+        # the model manager needs to know the actual
+        # data being plotted and fitted.
+        self.manager.setArrays(x, y)
+
+        model_list_gui = self.manager.buildMainPanel(model)
+        model_list_gui.setStretchFactor(0,0)
+        model_tree = self.manager.treeWidget
 
         win = QMainWindow()
         wid = QWidget()
@@ -551,14 +557,6 @@ class ModelBrowserUI(object):
         right = QVBoxLayout()
         right.setSpacing(2)
         right.setContentsMargins(2, 0, 2, 0)
-
-        self.manager = SpectralModelManager()
-
-        self.manager.setArrays(x, y)
-
-        model_list_gui = self.manager.buildSplitPanel(model)
-        model_list_gui.setStretchFactor(0,0)
-        model_tree = self.manager.treeWidget
 
         right.addWidget(model_list_gui)
 

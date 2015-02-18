@@ -7,7 +7,7 @@ from pyqt_nonblock import pyqtapplication
 
 import models_registry
 import sp_widget
-from sp_widget import SpectralModelManager
+from sp_widget import SpectralModelManager, SignalModelChanged
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -19,15 +19,18 @@ from spectrum_data import SpectrumData
 
 class SpectralModelManagerApp(SpectralModelManager):
     def __init__(self, model=None):
+
+        super(SpectralModelManagerApp, self).__init__()
+
         app = QApplication(sys.argv)
 
         self.x = None
         self.y = None
 
-        splitter = self.buildSplitPanel(model)
-        splitter.show()
-        splitter.resize(550, 400)
-        splitter.setSizes([350, 250])
+        mainPanel = self.buildMainPanel(model)
+        mainPanel.show()
+        mainPanel.resize(550, 400)
+        mainPanel.setSizes([350, 250])
 
         app.exec_()
 
@@ -92,6 +95,18 @@ def add(manager, name=None):
     __dialog._addManager(manager.manager, name)
 
 
+def refresh():
+    ''' Forces an update of the GUI to the current
+        state of the ModelManager instances.
+
+        This is the programmatic way of performing
+        the same actions triggered by the 'Refresh'
+        button.
+    '''
+    global __dialog
+    __dialog._refresh()
+
+
 # Utility to generate text strings for the tabs in the
 # tabbed pane, when the user fails to provide then.
 __name_index = 0
@@ -103,6 +118,15 @@ def _getName(name):
     return name
 
 
+# This class basically provides a stand-alone tabbed widget that
+# contains multiple instances of the main panel created by
+# SpectralModelManager. Each tab holds the rendering created by
+# SpectralModelManager for an individual instance of ModelManager.
+#
+# The tabbed widget also supports some functionality that make sense
+# only when all this stuff is run in interactive mode from the
+# command line, such as 'Close' and 'Refresh' buttons.
+#
 class _ModelManagerWidget(QTabWidget):
     def __init__(self, manager, name, parent=None, threaded=False):
         QTabWidget.__init__(self, parent)
@@ -151,9 +175,9 @@ class _ModelManagerWidget(QTabWidget):
                     return
 
     def _buildWidget(self, manager):
-        split_panel = manager.buildSplitPanel()
+        main_panel = manager.buildMainPanel()
         grid_layout = QGridLayout()
-        grid_layout.addWidget(split_panel, 0, 0)
+        grid_layout.addWidget(main_panel, 0, 0)
 
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -216,12 +240,6 @@ class _ModelManagerWidget(QTabWidget):
                 name = models_registry.getComponentName(component)
                 window.model.addToModel(name, component)
 
-        # Signal out that we've updated
-        try:
-            ModelManager.sv_signals.ModelRefresh()
-        except TypeError:
-            pass
-
     # Overrides the default behavior so as to ignore window closing
     # requests (such as from the platform-dependent red X button) and
     # respond instead by just making the window invisible. This in
@@ -252,11 +270,6 @@ def _displayGUI(manager, name):
         __app = QApplication([])
         if __app is None:
             __app = pyqtapplication()
-        if not getattr(__app, '_svs_signals', None):
-            __app._svs_signals = Signals(signal_class=Signal)
-        if manager.__class__.sv_signals is None:
-            manager.__class__.sv_signals = __app._svs_signals
-
         __dialog = _ModelManagerWidget(manager.manager, name)
     else:
         __dialog._addManager(manager.manager, name)
@@ -280,6 +293,18 @@ class ModelManager(object):
     in a tabbed pane, and can be interacted with so that individual
     parameter values can be examined or set by the user.
 
+    This class is basically a wrap-around of SpectralModelManager, to
+    make it available to interactive users with a Python command prompt.
+    Programmatic use should resort to instances of SpectralModelManager
+    directly.
+
+    Changes in the components or the structure of the model manager
+    trigger signals of type SignalModelChanged. These signals can be
+    caught with code that looks like this:
+
+    managerInstance.changed.connect(handleSignal.....)
+
+
     Parameters
     ----------
     name: str, optional
@@ -296,20 +321,43 @@ class ModelManager(object):
 
     Example:
     -------
-      mm1 = ModelManager()
-      mm1 = ModelManager('test1')
-      mm1 = ModelManager(model=[Gaussian1D(1.,1.,1.)])
-      mm1 = ModelManager(model=[Gaussian1D(1.,1.,1.), Lorentz1D(1.,1.,1.)])
-      mm1 = ModelManager("test2", [Gaussian1D(1.,1.,1.), Lorentz1D(1.,1.,1.)])
+      How to create an instance:
 
+        mm1 = ModelManager()
+        mm2 = ModelManager('test1')
+        mm3 = ModelManager(model=[Gaussian1D(1.,1.,1.)])
+        mm4 = ModelManager(model=[Gaussian1D(1.,1.,1.), Lorentz1D(1.,1.,1.)])
+        mm5 = ModelManager("test2", [Gaussian1D(1.,1.,1.), Lorentz1D(1.,1.,1.)])
+
+      How to catch a signal:
+
+        >>> import sp_model_manager as mm
+        >>> def f():
+        ...   print 'Hello!'
+        ...
+        >>> a = mm.ModelManager()
+        >>> a.changed.connect(f)
+        >>>                          # do some interaction with the GUI, changing
+        >>> Hello!                   # spectral component parameters or the model
+        Hello!                       # structure.
+        Hello!
+        Hello!
+        Hello!
+        >>>
     """
-    sv_signals = None
-
     def __init__(self, name=None, model=None):
-        self.wave = None
 
         self.manager = SpectralModelManager(model)
+
         _displayGUI(self, name)
+
+        # this just propagates up the signals emitted by
+        # the SpectralModelManager instance just created.
+        self.changed = SignalModelChanged()
+        self.manager.changed.connect(self._broadcastModelChange)
+
+    def _broadcastModelChange(self):
+        self.changed()
 
     # Use delegation to decouple the ModelManager API from
     # the GUI model manager API.
@@ -393,9 +441,6 @@ class ModelManager(object):
         '''
         return self.manager.spectrum(wave)
 
-    @property
-    def model(self):
-        return self.manager.model
 
 if __name__ == "__main__":
     mm = ModelManager()

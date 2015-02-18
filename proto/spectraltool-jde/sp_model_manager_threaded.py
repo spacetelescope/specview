@@ -204,9 +204,9 @@ class _ModelManagerWidget(QTabWidget):
                     return
 
     def _buildWidget(self, manager):
-        split_panel = manager.buildSplitPanel()
+        main_panel = manager.buildMainPanel()
         grid_layout = QGridLayout()
-        grid_layout.addWidget(split_panel, 0, 0)
+        grid_layout.addWidget(main_panel, 0, 0)
 
         exit_button = QPushButton('Close', self)
         exit_button.setFocusPolicy(Qt.NoFocus)

@@ -17,6 +17,18 @@ just in case.
 The basic widget that holds a composite spectral model. It
 is used by the model manager classes in sp_model_manager.
 
+The standard way to use it looks basically as this:
+
+manager = SpectralModelManager()
+manager.changed.connect(handlerForChangedEvents)
+manager.selected.connect(handlerForSelectedEvents)
+manager.setArrays(x, y)
+widget = manager.buildMainPanel(model)
+
+(i) build an instance; (ii) add event handlers if needed;
+(iii) add data arrays if needed; (iv) get the widget, initialized
+with a non-empty list of astropy spectral model components.
+
 
 - modelmvc.py
 

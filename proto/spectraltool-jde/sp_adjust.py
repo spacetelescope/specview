@@ -34,6 +34,9 @@ class _Const1DAdjuster(object):
 # that basically have an amplitude, a width, and a defined
 # position in wavelength space.
 class _LineProfile1DAdjuster(object):
+    def __init__(self, factor=1.0):
+        self._factor = factor
+
     def adjust(self, instance, x, y):
 
         y_range = np.max(y) - np.min(y)
@@ -43,7 +46,7 @@ class _LineProfile1DAdjuster(object):
 
         name = models_registry.getComponentName(instance)
 
-        _setattr(instance, name, 'amplitude', y_range)
+        _setattr(instance, name, 'amplitude', y_range * self._factor)
         _setattr(instance, name, 'position', position)
         _setattr(instance, name, 'width', width)
 
@@ -61,31 +64,39 @@ def _setattr(instance, fname, pname, value):
 
 
 # This associates each adjuster to its corresponding spectral function.
+# Some functions are not really line profiles, but their parameter
+# names and roles are the same as in a typical line profile, so they
+# can be adjusted in the same way.
 _adjusters = {
-    'Beta1D':               _LineProfile1DAdjuster(),
-    'Box1D':                _LineProfile1DAdjuster(),
-    'Const1D':              _Const1DAdjuster(),
-    'Gaussian1D':           _LineProfile1DAdjuster(),
-    'GaussianAbsorption1D': _LineProfile1DAdjuster(),
-    'Linear1D':             _Linear1DAdjuster(),
-    'Lorentz1D':            _LineProfile1DAdjuster(),
-    'MexicanHat1D':         _LineProfile1DAdjuster(),
-    'Trapezoid1D':          _LineProfile1DAdjuster(),
-    # 'Redshift':             RedshiftAdjuster(),
-    # 'Scale':                ScaleAdjuster(),
-    # 'Shift':                ShiftAdjuster(),
+    'Beta1D':                     _LineProfile1DAdjuster(),
+    'Box1D':                      _LineProfile1DAdjuster(),
+    'Const1D':                    _Const1DAdjuster(),
+    'Gaussian1D':                 _LineProfile1DAdjuster(),
+    'GaussianAbsorption1D':       _LineProfile1DAdjuster(),
+    'Linear1D':                   _Linear1DAdjuster(),
+    'Lorentz1D':                  _LineProfile1DAdjuster(),
+    'MexicanHat1D':               _LineProfile1DAdjuster(),
+    'Trapezoid1D':                _LineProfile1DAdjuster(),
+    'PowerLaw1D':                 _LineProfile1DAdjuster(factor=0.5),
+    'BrokenPowerLaw1D':           _LineProfile1DAdjuster(factor=0.5),
+    'ExponentialCutoffPowerLaw1D':_LineProfile1DAdjuster(factor=0.5),
+    'LogParabola1D':              _LineProfile1DAdjuster(factor=0.5),
 }
 
 
 # Functions can have parameter names that are similar but not quite the same.
 _p_names = {
-    'Gaussian1D':           {'amplitude': 'amplitude', 'position': 'mean', 'width': 'stddev'},
-    'GaussianAbsorption1D': {'amplitude': 'amplitude', 'position': 'mean', 'width': 'stddev'},
-    'Beta1D':               {'amplitude': 'amplitude', 'position': 'x_0'},
-    'Lorentz1D':            {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'fwhm'},
-    'Box1D':                {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'width'},
-    'MexicanHat1D':         {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'sigma'},
-    'Trapezoid1D':          {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'width'},
+    'Gaussian1D':                 {'amplitude': 'amplitude', 'position': 'mean', 'width': 'stddev'},
+    'GaussianAbsorption1D':       {'amplitude': 'amplitude', 'position': 'mean', 'width': 'stddev'},
+    'Beta1D':                     {'amplitude': 'amplitude', 'position': 'x_0'},
+    'Lorentz1D':                  {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'fwhm'},
+    'Box1D':                      {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'width'},
+    'MexicanHat1D':               {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'sigma'},
+    'Trapezoid1D':                {'amplitude': 'amplitude', 'position': 'x_0', 'width': 'width'},
+    'PowerLaw1D':                 {'amplitude': 'amplitude', 'position': 'x_0'},
+    'BrokenPowerLaw1D':           {'amplitude': 'amplitude', 'position': 'x_break'},
+    'ExponentialCutoffPowerLaw1D':{'amplitude': 'amplitude', 'position': 'x_0'},
+    'LogParabola1D':              {'amplitude': 'amplitude', 'position': 'x_0'},
     }
 
 

@@ -1,5 +1,6 @@
 from setuptools import setup
 
+
 setup(name='SpecView',
       version='0.1',
       description='Interactive spectral analysis suite.',

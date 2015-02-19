@@ -19,11 +19,37 @@ class BaseViewer(QtGui.QWidget):
         self.vb_layout = QtGui.QVBoxLayout()
         self.setLayout(self.vb_layout)
         # Create main graphics layout widget
+        self.view_box = None
         self.w = pg.GraphicsLayoutWidget()
         self.vb_layout.addWidget(self.w)
+        # Create roi container
+        self._rois = list()
 
     def dragEnterEvent(self, e):
         e.accept()
+
+    def _add_roi(self):
+        view_range = self.view_box.viewRange()
+        x_len = (view_range[0][1] - view_range[0][0]) * 0.5
+        y_len = (view_range[1][1] - view_range[1][0]) * 0.5
+        x_pos = x_len + view_range[0][0]
+        y_pos = y_len + view_range[1][0]
+
+        def remove():
+            self.view_box.removeItem(roi)
+            self._rois.remove(roi)
+
+        roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len * 0.5],
+                         sideScalers=True, removable=True)
+        self._rois.append(roi)
+        # Assign roi
+        self.view_box.addItem(roi)
+        # Connect the remove functionality
+        roi.sigRemoveRequested.connect(remove)
+
+    def _get_roi_mask(self):
+        pass
+
 
 
 class SpectraViewer(BaseViewer):
@@ -42,15 +68,18 @@ class SpectraViewer(BaseViewer):
         self.plot_dict = dict()
         self.active_plot = None
 
-    def add_plot(self, spectrum_data, name=None, is_active=True):
+    def add_plot(self, spectrum_data, name=None, is_active=True,
+                 use_step=True):
         fin_pnt = spectrum_data.x.data[-1] - spectrum_data.x.data[-2] +\
                   spectrum_data.x.data[-1]
-        plot = pg.PlotCurveItem(np.append(spectrum_data.x.data,
-                                          fin_pnt),
+        x_data = np.append(spectrum_data.x.data, fin_pnt) if use_step else \
+            spectrum_data.x.data
+
+        plot = pg.PlotCurveItem(x_data,
                                 spectrum_data.y.data,
                                 pen=next(COLORS),
                                 clickable=True,
-                                stepMode=True)
+                                stepMode=use_step)
         self.plot_window.addItem(plot)
 
         plot.sigClicked.connect(self.select_active)
@@ -110,19 +139,30 @@ class SpectraViewer(BaseViewer):
 
         return reduce(np.logical_or, mask_holder)
 
+    def _get_roi_mask(self, x_data, y_data):
+        mask_holder = []
+
+        for roi in self._rois:
+            roi_shape = roi.parentBounds()
+            x1, y1, x2, y2 = roi_shape.getCoords()
+            mask_holder.append((x_data >= x1) & (x_data <= x2) &
+                               (y_data >= y1) & (y_data <= y2))
+
+        return reduce(np.logical_or, mask_holder)
+
     def _fit_region(self):
         spectrum_data = self.plot_dict[self.active_plot]
         y_data = spectrum_data.y.data
         x_data = spectrum_data.x.data
 
-        mask = self._get_region_mask(x_data, y_data)
+        mask = self._get_roi_mask(x_data, y_data)
         print(mask)
 
         coeff, x, y = fitting.gaussian(x_data[mask], y_data[mask])
         spectrum_data = SpectrumData()
         spectrum_data.set_x(x, unit='micron')
         spectrum_data.set_y(y, unit='erg/s')
-        self.add_plot(spectrum_data, is_active=False)
+        self.add_plot(spectrum_data, is_active=False, use_step=False)
 
 
 class ImageViewer(BaseViewer):

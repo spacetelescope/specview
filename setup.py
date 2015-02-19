@@ -12,4 +12,5 @@ setup(name='SpecView',
       zip_safe=False,
       install_requires=['numpy>=1.9.1',
                         'scipy>=0.15',
-                        'astropy>=1.0'])
+                        'astropy>=1.0',
+                        'pyqtgraph>=0.9.10'])

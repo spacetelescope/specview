@@ -42,7 +42,7 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
 
     def slot_toolbar(self):
         self.toolbar.button_insert_region.triggered.connect(
-            self.viewer._add_region)
+            self.viewer._add_roi)
         self.toolbar.button_delete_region.triggered.connect(
             self.viewer._remove_region)
         self.toolbar.button_fit_region.triggered.connect(

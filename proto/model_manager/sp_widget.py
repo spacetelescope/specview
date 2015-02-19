@@ -748,13 +748,30 @@ class SpectralModelManager(QObject):
         """
         return self.models_gui.model.items
 
-    def spectrum(self, wave):
-        ''' Computes the compound model for a given
-        array of spectral coordinate values.
+    def compoundModel(self):
+        ''' Builds the compound model for the active list of components.
 
-        For now, a simple additive composition is used to compute
-        the flux array. This has to be modified eventually so as
-        to enable any kind of allowable composition.
+        For now, a simple additive composition is used. This will have
+        to be modified eventually so as to enable any kind of allowable
+        composition.
+
+        Returns
+        -------
+        An astropy compound model. If no components exist in
+        the list, None is returned.
+
+        '''
+        if len(self.components) > 0:
+            sum_of_models = self.components[0]
+            for component in self.components[1:]:
+                sum_of_models += component
+            return sum_of_models
+        else:
+            return None
+
+    def spectrum(self, wave):
+        ''' Computes the compound model for a given array of
+        spectral coordinate values.
 
         Parameters
         ----------
@@ -767,10 +784,8 @@ class SpectralModelManager(QObject):
         the model, a zero-valued array is returned instead.
 
         '''
-        if len(self.components) > 0:
-            sum_of_models = self.components[0]
-            for component in self.components[1:]:
-                sum_of_models += component
+        sum_of_models = self.compoundModel()
+        if sum_of_models:
             return sum_of_models(wave)
         else:
             return np.zeros(len(wave))

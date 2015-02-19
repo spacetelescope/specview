@@ -29,6 +29,12 @@ registry = {
 
 
 def getComponentName(function):
-    name = str(function.__class__)
-    return name.split(".")[-1][:-2]
+    # this nightmarish way of getting the function name results from the way
+    # astropy functional models store them. Both their '_name' and 'name'
+    # attributes are both set to None. Why???? And worse, the name coding
+    # changed dramatically from astropy 0.4 to 1.0. We hope that it either
+    # stays stable from now on, or, better, the name attributes get populated
+    # by the constructor as they should.
+    name = function.__class__()
+    return str(name).split("Inputs")[0].split(":")[1][1:-1]
 

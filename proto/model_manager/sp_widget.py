@@ -5,7 +5,8 @@ sys.path.insert(0, os.path.abspath("../proto"))
 
 import re
 import numpy as np
-from astropy.modeling import Parameter, Fittable1DModel, SummedCompositeModel
+#from astropy.modeling import Parameter, Fittable1DModel, SummedCompositeModel
+from astropy.modeling import Parameter, Fittable1DModel
 from astropy.modeling.polynomial import PolynomialModel
 
 import signal_slot
@@ -622,8 +623,8 @@ class SpectralModelManager(QObject):
     It is responsible for building the GUI trees and putting them together
     into a split pane layout. It also provides accessors to the active
     model individual spectral components and to the library functions,
-    as well as to the composite spectrum that results from a
-    SummedCompositeModel call.
+    as well as to the composite spectrum that results from a compound
+    model call.
 
     It inherits from QObject for the sole purpose of being able to
     respond to Qt signals.
@@ -661,8 +662,8 @@ class SpectralModelManager(QObject):
 
         This region is used by code in module sp_adjust. If no
         X and/or Y arrays are provided via this method, spectral
-        components added to the SummedCompositeModel will be
-        initialized to a default set of parameter values.
+        components added to the compound model will be initialized
+        to a default set of parameter values.
         
         Parameters
         ----------
@@ -749,8 +750,12 @@ class SpectralModelManager(QObject):
         return self.models_gui.model.items
 
     def spectrum(self, wave):
-        ''' Computes the SummedCompositeModel for a given
+        ''' Computes the compound model for a given
         array of spectral coordinate values.
+
+        For now, a simple additive composition is used to compute
+        the flux array. This has to be modified eventually so as
+        to enable any kind of allowable composition.
 
         Parameters
         ----------
@@ -764,7 +769,9 @@ class SpectralModelManager(QObject):
 
         '''
         if len(self.components) > 0:
-            sum_of_models = SummedCompositeModel(self.components)
+            sum_of_models = self.components[0]
+            for component in self.components[1:]:
+                sum_of_models += component
             return sum_of_models(wave)
         else:
             return np.zeros(len(wave))

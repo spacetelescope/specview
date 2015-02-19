@@ -1,7 +1,3 @@
-THIS VERSION DOES NOT WORK WELL. THE GUI MUST BE
-ADAPTED TO RUN WITH ASTROPY 1.0
-
-
 Source files:
 -------------
 
@@ -29,12 +25,15 @@ manager.selected.connect(handlerForSelectedEvents)
 manager.setArrays(x, y)
 widget = manager.buildMainPanel(model)
 
-(i) build an instance; (ii) add event handlers if needed;
-(iii) add data arrays if needed; (iv) get the widget, initialized
-with a non-empty list of astropy spectral model components.
+The command above do the following: (i) build an instance;
+(ii) add event handlers if needed; (iii) add data arrays if
+needed; (iv) get the widget, initialized with an empty list
+of astropy spectral model components.
 
 
 - modelmvc.py
+
+*** This is not yet tested under astropy 1.0! ***
 
 Original code by Chris, modified in an attempt to use the
 sp_widget mechanism. Three data sets are available for
@@ -59,14 +58,15 @@ elements brings up contextual menus).
 
 - models_registry.py:
 
-Dict with astropy.modeling function instances used by sp_widget.
-This should be a dictionary with classes instead of instances,
-so we could instantiate as needed. The astropy.modeling.Model
-class provides such a dictionary, so why not to use it? We
-eventually will, but for now this class exists (with the registry
-feature) only in the astropy dev version. And that version can't
-be built due to a Cython syntax error. So we temporarily resort to
-brute force and just .copy() an instance whenever it's necessary.
+Dict with astropy.modeling spectral component instances used by
+sp_widget.
+
+This should be a dictionary with classes instead of instances, so
+we could instantiate as needed. The astropy.modeling.Model class
+provides such a dictionary, so why not to use it? Further developments
+suggest that we will need to instantiate components at the outset,
+so lets postpone this change.
+
 
 - sp_adjust.py
 
@@ -76,6 +76,7 @@ that depend on the specific values of wavelength and flux being
 fitted, in order for the fitting algorithms to avoid getting
 stuck in secondary minima. The nature of the "adjustment" is
 function-dependent.
+
 
 - test_data.py
 
@@ -110,9 +111,9 @@ example, suppose that 'a' is a reference to a ModelManager
 instance that contains one instance of Gaussian1D. Then, doing,
 for example,
 
->>> a.components[0].amplitude = 10.
+>>> a.components[0].amplitude.value = 10.
 
-will change the amplitude parameter in the Gaussian1D instance,
+will change the amplitude parameter value in the Gaussian1D instance,
 but the GUI won't refresh automatically to reflect that. It will
 still display the previous value until the 'Refresh' button is
 clicked. Aside being not as convenient as an auto refresh, it's

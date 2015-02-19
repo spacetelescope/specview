@@ -2,6 +2,8 @@ import sys
 from PyQt4 import QtGui, QtCore, Qt
 from specview.qt import MainWindow
 from specview.qt import ImageMdiSubWindow, SpectraMdiSubWindow
+import specview
+import numpy as np
 
 
 class AppGUI(MainWindow):
@@ -13,7 +15,11 @@ class AppGUI(MainWindow):
 
         for k, v in self._model.data_items.items():
             self.add_data_set(k)
-            # self.add_sub_window(k, v)
+
+        self.widget_console.localNamespace = {'model': self._model,
+                                              'ui': self,
+                                              'specview': specview,
+                                              'np': np}
 
     def slot_menu_bar(self):
         self.menu_bar.docks_menu.addAction(
@@ -32,8 +38,9 @@ class AppGUI(MainWindow):
             )
         )
 
-    def _viewer_drop_event(self, name):
-        self.add_sub_window(self._model.data_items[str(name)])
+    def _viewer_drop_event(self, event):
+        viewer, name = event
+        viewer.add_plot(self._model.data_items[str(name)])
 
     def _open_file_dialog(self):
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file')
@@ -41,7 +48,7 @@ class AppGUI(MainWindow):
     def add_sub_window(self, spectrum_data):
         sub_window = SpectraMdiSubWindow(self.mdiarea)
         sub_window.viewer.add_plot(spectrum_data)
-        sub_window.viewer.receive_drop[str].connect(self._viewer_drop_event)
+        sub_window.viewer.receive_drop[tuple].connect(self._viewer_drop_event)
         sub_window.show()
 
     def add_data_set(self, name):

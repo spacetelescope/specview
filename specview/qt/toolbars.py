@@ -23,6 +23,13 @@ class SpectraToolBar(BaseToolBar):
         self.button_fit_region.setStatusTip('Fit rectangular '
                                                'region-of-interest')
 
+        self.active_plots = QtGui.QAction('&Active Plot', self)
+        self.active_plots.setStatusTip('Select visible plots.')
+        self.active_plots.setIcon(QtGui.QIcon('./img/selection7.png'))
+
+
+        self.active_plot_menu = QtGui.QMenu("Active Plot Menu", self)
+
         self.setup_buttons()
 
     def setup_buttons(self):

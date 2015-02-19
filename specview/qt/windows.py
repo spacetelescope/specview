@@ -2,6 +2,7 @@ from PyQt4 import QtGui, QtCore, Qt
 from menubars import MenuBar
 import pyqtgraph as pg
 from pyqtgraph.console import ConsoleWidget
+from widgets import TreeWidget
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -65,11 +66,10 @@ class MainWindow(QtGui.QMainWindow):
         dd_widget.setLayout(dd_layout)
 
         # Tree view widget
-        self.widget_tree_view_data = QtGui.QTreeWidget()
+        self.widget_tree_view_data = TreeWidget()  # QtGui.QTreeWidget()
         self.widget_tree_view_data.setDragEnabled(True)
-        self.widget_tree_view_data.setColumnCount(2)
-        self.widget_tree_view_data.setHeaderLabels(QtCore.QStringList(["Name",
-                                                                "Shape"]))
+        self.widget_tree_view_data.setHeaderLabels(QtCore.QStringList([
+            "Name", ]))
 
         # Button widget
         self.button_add_plot = QtGui.QPushButton("&Plot")

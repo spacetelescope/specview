@@ -1,4 +1,5 @@
 from astropy.io import fits
+from specview.core import SpectrumData, SpectrumArray
 
 
 def read_data(file_name):
@@ -17,7 +18,7 @@ def read_data(file_name):
 
         for i in range(len(hdulist)):
             if hdulist[i].data.size > 0:
-                data = NDData(hdulist[i].data)
+                data = hdulist[i].data
                 data_collection.append(data)
 
         return name, data_collection

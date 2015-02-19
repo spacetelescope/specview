@@ -4,6 +4,10 @@ import numpy as np
 from toolbars import SpectraToolBar, ImageToolBar
 from specview.analysis import fitting
 from specview.core import SpectrumData
+from itertools import cycle
+
+
+COLORS = cycle(['g', 'r', 'c', 'm', 'y', 'w'])
 
 
 class BaseViewer(QtGui.QWidget):
@@ -24,7 +28,7 @@ class BaseViewer(QtGui.QWidget):
 
 class SpectraViewer(BaseViewer):
     # Create drop signal
-    receive_drop = QtCore.pyqtSignal(str)
+    receive_drop = QtCore.pyqtSignal(tuple)
 
     def __init__(self):
         super(SpectraViewer, self).__init__()
@@ -38,17 +42,26 @@ class SpectraViewer(BaseViewer):
         self.plot_dict = dict()
         self.active_plot = None
 
-    def add_plot(self, spectrum_data, name=None, set_active=True):
-        plot = self.plot_window.plot(spectrum_data.x.data,
-                                     spectrum_data.y.data)
+    def add_plot(self, spectrum_data, name=None, is_active=True):
+        fin_pnt = spectrum_data.x.data[-1] - spectrum_data.x.data[-2] +\
+                  spectrum_data.x.data[-1]
+        plot = pg.PlotCurveItem(np.append(spectrum_data.x.data,
+                                          fin_pnt),
+                                spectrum_data.y.data,
+                                pen=next(COLORS),
+                                clickable=True,
+                                stepMode=True)
+        self.plot_window.addItem(plot)
+
+        plot.sigClicked.connect(self.select_active)
 
         if name is None:
             name = "plot{}".format(len(self.plot_dict.keys()))
 
         self.plot_dict[plot] = spectrum_data
 
-        if set_active:
-            self.set_active(plot)
+        if is_active:
+            self.select_active(plot)
 
     def set_active(self, plot):
         self.active_plot = plot
@@ -60,8 +73,20 @@ class SpectraViewer(BaseViewer):
                                   units=spectrum_data.y.unit)
 
     def dropEvent(self, e):
-        print(e.mimeData())
-        self.receive_drop.emit(str(e.mimeData().text()))
+        self.receive_drop.emit((self, str(e.mimeData().text())))
+
+    def select_active(self, plot):
+        if plot == self.active_plot:
+            return
+        elif self.active_plot is not None:
+            color = self.active_plot.opts['pen'].color()
+            color.setAlpha(126)
+            self.active_plot.setPen(color.getRgb(), width=1)
+
+        color = plot.opts['pen'].color()
+        color.setAlpha(255)
+        plot.setPen(color, width=2)
+        self.set_active(plot)
 
     def _add_region(self):
         region = pg.LinearRegionItem()
@@ -97,7 +122,7 @@ class SpectraViewer(BaseViewer):
         spectrum_data = SpectrumData()
         spectrum_data.set_x(x, unit='micron')
         spectrum_data.set_y(y, unit='erg/s')
-        self.add_plot(spectrum_data, set_active=False)
+        self.add_plot(spectrum_data, is_active=False)
 
 
 class ImageViewer(BaseViewer):

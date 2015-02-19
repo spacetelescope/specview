@@ -1,8 +1,6 @@
-import sys
-
 import numpy as np
 
-import astropy.modeling.functional_models as models
+import astropy.modeling.models as models
 
 from sp_model_manager import SpectralModelManagerApp
 

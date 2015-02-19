@@ -5,7 +5,6 @@ sys.path.insert(0, os.path.abspath("../proto"))
 
 import re
 import numpy as np
-#from astropy.modeling import Parameter, Fittable1DModel, SummedCompositeModel
 from astropy.modeling import Parameter, Fittable1DModel
 from astropy.modeling.polynomial import PolynomialModel
 

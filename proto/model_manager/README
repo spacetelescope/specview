@@ -33,11 +33,9 @@ of astropy spectral model components.
 
 - modelmvc.py
 
-*** This is not yet tested under astropy 1.0! ***
-
 Original code by Chris, modified in an attempt to use the
-sp_widget mechanism. Three data sets are available for
-testing:
+sp_widget mechanism (and astropy 1.0). Three data sets are
+available for testing:
 
  - original: the original data points provided by Chris
  - realistic: data points with realistic values (Angstrom, flam)

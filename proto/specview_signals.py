@@ -1,13 +1,14 @@
 '''Signals used by specview'''
 import six
-from weakref import WeakKeyDictionary
-from inspect import isclass
 import warnings
 
 from register_leaf_classes import RegisterLeafClasses
 import signal_slot
 
 class Signals(signal_slot.Signals):
+    '''The signal container that allows autoregistring of a
+    set of predefined signals.
+    '''
     def __init__(self, signal_class=None):
         super(Signals, self).__init__()
         if signal_class is not None:
@@ -20,28 +21,31 @@ class Signals(signal_slot.Signals):
 class Signal(signal_slot.Signal):
     '''Specview signals'''
 
+class SignalNoArgs(Signal):
+    '''Subclassed signals take no arguments.'''
+
+    def emit(self):
+        '''Signal takes no arguments.'''
+        super(SignalNoArgs, self).emit()
+
+
 # Signals related to Data and Models
-class ModelRefresh(Signal):
-    '''Global reset/re-read all models.
+class ModelRefresh(SignalNoArgs):
+    '''Global reset/re-read all models.'''
 
-    Notes
-    -----
-    Use if the specific states of any models become unknown.
-    Otherwise, use a more specific signal.
-    '''
 
-class ModelAdded(Signal):
+class ModelAdded(SignalNoArgs):
     '''New model added'''
 
-class ModelRemoved(Signal):
+class ModelRemoved(SignalNoArgs):
     '''Model removed.'''
 
 
 # Signals related to view changes.
 # Note: These are intended for the high-level interactions between
-# modules. If signalling is needed within a module for detailed
+# modules. If signaling is needed within a module for detailed
 # GUI interaction, the gui-specific signalling should be used.
 # I.E. Use PyQt.pyqtsignal()
 
-class ViewportChange(Signal):
+class ViewportChange(SignalNoArgs):
     '''Viewport has changed.'''

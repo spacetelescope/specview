@@ -11,19 +11,16 @@ License: MIT
 
 """
 from __future__ import print_function
-import six
 import inspect
 import warnings
 from weakref import WeakSet, WeakKeyDictionary
-
-#from debug import msg_debug
 
 class Signal(object):
     def __init__(self):
         self._functions = WeakSet()
         self._methods = WeakKeyDictionary()
 
-    def __call__(self, *args, **kargs):
+    def emit(self, *args, **kargs):
         # Call handler functions
         to_be_removed = []
         for func in self._functions.copy():
@@ -40,7 +37,6 @@ class Signal(object):
         to_be_removed = []
         emitters = self._methods.copy()
         for obj, funcs in emitters.items():
-            msg_debug('obj is type "{}"'.format(type(obj)))
             for func in funcs.copy():
                 try:
                     func(obj, *args, **kargs)
@@ -120,7 +116,7 @@ if __name__ == '__main__':
 
         def set_value(self, value):
             self.__value = value
-            self.changed()  # Emit signal
+            self.changed.emit()  # Emit signal
 
         def get_value(self):
             return self.__value

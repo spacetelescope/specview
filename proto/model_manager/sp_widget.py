@@ -721,10 +721,10 @@ class SpectralModelManager(QObject):
         return splitter
 
     def _broadcastChangedSignal(self):
-        self.changed()
+        self.changed.emit()
 
     def _broadcastSelectedSignal(self):
-        self.selected()
+        self.selected.emit()
 
     @property
     def treeWidget(self):
@@ -823,29 +823,42 @@ class SpectralModelManager(QObject):
         '''
         return self.models_gui.getSelectedModel()
 
-    def modifyModel(self, new_components):
-        ''' Replaces spectral components with new instances.
+    def modifyFromCompound(self, compound_model):
+        ''' Replaces spectral component parameter values with
+        new values taken from an astropy compound model.
 
-        This method must be called with a list of components that
-        matches the existing components in the model manager active
-        list. The method's purpose is to replace the parameter
-        values of each component with the values of the paired
-        component in the input list. Thus the lists have to match
-        perfectly.
+        This method must be called with a compound model instance
+        whose internal structure maps one-to-one to the list of
+        components that the model manager has in the active
+        component list. The method's purpose is to replace the
+        parameter values of each component with the values of the
+        paired component in the compound model. This is mostly
+        useful when one wants to update the model manager with
+        results from a fit.
 
         Parameters
         ----------
-        new_components: list
-          list with instances of astropy.modeling.Fittable1DModel
-          to be added to the manager.
+        compound_model: astropy comppund model
 
         '''
-        for i, c in enumerate(self.components):
-            nc = new_components[i]
-            c.parameters = nc.parameters
+        name_map = compound_model._param_map_inverse
 
-            # modify the tree model so the fit results
-            # show immediately on the display.
+        # all the maneuvering below has to do with the
+        # somewhat confusing way a compound model
+        # instance stores its parameters and how these
+        # map to the internal individual components.
+        # We hope this wiil stay stable across subsequent
+        # astropy releases, but who knows?
+        for i, c in enumerate(self.components):
+            parameter_names_list = c.param_names
+
+            for param_name in parameter_names_list:
+                key = (i, param_name)
+                compound_param_name = name_map[key]
+                par = getattr(compound_model, compound_param_name)
+                setattr(c, param_name ,     par.value)
+
+            # update tree model.
             for j, value in enumerate(c.parameters):
                 item = self.models_gui.model.item(i).child(j).child(0)
                 item.setData("value: " + str(value), role=Qt.DisplayRole)

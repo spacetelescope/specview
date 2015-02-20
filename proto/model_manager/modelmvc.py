@@ -10,7 +10,7 @@ from glue.external.echo import callback_property, add_callback
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from astropy.modeling import Fittable1DModel, Parameter, models
+from astropy.modeling import Fittable1DModel, Parameter, models, fitting
 
 from sp_model_manager import SpectralModelManager
 
@@ -442,83 +442,18 @@ class ModelBrowser(QObject):
             self.ui.window.raise_()
 
     def fit(self):
-        from astropy.modeling.fitting import LevMarLSQFitter
-
         components = self.ui.manager.components
         if len(components) > 0:
-            model = superposition_model(*components)
+            model = self.ui.manager.compoundModel()
 
-            fitter = LevMarLSQFitter()
-            model = fitter(model, self.x, self.y)
-            self.models = model.terms()
+            fitter = fitting.LevMarLSQFitter()
+            fitted_model = fitter(model, self.x, self.y)
 
-            self.ui.manager.modifyModel(self.models)
+            self.ui.manager.modifyFromCompound(fitted_model)
+
+            self.models = self.ui.manager.components
 
             self._draw()
-
-
-def superposition_model(*models):
-    """
-    An abomination to create a fittable superposition of astropy models
-    """
-
-    ps = []
-    params = {}
-    i = 0
-    for m in models:
-        for p in m.param_names:
-            ps.append(Parameter())
-            params['p_%i' % i] = ps[-1]
-            i += 1
-
-    def __init__(self, *args, **kwargs):
-        for i, a in enumerate(args):
-            kwargs['p_%i' % i] = a
-        super(type(self), self).__init__(**kwargs)
-
-    @staticmethod
-    def eval(x, *args):
-        result = 0
-        i = 0
-        for m in models:
-            np = len(m.param_names)
-            result += m.eval(x, *args[i:i + np])
-            i += np
-        return result
-
-    @staticmethod
-    def fit_deriv(x, *args):
-        result = []
-        i = 0
-        for m in models:
-            np = len(m.param_names)
-            result += list(m.fit_deriv(x, *args[i:i + np]))
-            i += np
-        return result
-
-    def terms(self):
-        i = 0
-        result = []
-        for m in models:
-            np = len(m.param_names)
-            m = m.copy()
-            for j in range(i, i + np):
-                src = self.param_names[j]
-                target = m.param_names[j - i]
-                setattr(m, target, getattr(self, src))
-            i += np
-            result.append(m)
-        return result
-
-    params['__init__'] = __init__
-    params['eval'] = eval
-    params['fit_deriv'] = fit_deriv
-    params['terms'] = terms
-
-    result = type('Superposition', (Fittable1DModel,), params)
-
-    args = sum((m.parameters.tolist() for m in models), [])
-    return result(*args)
 
 
 class ModelBrowserUI(object):

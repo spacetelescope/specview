@@ -7,9 +7,10 @@ import astropy.units as u
 
 
 '''
-Units converter  -  work in progress.
+Units converter.
 
-Find out in specview's code how these can be defined:
+We still need to find out (in the Java specview's code)
+how these can be defined:
     1/micron
     km/s @ 21cm
     km/s @ 12 CO (11.5 GHz)
@@ -56,12 +57,13 @@ class UnitsConverter(object):
         try:
             converted_wave = wave.to(self._wunit, equivalencies=u.spectral())
             converted_flux = flux.to(self._funit, equivalencies=u.spectral_density(wave))
+
             return converted_wave, converted_flux
+
         except (ValueError, astropy.units.core.UnitsError) as e:
             print("UNITS CONVERSION ERROR: ", e, file=sys.stderr)
             if exception:
                 raise e
-
             return wave, flux
 
 

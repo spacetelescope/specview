@@ -1,6 +1,6 @@
 from PyQt4 import QtGui
-from specview.qt import MainWindow
-from specview.qt import ImageMdiSubWindow, SpectraMdiSubWindow
+from specview.ui.qt import MainWindow
+from specview.ui.qt import ImageMdiSubWindow, SpectraMdiSubWindow
 import specview
 import numpy as np
 
@@ -61,7 +61,7 @@ class AppGUIInteractive(AppGUI):
     app = None
 
     def __init__(self, model=None):
-        from specview.qt.pyqt_nonblock import pyqtapplication
+        from specview.ui.qt.pyqt_nonblock import pyqtapplication
         from specview.core.model import Model
 
         if self.__class__.app is None:

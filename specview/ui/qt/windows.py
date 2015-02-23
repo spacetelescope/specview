@@ -3,8 +3,9 @@ from pyqtgraph.console import ConsoleWidget
 
 from specview.ui.qt.menubars import MenuBar
 from specview.ui.qt.toolbars import SpectraToolBar
-from custom import SpecViewModel
-from widgets import (DataDockWidget, InfoDockWidget, ConsoleDockWidget, ModelDockWidget)
+from models import SpectrumDataTreeModel
+from docks import (DataDockWidget, InfoDockWidget, ConsoleDockWidget,
+               ModelDockWidget)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -64,10 +65,3 @@ class MainWindow(QtGui.QMainWindow):
 
                 if hide_all:
                     child.hide()
-
-    def _connect_btn_add_model(self):
-        self.dock_model_editor.btn_add_model.triggered.connect(
-            lambda: self.dock_data.wgt_data_tree.add_model(
-                self.dock_model_editor.get_model()
-            )
-        )

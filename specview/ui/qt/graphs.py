@@ -26,6 +26,13 @@ class BaseGraph(QtGui.QWidget):
         # Create roi container
         self._rois = list()
 
+    @property
+    def rois(self):
+        return self._rois
+
+    def layer_info(self):
+        return self.get_roi_mask(), self._rois
+
     def dragEnterEvent(self, e):
         e.accept()
 
@@ -48,7 +55,7 @@ class BaseGraph(QtGui.QWidget):
         # Connect the remove functionality
         roi.sigRemoveRequested.connect(remove)
 
-    def _get_roi_mask(self, x_data, y_data):
+    def get_roi_mask(self, x_data, y_data):
         mask_holder = []
 
         for roi in self._rois:
@@ -65,18 +72,16 @@ class SpectraGraph(BaseGraph):
 
     def __init__(self):
         super(SpectraGraph, self).__init__()
-        # Region list
-        self.region_list = []
+        self.plot_dict = {}
+        self.active_plot = None
         # Add plot object
         self.plot_window = self.w.addPlot(row=1, col=0)
         self.plot_window.showGrid(x=True, y=True)
         self.view_box = self.plot_window.getViewBox()
 
-        self.plot_dict = dict()
-        self.active_plot = None
-
-    def add_plot(self, spec_data_item, name=None, is_active=True,
+    def add_plot(self, spec_data_item, name=None, mask=None, is_active=True,
                  use_step=True):
+        print("adding plot")
         spec_data = spec_data_item.item
         fin_pnt = spec_data.x.data[-1] - spec_data.x.data[-2] +\
                   spec_data.x.data[-1]
@@ -97,7 +102,7 @@ class SpectraGraph(BaseGraph):
         if name is None:
             name = "plot{}".format(len(self.plot_dict.keys()))
 
-        self.plot_dict[plot] = spec_data
+        self.plot_dict[plot] = spec_data_item
 
         if is_active:
             self.select_active(plot)
@@ -107,7 +112,7 @@ class SpectraGraph(BaseGraph):
 
     def set_active(self, plot):
         self.active_plot = plot
-        spectrum_data = self.plot_dict[plot]
+        spectrum_data = self.plot_dict[plot].item
 
         self.plot_window.setLabel('bottom', text='',
                                   units=spectrum_data.x.unit)
@@ -128,44 +133,17 @@ class SpectraGraph(BaseGraph):
 
         color = plot.opts['pen'].color()
         color.setAlpha(255)
-        plot.setPen(color, width=2)
+        plot.setPen(color)
         self.set_active(plot)
 
-    def _add_region(self):
-        region = pg.LinearRegionItem()
-        region.setZValue(10)
-        mn, mx = self.view_box.viewRange()[0]
-        epsilon = (mx - mn) * 0.1
-        region.setRegion([mn + epsilon, mn + epsilon * 2])
-        self.plot_window.addItem(region, ignoreBounds=True)
-        self.region_list.append(region)
+    def get_active_item(self):
+        return self.plot_dict[self.active_plot]
 
-    def _remove_region(self):
-        self.plot_window.removeItem(self.region_list[-1])
-        del self.region_list[-1]
+    def get_active_roi_mask(self):
+        spec_data = self.get_active_item().item
+        x_data, y_data = spec_data.x.data, spec_data.y.data
 
-    def _get_region_mask(self, x_data, y_data):
-        mask_holder = []
-
-        for region in self.region_list:
-            x1, x2 = region.getRegion()
-            mask_holder.append((x_data >= x1) & (x_data <= x2))
-
-        return reduce(np.logical_or, mask_holder)
-
-    def _fit_region(self):
-        # TODO: remove explicit reference to fitting package
-        spectrum_data = self.plot_dict[self.active_plot]
-        y_data = spectrum_data.y.data
-        x_data = spectrum_data.x.data
-
-        mask = self._get_roi_mask(x_data, y_data)
-
-        coeff, x, y = model_fitting.gaussian(x_data[mask], y_data[mask])
-        spectrum_data = SpectrumData()
-        spectrum_data.set_x(x, unit='micron')
-        spectrum_data.set_y(y, unit='erg/s')
-        self.add_plot(spectrum_data, is_active=False, use_step=False)
+        return self.get_roi_mask(x_data, y_data)
 
 
 class ImageGraph(BaseGraph):

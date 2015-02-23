@@ -6,21 +6,22 @@ import numpy as np
 from specview.ui.qt import MainWindow
 from specview.ui.qt import ImageMdiSubWindow, SpectraMdiSubWindow
 import specview
-from specview.ui.qt import SpecViewItem, SpecViewModel
+from specview.ui.qt import SpectrumDataTreeItem, SpectrumDataTreeModel
 from specview.io import read_data
 
 
 class Controller(object):
     def __init__(self):
         super(Controller, self).__init__()
-        self._model = SpecViewModel()
+        self._model = SpectrumDataTreeModel()
         self._viewer = MainWindow()
         self._viewer.dock_data.wgt_data_tree.setModel(self._model)
+        self._viewer.dock_model_editor.wgt_model_tree.setModel(self._model)
 
+        self._connect_trees()
         self._connect_menu_bar()
         self._connect_data_dock()
         self._connect_mdiarea()
-        self._connect_trees()
 
         self._viewer.dock_console.wgt_console.localNamespace = {
             'model': self._model,
@@ -39,6 +40,14 @@ class Controller(object):
         return self._model
 
     # ---- protected functions
+    def _connect_trees(self):
+        self.viewer.dock_data.wgt_data_tree.clicked.connect(lambda:
+            self.viewer.dock_model_editor.wgt_model_tree.set_root_index(
+                self.viewer.dock_data.wgt_data_tree.current_item,
+                self.viewer.dock_data.wgt_data_tree.currentIndex()
+            )
+        )
+
     def _connect_mdiarea(self):
         self.viewer.mdiarea.subWindowActivated.connect(self._set_toolbar)
 
@@ -64,12 +73,8 @@ class Controller(object):
             )
         )
 
-    def _connect_trees(self):
-        self.viewer.dock_data.wgt_data_tree.clicked.connect(lambda:
-            self.viewer.dock_model_editor.wgt_model_tree.set_parent_item(
-                self.viewer.dock_data.wgt_data_tree.current_item
-            )
-        )
+    def _connect_model_add(self):
+        pass
 
     def _open_file_dialog(self):
         fname = QtGui.QFileDialog.getOpenFileName(self.viewer, 'Open file')
@@ -77,12 +82,17 @@ class Controller(object):
 
     # ---- public functions
     def add_data_set(self, nddata, name="Data", parent=None):
-        ds_item = SpecViewItem(nddata, name)
-
-        self.model.add_row(ds_item)
+        self.model.create_data(nddata, name)
 
     def add_sub_window(self, spectrum_data, name=""):
         sub_window = self._viewer.mdiarea.addSubWindow(SpectraMdiSubWindow())
+        sub_window.toolbar.atn_create_layer.triggered.connect(lambda:
+            self.model.create_layer(
+                sub_window.graph.get_active_item(),
+                sub_window.graph.get_active_roi_mask()
+            )
+        )
+
         sub_window.graph.add_plot(spectrum_data)
         sub_window.setWindowTitle(name)
         sub_window.show()
@@ -98,10 +108,6 @@ class Controller(object):
         self.add_data_set(spec_data, name)
 
     # ---- slot functions
-    def _viewer_drop_event(self, event):
-        viewer, name = event
-        viewer.add_plot(self._model.data_items[str(name)])
-
     def _set_toolbar(self):
         sw = self.viewer.mdiarea.activeSubWindow()
 
@@ -109,7 +115,7 @@ class Controller(object):
             tb = sw.toolbar
             self.viewer.set_toolbar(toolbar=tb)
         else:
-            self.viewer.set_toobar(hide_all=True)
+            self.viewer.set_toolbar(hide_all=True)
 
 
 def main():

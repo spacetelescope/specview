@@ -4,7 +4,24 @@ from specview.core import SpectrumData
 def read_table(table,
                dispersion='wavelength', flux='flux',
                dispersion_unit='angstrom', flux_unit='count/s'):
-    '''Read FITS table'''
+    '''Read FITS table
+
+    Parameters
+    ----------
+    table: FITS table
+
+    dispersion: str
+                Name of column containing the dispersion axis.
+
+    flux: str
+          Name of column containing the flux axis.
+
+    dispersion_unit: str
+                     Unit of dispersion
+
+    flux_unit: str
+               Unit of flux
+    '''
 
     table_dispersion_unit = None
     table_flux_unit = None

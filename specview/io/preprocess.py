@@ -2,8 +2,8 @@ from astropy.io import fits
 from specview.core import SpectrumData
 
 def read_table(table,
-               dispersion='wavelength', flux='flux',
-               dispersion_unit='angstrom', flux_unit='count/s'):
+               flux='flux', dispersion='wavelength',
+               flux_unit=None, dispersion_unit=None):
     '''Read FITS table
 
     Parameters
@@ -22,21 +22,23 @@ def read_table(table,
     flux_unit: str
                Unit of flux
     '''
+    DEFAULT_FLUX_UNIT = 'count'
+    DEFAULT_DISPERSION_UNIT = 'pixel'
 
-    table_dispersion_unit = None
-    table_flux_unit = None
-    try:
-        table_dispersion_unit = table.columns[table.names.index(dispersion)].unit
-    except ValueError:
-        pass
-    try:
-        flux_unit = table.columns[table.names.index(flux)].unit
-    except ValueError:
-        pass
-    if table_dispersion_unit is not None:
-        dispersion_unit = table_dispersion_unit
-    if table_flux_unit is not None:
-        flux_unit = table_flux_unit
+    if dispersion_unit is None:
+        try:
+            dispersion_unit = table.columns[table.names.index(dispersion.upper())].unit
+            if dispersion_unit is None:
+                raise ValueError
+        except ValueError:
+            dispersion_unit = DEFAULT_DISPERSION_UNIT
+    if flux_unit is None:
+        try:
+            flux_unit = table.columns[table.names.index(flux.upper())].unit
+            if flux_unit is None:
+                raise ValueError
+        except ValueError:
+            flux_unit = DEFAULT_FLUX_UNIT
 
     spectrum = SpectrumData()
     spectrum.set_x(table[dispersion], unit=dispersion_unit)

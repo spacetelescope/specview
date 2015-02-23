@@ -1,22 +1,31 @@
 from astropy.io import fits
-from specview.core import SpectrumData, Model
+from specview.core import SpectrumData
 
-def read_table(file_name, ext=1, dispersion='wavelength', flux='flux', model=None):
-    '''Read a fits table'''
-    if model is None:
-        model = Model()
+def read_table(table,
+               dispersion='wavelength', flux='flux',
+               dispersion_unit='angstrom', flux_unit='count/s'):
+    '''Read FITS table'''
 
-    if ".fits" in file_name:
-        name = file_name.split("/")[-1].split(".")[-2]
-        hdulist = fits.open(str(file_name))
-        tdata = hdulist[ext].data
+    table_dispersion_unit = None
+    table_flux_unit = None
+    try:
+        table_dispersion_unit = table.columns[table.names.index(dispersion)].unit
+    except ValueError:
+        pass
+    try:
+        flux_unit = table.columns[table.names.index(flux)].unit
+    except ValueError:
+        pass
+    if table_dispersion_unit is not None:
+        dispersion_unit = table_dispersion_unit
+    if table_flux_unit is not None:
+        flux_unit = table_flux_unit
 
-        spectrum = SpectrumData()
-        spectrum.set_x(tdata[dispersion], unit='angstrom')
-        spectrum.set_y(tdata[flux], unit='erg/s')
-        model.data_items[name] = spectrum
+    spectrum = SpectrumData()
+    spectrum.set_x(table[dispersion], unit=dispersion_unit)
+    spectrum.set_y(table[flux], unit=flux_unit)
 
-    return model
+    return spectrum
 
 def read_data(file_name):
     """Simple function to read in a file and retrieve extensions that

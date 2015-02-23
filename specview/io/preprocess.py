@@ -15,20 +15,15 @@ def read_data(file_name):
         File name of data object.
     """
     if ".fits" in file_name:
-        name = file_name.split("/")[-1].split(".")[-2]
+        name = file_name.split("/")[-1].split(".")[-1]
         hdulist = fits.open(str(file_name))
-        start_wave, step_wave = hdulist[0].header['CRVAL1'], \
-                                hdulist[0].header['CD1_1']
-
-        start_range = random.randint(0, 5000)
-
-        y = hdulist[0].data[0]  # normalized flux
-        end_wave = len(y) * step_wave + start_wave
-        x = np.linspace(start_wave, end_wave, len(y))
+        x_unit = hdulist['SCI'].header['TUNIT1']
+        y_unit = hdulist['SCI'].header['TUNIT2']
+        data = hdulist['SCI'].data
+        x, y = data['WAVELENGTH'], data['FLUX']
 
         spec_data = SpectrumData()
-        spec_data.set_x(x[start_range:start_range+1000], unit=Unit("angstrom"))
-        spec_data.set_y(y[start_range:start_range+1000], unit=Unit(
-            "erg/cm^2/s/angstrom"))
+        spec_data.set_x(x[:1000], unit=Unit('angstrom'))
+        spec_data.set_y(y[:1000], unit=Unit('flm'))
 
         return spec_data

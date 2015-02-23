@@ -4,7 +4,7 @@ from PyQt4 import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 
-from specview.analysis import fitting
+from specview.analysis import model_fitting
 from specview.core import SpectrumData
 
 
@@ -29,7 +29,7 @@ class BaseGraph(QtGui.QWidget):
     def dragEnterEvent(self, e):
         e.accept()
 
-    def _add_roi(self):
+    def add_roi(self):
         view_range = self.view_box.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
         y_len = (view_range[1][1] - view_range[1][0]) * 0.5
@@ -84,11 +84,11 @@ class SpectraGraph(BaseGraph):
         x_data = np.append(spec_data.x.data, fin_pnt) if use_step else \
                            spec_data.x.data
 
-        plot = pg.PlotCurveItem(x_data,
-                                spec_data.y.data,
-                                pen=next(COLORS),
-                                clickable=True,
-                                stepMode=use_step)
+        plot = pg.PlotDataItem(x_data,
+                            spec_data.y.data,
+                            pen=pg.mkPen(next(COLORS)),
+                            clickable=True,
+                            stepMode=use_step)
 
         self.plot_window.addItem(plot)
 
@@ -161,7 +161,7 @@ class SpectraGraph(BaseGraph):
 
         mask = self._get_roi_mask(x_data, y_data)
 
-        coeff, x, y = fitting.gaussian(x_data[mask], y_data[mask])
+        coeff, x, y = model_fitting.gaussian(x_data[mask], y_data[mask])
         spectrum_data = SpectrumData()
         spectrum_data.set_x(x, unit='micron')
         spectrum_data.set_y(y, unit='erg/s')

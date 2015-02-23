@@ -22,12 +22,13 @@ class SpectrumArray(NDSlicingMixin, NDArithmeticMixin, NDData):
 
 class SpectrumData(object):
     """
-    Contains exactly two `SpectrumData` objects; one for flux, the other
+    Contains exactly two `SpectrumArray` objects; one for flux, the other
     for wavelength.
     """
     def __init__(self, x=None, y=None):
         self._x = x
         self._y = y
+        self._models = {}
 
     def set_x(self, data, wcs=None, unit=None, name=""):
         if not isinstance(wcs, WCS) and wcs is not None:
@@ -40,6 +41,16 @@ class SpectrumData(object):
             raise TypeError("wcs object is not of type WCS.")
 
         self._y = SpectrumArray(data, wcs=wcs, unit=unit)
+
+    def add_model(self, model, mask):
+        self._models[model] = mask
+
+    def remove_model(self, model):
+        del self._models[model]
+
+    @property
+    def models(self):
+        return self._models
 
     @property
     def x(self):

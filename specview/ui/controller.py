@@ -7,6 +7,7 @@ from specview.ui.qt import MainWindow
 from specview.ui.qt import ImageMdiSubWindow, SpectraMdiSubWindow
 import specview
 from specview.ui.qt import SpecViewItem, SpecViewModel
+from specview.io import read_data
 
 
 class Controller(object):
@@ -19,6 +20,7 @@ class Controller(object):
         self._connect_menu_bar()
         self._connect_data_dock()
         self._connect_mdiarea()
+        self._connect_trees()
 
         self._viewer.dock_console.wgt_console.localNamespace = {
             'model': self._model,
@@ -41,12 +43,14 @@ class Controller(object):
         self.viewer.mdiarea.subWindowActivated.connect(self._set_toolbar)
 
     def _connect_menu_bar(self):
-        self._viewer.menu_bar.docks_menu.addAction(
-            self._viewer.dock_data.toggleViewAction())
-        self._viewer.menu_bar.docks_menu.addAction(
-            self._viewer.dock_info.toggleViewAction())
-        self._viewer.menu_bar.docks_menu.addAction(
-            self._viewer.dock_console.toggleViewAction())
+        self.viewer.menu_bar.atn_open.triggered.connect(self._open_file_dialog)
+
+        self.viewer.menu_bar.docks_menu.addAction(
+            self.viewer.dock_data.toggleViewAction())
+        self.viewer.menu_bar.docks_menu.addAction(
+            self.viewer.dock_info.toggleViewAction())
+        self.viewer.menu_bar.docks_menu.addAction(
+            self.viewer.dock_console.toggleViewAction())
 
     def _connect_data_dock(self):
         self._viewer.dock_data.btn_create_plot.clicked.connect(
@@ -60,28 +64,38 @@ class Controller(object):
             )
         )
 
+    def _connect_trees(self):
+        self.viewer.dock_data.wgt_data_tree.clicked.connect(lambda:
+            self.viewer.dock_model_editor.wgt_model_tree.set_parent_item(
+                self.viewer.dock_data.wgt_data_tree.current_item
+            )
+        )
+
     def _open_file_dialog(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file')
+        fname = QtGui.QFileDialog.getOpenFileName(self.viewer, 'Open file')
+        self.open_file(fname)
 
     # ---- public functions
-    def add_data_set(self, name, nddata, parent=None):
-        ds_item = SpecViewItem(name, nddata)
+    def add_data_set(self, nddata, name="Data", parent=None):
+        ds_item = SpecViewItem(nddata, name)
 
-        if parent is not None:
-            parent.data_set_model.appendRow(ds_item)
-        else:
-            self.data_set_model.appendRow(ds_item)
+        self.model.add_row(ds_item)
 
-    def add_sub_window(self, spectrum_data):
+    def add_sub_window(self, spectrum_data, name=""):
         sub_window = self._viewer.mdiarea.addSubWindow(SpectraMdiSubWindow())
         sub_window.graph.add_plot(spectrum_data)
-        # sub_window.viewer.receive_drop[tuple].connect(self._viewer_drop_event)
+        sub_window.setWindowTitle(name)
         sub_window.show()
 
     def add_plot(self, spectrum_data):
         sub_window = self._viewer.mdiarea.activeSubWindow()
         sub_window.graph.add_plot(spectrum_data)
         sub_window.show()
+
+    def open_file(self, path):
+        spec_data = read_data(path)
+        name = path.split('/')[-1].split('.')[-2]
+        self.add_data_set(spec_data, name)
 
     # ---- slot functions
     def _viewer_drop_event(self, event):
@@ -92,9 +106,10 @@ class Controller(object):
         sw = self.viewer.mdiarea.activeSubWindow()
 
         if sw is not None:
-            self.viewer._hide_toolbars()
             tb = sw.toolbar
-            self.viewer.addToolBar(tb)
+            self.viewer.set_toolbar(toolbar=tb)
+        else:
+            self.viewer.set_toobar(hide_all=True)
 
 
 def main():

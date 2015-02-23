@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore, Qt
 from pyqtgraph.console import ConsoleWidget
+from specview.ui.qt.custom import ModelViewItem
 
 
 class SpecViewTree(QtGui.QTreeView):
@@ -28,6 +29,36 @@ class SpecViewTree(QtGui.QTreeView):
             selected_list.append(index.model().itemFromIndex(index).item)
 
         return selected_list
+
+    def add_model(self, model):
+        pass
+
+
+class ModelEditorTree(QtGui.QTreeView):
+    def __init__(self):
+        super(ModelEditorTree, self).__init__()
+        self.setDragEnabled(True)
+
+    # def selectionChanged(self, selected, deselected):
+    #     index = self.selectedIndexes()[0]
+    #     self.current_item = index.model().itemFromIndex(index).item
+
+    @property
+    def current_item(self):
+        index = self.currentIndex()
+        return index.model().itemFromIndex(index)
+
+    @property
+    def selected_items(self):
+        selected_list = []
+
+        for index in self.selectedIndexes():
+            selected_list.append(index.model().itemFromIndex(index).item)
+
+        return selected_list
+
+    def set_parent_item(self, parent):
+        print("Setting items")
 
 
 class BaseDockWidget(QtGui.QDockWidget):
@@ -113,3 +144,51 @@ class ConsoleDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_console)
 
         self.setVisible(False)
+
+class ModelDockWidget(BaseDockWidget):
+    """
+    TODO: make dedicated class for handling getting/retreiving selected model
+    data, and to handle creating the ModelViewItem instance.
+    """
+    from specview.analysis import model_fitting
+
+    def __init__(self):
+        super(ModelDockWidget, self).__init__()
+
+        self.setWindowTitle("Model Editor")
+
+        self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
+                             QtCore.Qt.RightDockWidgetArea)
+
+        # Add TreeView widget
+        self.wgt_model_tree = ModelEditorTree()
+        self.wgt_model_tree.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection)
+
+        self.wgt_model_selector = QtGui.QComboBox()
+        self.wgt_model_selector.addItems(self.model_fitting.all_models.keys())
+
+        self.btn_add_model = QtGui.QToolButton()
+
+        hb_layout = QtGui.QHBoxLayout()
+        hb_layout.addWidget(self.wgt_model_selector)
+        hb_layout.addWidget(self.btn_add_model)
+
+        self.add_layout(hb_layout)
+        self.add_widget(self.wgt_model_tree)
+
+        self.wgt_fit_selector = QtGui.QComboBox()
+        self.wgt_fit_selector.addItems(self.model_fitting.all_fitters.keys())
+
+        self.btn_perform_fit = QtGui.QPushButton("&Fit")
+
+        self.add_widget(self.wgt_fit_selector)
+        self.add_widget(self.btn_perform_fit)
+
+    def get_model(self):
+        new_model = ModelViewItem(
+            self.model_fitting.all_models[
+                self.wgt_model_selector.currentText()
+            ]
+        )
+        return new_model

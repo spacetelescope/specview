@@ -25,7 +25,7 @@ class ImageMdiSubWindow(BaseMdiSubWindow):
         self.graph = ImageGraph()
         self.toolbar = ImageToolBar()
 
-        self.vb_layout.addWidget(self.toolbar)
+        # self.vb_layout.addWidget(self.toolbar)
         self.vb_layout.addWidget(self.graph)
 
 
@@ -39,10 +39,7 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
         # self.vb_layout.addWidget(self.toolbar)
         self.vb_layout.addWidget(self.graph)
 
-        self.slot_toolbar()
+        self._connect_toolbar()
 
-    def slot_toolbar(self):
-        self.toolbar.button_insert_region.triggered.connect(
-            self.graph._add_roi)
-        self.toolbar.button_fit_region.triggered.connect(
-            self.graph._fit_region)
+    def _connect_toolbar(self):
+        self.toolbar.atn_insert_roi.triggered.connect(self.graph.add_roi)

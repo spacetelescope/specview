@@ -4,7 +4,7 @@ from pyqtgraph.console import ConsoleWidget
 from specview.ui.qt.menubars import MenuBar
 from specview.ui.qt.toolbars import SpectraToolBar
 from custom import SpecViewModel
-from widgets import (DataDockWidget, InfoDockWidget, ConsoleDockWidget)
+from widgets import (DataDockWidget, InfoDockWidget, ConsoleDockWidget, ModelDockWidget)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -14,7 +14,9 @@ class MainWindow(QtGui.QMainWindow):
         self.menu_bar = MenuBar()
         self.setMenuBar(self.menu_bar)
         self.setWindowTitle('IFUpy')
-        self.addToolBar("")
+        tb = QtGui.QToolBar()
+        self.addToolBar(tb)
+        tb.hide()
 
         # Set the MDI area as the central widget
         self.mdiarea = QtGui.QMdiArea()
@@ -39,12 +41,33 @@ class MainWindow(QtGui.QMainWindow):
         # Setup info view dock
         self.dock_info = InfoDockWidget()
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock_info)
+        self.dock_info.hide()
+
+        # Setup info view dock
+        self.dock_model_editor = ModelDockWidget()
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock_model_editor)
 
         # Setup console dock
         self.dock_console = ConsoleDockWidget()
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.dock_console)
 
-    def _hide_toolbars(self):
+    def set_toolbar(self, toolbar=None, hide_all=False):
+        if toolbar is not None:
+            self.addToolBar(toolbar)
+
         for child in self.children():
             if isinstance(child, QtGui.QToolBar):
-                self.removeToolBar(child)
+                if child == toolbar:
+                    child.show()
+                elif child.isVisible():
+                    child.hide()
+
+                if hide_all:
+                    child.hide()
+
+    def _connect_btn_add_model(self):
+        self.dock_model_editor.btn_add_model.triggered.connect(
+            lambda: self.dock_data.wgt_data_tree.add_model(
+                self.dock_model_editor.get_model()
+            )
+        )

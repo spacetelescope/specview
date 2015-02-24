@@ -859,6 +859,11 @@ class SpectralModelManager(QObject):
         '''
         return self.models_gui.getSelectedModel()
 
+    def _updateTreeModel(self, c, i):
+        for j, value in enumerate(c.parameters):
+            item = self.models_gui.model.item(i).child(j).child(0)
+            item.setData("value: " + str(value), role=Qt.DisplayRole)
+
     def modifyFromCompound(self, compound_model):
         ''' Replaces spectral component parameter values with
         new values taken from an astropy compound model.
@@ -874,29 +879,47 @@ class SpectralModelManager(QObject):
 
         Parameters
         ----------
-        compound_model: astropy comppund model
+        compound_model: astropy compound model, or a single instance
+          of either Fittable1DModel or PolynomialModel. It's basically
+          what an astropy Fitter returns.
 
         '''
-        name_map = compound_model._param_map_inverse
+        if str(compound_model.__class__).find('CompoundModel') > -1:
 
-        # all the maneuvering below has to do with the
-        # somewhat confusing way a compound model
-        # instance stores its parameters and how these
-        # map to the internal individual components.
-        # We hope this wiil stay stable across subsequent
-        # astropy releases, but who knows?
-        for i, c in enumerate(self.components):
-            parameter_names_list = c.param_names
+            name_map = compound_model._param_map_inverse
 
-            for param_name in parameter_names_list:
-                key = (i, param_name)
-                compound_param_name = name_map[key]
-                par = getattr(compound_model, compound_param_name)
-                setattr(c, param_name ,     par.value)
+            # all the maneuvering below has to do with the way a
+            # compound model instance stores its parameters and
+            # how these map to the internal individual components.
+            for i, c in enumerate(self.components):
+                parameter_names_list = c.param_names
 
-            # update tree model.
-            for j, value in enumerate(c.parameters):
-                item = self.models_gui.model.item(i).child(j).child(0)
+                for param_name in parameter_names_list:
+                    key = (i, param_name)
+                    compound_param_name = name_map[key]
+                    par = getattr(compound_model, compound_param_name)
+                    setattr(c, param_name ,     par.value)
+
+                self._updateTreeModel(c, i)
+
+        else:
+            # this handles the case of a solitary astropy component
+            # instance. In this case, the astropy Fitter doesn't build
+            # a compound model, but just an instance of the function
+            # being fitted.
+            c = self.components[0]
+            c.parameters = compound_model.parameters
+            self._updateTreeModel(c, 0)
+
+    def _updateTreeModel(self, component, index):
+        for j, value in enumerate(component.parameters):
+            parent = self.models_gui.model.item(index).child(j)
+            # yet another specialization for the case of a degree
+            # of a polynomial, which is not exactly a parameter
+            # or coefficient, but must be handled by the GUI
+            # nevertheless.
+            if not isinstance(parent, SpectralComponentDegreeItem):
+                item = parent.child(0)
                 item.setData("value: " + str(value), role=Qt.DisplayRole)
 
 

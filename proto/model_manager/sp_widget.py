@@ -543,7 +543,7 @@ class ActiveComponentsModel(SpectralComponentsModel):
         # RE patterns to decode scientific notation,
         # floating point notation, and integers.
         self._floating_point_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
-        self._integer_pattern = re.compile(r"[+,-]?[0-9]+")
+        self._integer_pattern = re.compile(r"[+]?[0-9]+")
 
     # TODO use QDataWidgetMapper
     # this violation of MVC design principles is necessary

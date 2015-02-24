@@ -5,6 +5,22 @@ from proto.model_manager import test_data
 
 
 def extract(spectrum_data, range):
+    ''' Extracts a region from a spectrum.
+
+    Paramaters
+    ----------
+    spectrum_data: SpectrumData
+      Contains the spectrum to be extracted.
+    range: tuple
+      A wavelength range as in (wave1, wave2)
+
+    Returns
+    -------
+    SpectrumData with extracted region.
+
+    '''
+    # this needs some small changes so as to use
+    # SpectrumArray instances for the slicing.
     x = spectrum_data.x.data
     y = spectrum_data.y.data
 
@@ -23,6 +39,19 @@ def extract(spectrum_data, range):
 
 
 def stats(spectrum_data):
+    ''' Computes basic statistics for a spectral region
+    contained in a SpectrumData instance.
+
+    Paramaters
+    ----------
+    spectrum_data: SpectrumData
+      Typically this is returned by the extract() function
+
+    Returns
+    -------
+    statistics: dict
+
+    '''
     flux = spectrum_data.y.data
     return {'mean':    np.mean(flux),
             'median':  np.median(flux),

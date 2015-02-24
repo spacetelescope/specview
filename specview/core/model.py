@@ -1,6 +1,5 @@
 from specview.analysis import extract
 from specview.core import CubeData, SpectrumData, SpectrumArray
-from specview.io import read_data
 import numpy as np
 from astropy.units import Unit
 

@@ -8,7 +8,7 @@ setup(name='SpecView',
       author='Harry Ferguson',
       author_email='ferguson@stsci.edu',
       license='AURA',
-      packages=['specview']
+      packages=['specview'],
       zip_safe=False,
       install_requires=['numpy>=1.9.1',
                         'scipy>=0.15',

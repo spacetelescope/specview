@@ -553,12 +553,6 @@ class ActiveComponentsModel(SpectralComponentsModel):
     def setWindow(self, window):
         self._window = window
 
-    # Here we adopt ugly conditional code to handle instances
-    # of both Fittable1DModel and PolynomialModel. This would
-    # be better designed with subclassing or delegation, but
-    # that would prevent users from directly adding bare astropy
-    # models to the manager. With conditional code (ugh!), we
-    # leave the door open for that possibility.
     def addToModel(self, name, element):
         # add component to tree root
         item = SpectralComponentItem(name)
@@ -571,38 +565,11 @@ class ActiveComponentsModel(SpectralComponentsModel):
         # has an extra attribute, not shared with Fittable1DModel: the
         # polynomial degree. This degree is not really a parameter or
         # coefficient, but in fact a control value that must be accessible
-        # to the user. And, because of its importance, it should be displayed
-        # as the topmost element in the tree view of the Polynomial.
+        # to the user.
         if issubclass(element.__class__, Fittable1DModel):
-            # add parameters to component in tree.
             for e in element.param_names:
                 par = element.__getattribute__(e)
-                if isinstance(par, Parameter):
-                    # add parameter. Parameter name is followed
-                    # by its value when displaying in tree.
-                    parItem = SpectralComponentItem(par.name + ": " + str(par.value))
-                    parItem.setDataItem(par)
-                    item.appendRow(parItem)
-
-                    # add parameter value and other attributes to parameter element.
-                    valueItem = SpectralComponentValueItem(par, "value")
-                    valueItem.setDataItem(par.value)
-                    parItem.appendRow(valueItem)
-                    minItem = SpectralComponentValueItem(par, "min")
-                    minItem.setDataItem(par.min)
-                    parItem.appendRow(minItem)
-                    maxItem = SpectralComponentValueItem(par, "max")
-                    maxItem.setDataItem(par.max)
-                    parItem.appendRow(maxItem)
-                    fixedItem = SpectralComponentValueItem(par, "fixed", checkable=True)
-                    fixedItem.setDataItem(par.fixed)
-                    parItem.appendRow(fixedItem)
-                    # 'tied' is not really a boolean, but a callable.
-                    # How to handle this in a GUI?
-                    tiedItem = SpectralComponentValueItem(par, "tied", editable=False)
-                    tiedItem.setDataItem(par.tied)
-                    parItem.appendRow(tiedItem)
-
+                self._addParameterToModel(item, par)
         elif issubclass(element.__class__, PolynomialModel):
             # begin by adding degree to tree.
             degree = element.degree
@@ -611,25 +578,31 @@ class ActiveComponentsModel(SpectralComponentsModel):
             item.appendRow(valueItem)
             # now add coefficients.
             for e in element.param_names:
-                coeff_name = e
-                # look up coefficient value
-                index = 0
-                for name in element.param_names:
-                    if name == coeff_name:
-                        break
-                    index +=1
-                coeff_value = element.parameters[index]
-                data_value = coeff_name + ": " + str(coeff_value)
-                parItem = SpectralComponentItem(data_value)
-                parItem.setDataItem(data_value)
-                item.appendRow(parItem)
-                # add *non-editable* coefficient value to coefficient element.
-                valueItem = SpectralComponentItem(data_value)
-                valueItem.setDataItem(coeff_value)
-                parItem.appendRow(valueItem)
-                # TODO add here other attributes as well.
-                # They can be either editable or non-editable.
-                #
+                par = element.__getattr__(e)
+                self._addParameterToModel(item, par)
+
+    def _addParameterToModel(self, item, par):
+        parItem = SpectralComponentItem(par.name + ": " + str(par.value))
+        parItem.setDataItem(par)
+        item.appendRow(parItem)
+        # add parameter value and other attributes to parameter element.
+        valueItem = SpectralComponentValueItem(par, "value")
+        valueItem.setDataItem(par.value)
+        parItem.appendRow(valueItem)
+        minItem = SpectralComponentValueItem(par, "min")
+        minItem.setDataItem(par.min)
+        parItem.appendRow(minItem)
+        maxItem = SpectralComponentValueItem(par, "max")
+        maxItem.setDataItem(par.max)
+        parItem.appendRow(maxItem)
+        fixedItem = SpectralComponentValueItem(par, "fixed", checkable=True)
+        fixedItem.setDataItem(par.fixed)
+        parItem.appendRow(fixedItem)
+        # 'tied' is not really a boolean, but a callable.
+        # How to handle this in a GUI?
+        tiedItem = SpectralComponentValueItem(par, "tied", editable=False)
+        tiedItem.setDataItem(par.tied)
+        parItem.appendRow(tiedItem)
 
     @property
     def items(self):

@@ -1,3 +1,4 @@
+import warnings
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 from specview.core import SpectrumData
@@ -69,7 +70,10 @@ def read_data(file_name, ext=None, **kwargs):
         exts = [ext] if ext is not None else range(len(hdulist))
         for idx in exts:
             if isinstance(hdulist[idx], FITS_table):
-                data = read_table(hdulist[idx].data, **kwargs)
-                return data
+                try:
+                    data = read_table(hdulist[idx].data, **kwargs)
+                    return data
+                except Exception as e:
+                    warnings.warn('File {}[{}]: {}'.format(file_name, idx, e.args[0]))
 
         raise RuntimeError('File {} does not contain any supported 1D format.'.format(file_name))

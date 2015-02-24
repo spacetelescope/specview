@@ -1,4 +1,5 @@
 from astropy.io import fits
+from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 from specview.core import SpectrumData
 
 def read_table(table,
@@ -46,23 +47,29 @@ def read_table(table,
 
     return spectrum
 
-def read_data(file_name):
+def read_data(file_name, ext=None, **kwargs):
     """Simple function to read in a file and retrieve extensions that
     contain data.
 
     Parameters
     ----------
     file_name : str
-        File name of data object.
+        File name of FITS data object.
+
+    ext: int
+        Extension to read. If none, the first one with data will be used.
+
+    kwargs: dict
+        Keyword arguments to pass to helper routines.
     """
     if ".fits" in file_name:
         name = file_name.split("/")[-1].split(".")[-2]
         hdulist = fits.open(str(file_name))
-        data_collection = []
 
-        for i in range(len(hdulist)):
-            if hdulist[i].data.size > 0:
-                data = hdulist[i].data
-                data_collection.append(data)
+        exts = [ext] if ext is not None else range(len(hdulist))
+        for idx in exts:
+            if isinstance(hdulist[idx], FITS_table):
+                data = read_table(hdulist[idx].data, **kwargs)
+                return data
 
-        return name, data_collection
+        raise RuntimeError('File {} does not contain any supported 1D format.'.format(file_name))

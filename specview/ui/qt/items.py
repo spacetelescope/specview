@@ -3,6 +3,7 @@ import numpy as np
 from specview.analysis import model_fitting
 from specview.core.data_objects import SpectrumData
 import inspect
+import matplotlib.pyplot as plt
 
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
@@ -69,7 +70,10 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         model = self.model
         x = self._data.x.data
         y = model(x)
-        print(model_fitting._gaussian_parameter_estimates(x, y))
+        plt.plot(self._data.x.data, self._data.y.data)
+        plt.plot(x, y)
+        plt.show()
+        # print(model_fitting._gaussian_parameter_estimates(x, y))
         fit_spec_data = SpectrumData(x=self._data.x)
         fit_spec_data.set_y(y, wcs=self._data.y.wcs, unit=self._data.y.unit)
         return fit_spec_data

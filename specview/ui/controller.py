@@ -10,6 +10,7 @@ from specview.io import read_data
 from specview.ui.qt.tree_items import LayerDataTreeItem
 from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData, SpectrumArray
+from specview.ui.qt.dialogs import FileEditDialog
 
 
 class Controller(object):
@@ -185,6 +186,9 @@ class Controller(object):
         sub_window.graph.add_item(spectrum_data)
 
     def open_file(self, path):
+        dialog = FileEditDialog(path)
+        dialog.exec_()
+
         spec_data = read_data(path)
         name = path.split('/')[-1].split('.')[-2]
         self.add_data_set(spec_data, name)

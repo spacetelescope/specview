@@ -285,7 +285,7 @@ class ModelManager(object):
     """ Instances of this class hold a composite spectral model.
 
     A ModelManager instance contains a user-definable list of spectral
-    components from astropy.modeling.functional_models. From that list,
+    components from astropy.modeling.models. From that list,
     a compound model (astropy 1.0) is built and used to compute flux values,
     given spectral coordinate values. The list of spectral components
     in any particular instance of ModelManager is displayed on screen,

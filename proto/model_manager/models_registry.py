@@ -3,8 +3,9 @@
 # the astropy.modeling.Model registry. For now, we directly
 # store hard-coded instances.
 
-# import astropy.modeling.functional_models as models
 import astropy.modeling.models as models
+from astropy.modeling import Parameter, Fittable1DModel
+from astropy.modeling.polynomial import PolynomialModel
 
 registry = {
     'Gaussian1D':                 models.Gaussian1D(1.0, 1.0, 1.0),
@@ -27,14 +28,20 @@ registry = {
     'Polynomial1D' :              models.Polynomial1D(1),
 }
 
-
+# this nightmarish way of getting the function name results from the way
+# astropy functional models store them. Both their '_name' and 'name'
+# attributes are set to None, and a plain, easy to use name is nowhere
+# to be seen. And worse, the name coding changed  dramatically from
+# astropy 0.4 to 1.0.
 def getComponentName(function):
-    # this nightmarish way of getting the function name results from the way
-    # astropy functional models store them. Both their '_name' and 'name'
-    # attributes are both set to None. Why???? And worse, the name coding
-    # changed dramatically from astropy 0.4 to 1.0. We hope that it either
-    # stays stable from now on, or, better, the name attributes get populated
-    # by the constructor as they should.
-    name = function.__class__()
+    if issubclass(function.__class__, Fittable1DModel):
+        name = function.__class__()
+        return _getName(name)
+    elif issubclass(function.__class__, PolynomialModel):
+        name = function.__class__
+        return _getName(name)
+
+def _getName(name):
     return str(name).split("Inputs")[0].split(":")[1][1:-1]
+
 

@@ -356,15 +356,8 @@ class _SpectralLibraryGUI(object):
             function = models_registry.registry[key]
             # redundant test for now, but needed in case we
             # switch to introspection from the models registry.
-            # if issubclass(function.__class__, Fittable1DModel) or \
-            #    issubclass(function.__class__, PolynomialModel):
-            # TODO Polynomials do not carry internal instances of
-            # Parameter. This makes the code in this module unusable.
-            # We need to add special handling tools that can get and
-            # set polynomial coefficients. Thus suggests that they
-            # were not designed t be mixed in with instances of
-            # Fittable1DModel.
-            if issubclass(function.__class__, Fittable1DModel):
+            if issubclass(function.__class__, Fittable1DModel) or \
+                issubclass(function.__class__, PolynomialModel):
                 data.append(function)
 
         self.model = SpectralComponentsModel(name="Available components")
@@ -478,6 +471,20 @@ class SpectralComponentItem(QStandardItem):
     def getDataItem(self):
         return self.item
 
+
+# Degree item specializes the base item to make it editable.
+# This is meant to handle specifics associated with polynomial
+# degrees. The slot connected to the tree model's itemChanged
+# signal must be able to differentiate among the several possible
+# items, using the 'type' attribute and the 'isCheckable' property.
+class SpectralComponentDegreeItem(SpectralComponentItem):
+    def __init__(self, value):
+        self.type = "degree"
+        id_str = "degree: " + str(value)
+        SpectralComponentItem.__init__(self, id_str)
+        self.setEditable(True)
+
+
 # Value item specializes the base item to make it editable.
 # or checkable. The slot connected to the tree model's
 # itemChanged signal must be able to differentiate among the
@@ -533,9 +540,10 @@ class ActiveComponentsModel(SpectralComponentsModel):
         SpectralComponentsModel.__init__(self, name)
         self.itemChanged.connect(self._onItemChanged)
 
-        # RE pattern to decode scientific notation and
-        # floating point notation.
-        self._pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+        # RE patterns to decode scientific notation,
+        # floating point notation, and integers.
+        self._floating_point_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+        self._integer_pattern = re.compile(r"[+]?[0-9]+")
 
     # TODO use QDataWidgetMapper
     # this violation of MVC design principles is necessary
@@ -551,35 +559,50 @@ class ActiveComponentsModel(SpectralComponentsModel):
         item.setDataItem(element)
         parent = self.invisibleRootItem()
         parent.appendRow(item)
-        # now add parameters to component in tree.
-        for e in element.param_names:
-            par = element.__getattribute__(e)
-            if isinstance(par, Parameter):
 
-                # add parameter. Parameter name is followed
-                # by its value when displaying in tree.
-                parItem = SpectralComponentItem(par.name + ": " + str(par.value))
-                parItem.setDataItem(par)
-                item.appendRow(parItem)
+        # we need to tell apart right here instances of Fittable1DModel
+        # from instances of PolynomialModel. This is because PolynomialModel
+        # has an extra attribute, not shared with Fittable1DModel: the
+        # polynomial degree. This degree is not really a parameter or
+        # coefficient, but in fact a control value that must be accessible
+        # to the user.
+        if issubclass(element.__class__, Fittable1DModel):
+            for e in element.param_names:
+                par = element.__getattribute__(e)
+                self._addParameterToModel(item, par)
+        elif issubclass(element.__class__, PolynomialModel):
+            # begin by adding degree to tree.
+            degree = element.degree
+            valueItem = SpectralComponentDegreeItem(degree)
+            valueItem.setDataItem(degree)
+            item.appendRow(valueItem)
+            # now add coefficients.
+            for e in element.param_names:
+                par = element.__getattr__(e)
+                self._addParameterToModel(item, par)
 
-                # add parameter value and other attributes to parameter element.
-                valueItem = SpectralComponentValueItem(par, "value")
-                valueItem.setDataItem(par.value)
-                parItem.appendRow(valueItem)
-                minItem = SpectralComponentValueItem(par, "min")
-                minItem.setDataItem(par.min)
-                parItem.appendRow(minItem)
-                maxItem = SpectralComponentValueItem(par, "max")
-                maxItem.setDataItem(par.max)
-                parItem.appendRow(maxItem)
-                fixedItem = SpectralComponentValueItem(par, "fixed", checkable=True)
-                fixedItem.setDataItem(par.fixed)
-                parItem.appendRow(fixedItem)
-                # 'tied' is not really a boolean, but a callable.
-                # How to handle this in a GUI?
-                tiedItem = SpectralComponentValueItem(par, "tied", editable=False)
-                tiedItem.setDataItem(par.tied)
-                parItem.appendRow(tiedItem)
+    def _addParameterToModel(self, item, par):
+        parItem = SpectralComponentItem(par.name + ": " + str(par.value))
+        parItem.setDataItem(par)
+        item.appendRow(parItem)
+        # add parameter value and other attributes to parameter element.
+        valueItem = SpectralComponentValueItem(par, "value")
+        valueItem.setDataItem(par.value)
+        parItem.appendRow(valueItem)
+        minItem = SpectralComponentValueItem(par, "min")
+        minItem.setDataItem(par.min)
+        parItem.appendRow(minItem)
+        maxItem = SpectralComponentValueItem(par, "max")
+        maxItem.setDataItem(par.max)
+        parItem.appendRow(maxItem)
+        fixedItem = SpectralComponentValueItem(par, "fixed", checkable=True)
+        fixedItem.setDataItem(par.fixed)
+        parItem.appendRow(fixedItem)
+        # 'tied' is not really a boolean, but a callable.
+        # How to handle this in a GUI?
+        tiedItem = SpectralComponentValueItem(par, "tied", editable=False)
+        tiedItem.setDataItem(par.tied)
+        parItem.appendRow(tiedItem)
 
     @property
     def items(self):
@@ -588,9 +611,20 @@ class ActiveComponentsModel(SpectralComponentsModel):
             result.append(self.item(i).item)
         return result
 
+    def _degreeItemChanged(self, item):
+        type = item.type
+        old_value = item.getDataItem()
+        substring = self._integer_pattern.findall(item.text())
+        if substring:
+            number = int(substring[0])
+            item.setDataItem(number)
+            item.setData(type + ": " + str(number), role=Qt.DisplayRole)
+        else:
+            item.setData(type + ": " + str(old_value), role=Qt.DisplayRole)
+
     def _floatItemChanged(self, item):
         type = item.type
-        substring = self._pattern.findall(item.text())
+        substring = self._floating_point_pattern.findall(item.text())
         if substring:
             if hasattr(item, 'parameter'):
                 number = substring[0]
@@ -612,6 +646,8 @@ class ActiveComponentsModel(SpectralComponentsModel):
     def _onItemChanged(self, item):
         if item.isCheckable():
             self._booleanItemChecked(item)
+        elif isinstance(item, SpectralComponentDegreeItem):
+            self._degreeItemChanged(item)
         else:
             self._floatItemChanged(item)
 
@@ -823,6 +859,11 @@ class SpectralModelManager(QObject):
         '''
         return self.models_gui.getSelectedModel()
 
+    def _updateTreeModel(self, c, i):
+        for j, value in enumerate(c.parameters):
+            item = self.models_gui.model.item(i).child(j).child(0)
+            item.setData("value: " + str(value), role=Qt.DisplayRole)
+
     def modifyFromCompound(self, compound_model):
         ''' Replaces spectral component parameter values with
         new values taken from an astropy compound model.
@@ -838,29 +879,47 @@ class SpectralModelManager(QObject):
 
         Parameters
         ----------
-        compound_model: astropy comppund model
+        compound_model: astropy compound model, or a single instance
+          of either Fittable1DModel or PolynomialModel. It's basically
+          what an astropy Fitter returns.
 
         '''
-        name_map = compound_model._param_map_inverse
+        if str(compound_model.__class__).find('CompoundModel') > -1:
 
-        # all the maneuvering below has to do with the
-        # somewhat confusing way a compound model
-        # instance stores its parameters and how these
-        # map to the internal individual components.
-        # We hope this wiil stay stable across subsequent
-        # astropy releases, but who knows?
-        for i, c in enumerate(self.components):
-            parameter_names_list = c.param_names
+            name_map = compound_model._param_map_inverse
 
-            for param_name in parameter_names_list:
-                key = (i, param_name)
-                compound_param_name = name_map[key]
-                par = getattr(compound_model, compound_param_name)
-                setattr(c, param_name ,     par.value)
+            # all the maneuvering below has to do with the way a
+            # compound model instance stores its parameters and
+            # how these map to the internal individual components.
+            for i, c in enumerate(self.components):
+                parameter_names_list = c.param_names
 
-            # update tree model.
-            for j, value in enumerate(c.parameters):
-                item = self.models_gui.model.item(i).child(j).child(0)
+                for param_name in parameter_names_list:
+                    key = (i, param_name)
+                    compound_param_name = name_map[key]
+                    par = getattr(compound_model, compound_param_name)
+                    setattr(c, param_name ,     par.value)
+
+                self._updateTreeModel(c, i)
+
+        else:
+            # this handles the case of a solitary astropy component
+            # instance. In this case, the astropy Fitter doesn't build
+            # a compound model, but just an instance of the function
+            # being fitted.
+            c = self.components[0]
+            c.parameters = compound_model.parameters
+            self._updateTreeModel(c, 0)
+
+    def _updateTreeModel(self, component, index):
+        for j, value in enumerate(component.parameters):
+            parent = self.models_gui.model.item(index).child(j)
+            # yet another specialization for the case of a degree
+            # of a polynomial, which is not exactly a parameter
+            # or coefficient, but must be handled by the GUI
+            # nevertheless.
+            if not isinstance(parent, SpectralComponentDegreeItem):
+                item = parent.child(0)
                 item.setData("value: " + str(value), role=Qt.DisplayRole)
 
 

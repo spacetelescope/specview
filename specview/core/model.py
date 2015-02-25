@@ -1,6 +1,5 @@
 from specview.analysis import extract
 from specview.core import CubeData, SpectrumData, SpectrumArray
-from specview.io import read_data
 import numpy as np
 from astropy.units import Unit
 from astropy.modeling import models, fitting
@@ -37,7 +36,10 @@ class Model(object):
         self.data_items["test1"] = self.spectrum_data1
         self.data_items["test2"] = self.spectrum_data2
         self.data_items["test3"] = self.spectrum_data3
+<<<<<<< HEAD
 
     def _gen_gauss(self, x, amp, mean, stddev):
         g_init = models.Gaussian1D(amplitude=amp, mean=mean, stddev=stddev)
         return x, g_init(x)
+=======
+>>>>>>> upstream/master

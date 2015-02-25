@@ -1,10 +1,7 @@
 from PyQt4 import QtGui, QtCore
-from pyqtgraph.console import ConsoleWidget
 
 from specview.ui.qt.menubars import MainMainBar
-from specview.ui.qt.toolbars import SpectraToolBar
-from models import SpectrumDataTreeModel
-from docks import (DataDockWidget, InfoDockWidget, ConsoleDockWidget,
+from qt.docks import (DataDockWidget, InfoDockWidget, ConsoleDockWidget,
                ModelDockWidget)
 
 
@@ -37,23 +34,33 @@ class MainWindow(QtGui.QMainWindow):
                        QtCore.Qt.RightDockWidgetArea)
 
         # Setup data dock
-        self.dock_data = DataDockWidget()
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock_data)
+        self.data_dock = DataDockWidget()
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.data_dock)
 
         # Setup info view dock
-        self.dock_info = InfoDockWidget()
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock_info)
-        self.dock_info.hide()
+        self.info_dock = InfoDockWidget()
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.info_dock)
+        self.info_dock.hide()
 
         # Setup info view dock
-        self.dock_model_editor = ModelDockWidget()
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock_model_editor)
-        self.dock_model_editor.setFloating(True)
-        self.dock_model_editor.hide()
+        self.model_editor_dock = ModelDockWidget()
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.model_editor_dock)
+        self.model_editor_dock.setFloating(True)
+        self.model_editor_dock.hide()
 
         # Setup console dock
-        self.dock_console = ConsoleDockWidget()
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.dock_console)
+        self.console_dock = ConsoleDockWidget()
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.console_dock)
+
+        self._setup_menu_bar()
+
+    def _setup_menu_bar(self):
+        self.menu_bar.docks_menu.addAction(
+            self.data_dock.toggleViewAction())
+        self.menu_bar.docks_menu.addAction(
+            self.info_dock.toggleViewAction())
+        self.menu_bar.docks_menu.addAction(
+            self.console_dock.toggleViewAction())
 
     def set_toolbar(self, toolbar=None, hide_all=False):
         if toolbar is not None:

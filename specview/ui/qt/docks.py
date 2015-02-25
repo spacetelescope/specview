@@ -4,9 +4,7 @@ from specview.ui.qt.tree_views import SpectrumDataTree, ModelTree
 
 
 class BaseDockWidget(QtGui.QDockWidget):
-    """
-    Subclass of dock widget.
-    """
+    """Subclass of dock widget."""
     def __init__(self):
         super(BaseDockWidget, self).__init__()
 
@@ -135,7 +133,7 @@ class ModelDockWidget(BaseDockWidget):
 
         self.btn_fit_model = QtGui.QPushButton()
 
-        self.add_widget(self.btn_fit_model)
+        # self.add_widget(self.btn_fit_model)
 
         # Create combo box for selecting fitter
         self.wgt_fit_selector = QtGui.QComboBox()

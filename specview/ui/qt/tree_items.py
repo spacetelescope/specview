@@ -3,8 +3,6 @@ import numpy as np
 from specview.analysis import model_fitting
 from specview.core.data_objects import SpectrumData
 import inspect
-import matplotlib.pyplot as plt
-
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
     """Subclasses QStandarditem; provides the base class for all items listed
@@ -45,6 +43,8 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 
 
 class LayerDataTreeItem(QtGui.QStandardItem):
+    sig_updated = QtCore.pyqtSignal()
+
     def __init__(self, parent, mask, rois, name="Layer"):
         super(LayerDataTreeItem, self).__init__()
         self.setColumnCount(2)
@@ -66,19 +66,6 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         return np.sum(self._models)
 
     @property
-    def fit(self):
-        model = self.model
-        x = self._data.x.data
-        y = model(x)
-        plt.plot(self._data.x.data, self._data.y.data)
-        plt.plot(x, y)
-        plt.show()
-        # print(model_fitting._gaussian_parameter_estimates(x, y))
-        fit_spec_data = SpectrumData(x=self._data.x)
-        fit_spec_data.set_y(y, wcs=self._data.y.wcs, unit=self._data.y.unit)
-        return fit_spec_data
-
-    @property
     def item(self):
         return self._data
 
@@ -88,6 +75,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
     def add_model(self, model):
         self._models.append(model)
+
+    # --- signals
+    def sig_update(self):
+        pass
+        # self.sig_updated.emit()
 
 
 class ModelDataTreeItem(QtGui.QStandardItem):
@@ -103,7 +95,8 @@ class ModelDataTreeItem(QtGui.QStandardItem):
 
     def _setup_children(self):
         args = inspect.getargspec(self._model.__init__)
-        keywords, defaults = args[0], args[-1]
+        keywords = args[0]
+        defaults = self._model.parameters
 
         for i, key in enumerate(keywords[1:]):
             para_name = ParameterDataTreeItem(self, key, defaults[i])
@@ -114,6 +107,14 @@ class ModelDataTreeItem(QtGui.QStandardItem):
     def update_parameter(self, name, value):
         print("Model has been updated {} {}".format(name, value))
         setattr(self._model, name, float(str(value)))
+        self._parent.sig_update()
+
+    def refresh_parameters(self):
+        print("Model refreshed")
+        for i in range(len(self.rowCount())):
+            self.removeRow(i)
+
+        self._setup_children()
 
 
 class ParameterDataTreeItem(QtGui.QStandardItem):
@@ -133,3 +134,4 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
     @property
     def parent(self):
         return self._parent
+

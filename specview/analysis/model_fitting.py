@@ -36,6 +36,13 @@ def get_model(name):
     return all_models[name]()
 
 
+def get_fitter(name):
+    if name not in all_fitters.keys():
+        raise NameError("There is no fitter named {}".format(name))
+
+    return all_fitters[name]()
+
+
 def gaussian(x, y):
     amp, mean, stddev = _gaussian_parameter_estimates(x, y)
     g_init = models.Gaussian1D(amplitude=amp, mean=mean, stddev=stddev)

@@ -61,23 +61,45 @@ class BaseGraph(QtGui.QWidget):
             mask_holder.append((x_data >= x1) & (x_data <= x2) &
                                (y_data >= y1) & (y_data <= y2))
 
-        return reduce(np.logical_or, mask_holder)
+        mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        return mask
 
 class SpectraGraph(BaseGraph):
     def __init__(self):
         super(SpectraGraph, self).__init__()
-        self.plot_dict = {}
-        self._plot_list = []
-        self.active_plot = None
-        self.active_data = None
-        # Add plot object
+        self._plot_dict = {}
+        self._active_plot = None
+        self._active_item = None
+
         self.plot_window = self.w.addPlot(row=1, col=0)
         self.plot_window.showGrid(x=True, y=True)
         self.view_box = self.plot_window.getViewBox()
 
-    def add_plot(self, layer_data_item, name=None, mask=None, is_active=True,
-                 use_step=True):
-        print("adding plot")
+    @property
+    def active_item(self):
+        return self._active_item
+
+    @property
+    def active_mask(self):
+        spec_data = self.active_item.item
+        x_data, y_data = spec_data.x.data, spec_data.y.data
+
+        return self.get_roi_mask(x_data, y_data)
+
+    def add_item(self, layer_data_item):
+        self._plot_dict[layer_data_item] = None
+        self._graph_data(layer_data_item)
+
+    def remove_item(self, layer_data_item):
+        for k, plot in self._plot_dict[layer_data_item].items():
+            self.plot_window.remove(plot)
+
+        del self._plot_dict[layer_data_item]
+
+    def update_all(self):
+        pass
+
+    def _graph_data(self, layer_data_item, use_step=True):
         spec_data = layer_data_item.item
 
         fin_pnt = spec_data.x.data[-1] - spec_data.x.data[-2] +\
@@ -87,29 +109,20 @@ class SpectraGraph(BaseGraph):
                            spec_data.x.data
 
         plot = pg.PlotDataItem(x_data,
-                            spec_data.y.data,
-                            pen=pg.mkPen(next(COLORS)),
-                            clickable=True,
-                            stepMode=use_step)
+                               spec_data.y.data,
+                               pen=pg.mkPen(next(COLORS)),
+                               clickable=True,
+                               stepMode=use_step)
 
+        self._plot_dict[layer_data_item] = plot
         self.plot_window.addItem(plot)
 
-        plot.curve.sigClicked.connect(self.select_active)
-
-        if name is None:
-            name = "plot{}".format(len(self.plot_dict.keys()))
-
-        self.plot_dict[layer_data_item] = plot
-
-        if is_active:
-            self.select_active(layer_data_item)
-
-    def remove_plot(self, plot):
-        pass
+        self.select_active(layer_data_item)
 
     def set_active(self, layer_data_item):
-        self.active_plot = self.plot_dict[layer_data_item]
-        self.active_data = layer_data_item
+        self._active_plot = self._plot_dict[layer_data_item]
+        self._active_item = layer_data_item
+
         spectrum_data = layer_data_item.item
 
         self.plot_window.setLabel('bottom', text='',
@@ -118,17 +131,17 @@ class SpectraGraph(BaseGraph):
                                   units=spectrum_data.y.unit)
 
     def select_active(self, layer_data_item):
-        if layer_data_item not in self.plot_dict.keys():
+        if layer_data_item not in self._plot_dict.keys():
             return
 
-        plot = self.plot_dict[layer_data_item]
+        plot = self._plot_dict[layer_data_item]
         print("Selecting active")
-        if plot == self.active_plot:
+        if plot == self._active_plot:
             return
-        elif self.active_plot is not None:
-            color = self.active_plot.opts['pen'].color()
+        elif self._active_plot is not None:
+            color = self._active_plot.opts['pen'].color()
             color.setAlpha(100)
-            self.active_plot.setPen(color, width=1)
+            self._active_plot.setPen(color, width=1)
 
         color = plot.opts['pen'].color()
         color.setAlpha(255)
@@ -136,13 +149,7 @@ class SpectraGraph(BaseGraph):
         self.set_active(layer_data_item)
 
     def get_active_item(self):
-        return self.active_data
-
-    def get_active_roi_mask(self):
-        spec_data = self.get_active_item().item
-        x_data, y_data = spec_data.x.data, spec_data.y.data
-
-        return self.get_roi_mask(x_data, y_data)
+        return self._active_item
 
 
 class ImageGraph(BaseGraph):

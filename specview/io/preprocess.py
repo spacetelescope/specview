@@ -23,7 +23,7 @@ def read_data(file_name):
         x, y = data['WAVELENGTH'], data['FLUX']
 
         spec_data = SpectrumData()
-        spec_data.set_x(x[:1000], unit=Unit('angstrom'))
-        spec_data.set_y(y[:1000], unit=Unit('flm'))
+        spec_data.set_x(x, unit=Unit('angstrom'))
+        spec_data.set_y(y, unit=Unit('flm'))
 
         return spec_data

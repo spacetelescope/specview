@@ -24,14 +24,11 @@ class BaseGraph(QtGui.QWidget):
         self.w = pg.GraphicsLayoutWidget()
         self.vb_layout.addWidget(self.w)
         # Create roi container
-        self._rois = list()
+        self._rois = []
 
     @property
     def rois(self):
         return self._rois
-
-    def layer_info(self):
-        return self.get_roi_mask(), self._rois
 
     def dragEnterEvent(self, e):
         e.accept()
@@ -67,22 +64,22 @@ class BaseGraph(QtGui.QWidget):
         return reduce(np.logical_or, mask_holder)
 
 class SpectraGraph(BaseGraph):
-    # Create drop signal
-    receive_drop = QtCore.pyqtSignal(tuple)
-
     def __init__(self):
         super(SpectraGraph, self).__init__()
         self.plot_dict = {}
+        self._plot_list = []
         self.active_plot = None
+        self.active_data = None
         # Add plot object
         self.plot_window = self.w.addPlot(row=1, col=0)
         self.plot_window.showGrid(x=True, y=True)
         self.view_box = self.plot_window.getViewBox()
 
-    def add_plot(self, spec_data_item, name=None, mask=None, is_active=True,
+    def add_plot(self, layer_data_item, name=None, mask=None, is_active=True,
                  use_step=True):
         print("adding plot")
-        spec_data = spec_data_item.item
+        spec_data = layer_data_item.item
+
         fin_pnt = spec_data.x.data[-1] - spec_data.x.data[-2] +\
                   spec_data.x.data[-1]
 
@@ -97,33 +94,35 @@ class SpectraGraph(BaseGraph):
 
         self.plot_window.addItem(plot)
 
-        plot.sigClicked.connect(self.select_active)
+        plot.curve.sigClicked.connect(self.select_active)
 
         if name is None:
             name = "plot{}".format(len(self.plot_dict.keys()))
 
-        self.plot_dict[plot] = spec_data_item
+        self.plot_dict[layer_data_item] = plot
 
         if is_active:
-            self.select_active(plot)
+            self.select_active(layer_data_item)
 
     def remove_plot(self, plot):
         pass
 
-    def set_active(self, plot):
-        self.active_plot = plot
-        spectrum_data = self.plot_dict[plot].item
+    def set_active(self, layer_data_item):
+        self.active_plot = self.plot_dict[layer_data_item]
+        self.active_data = layer_data_item
+        spectrum_data = layer_data_item.item
 
         self.plot_window.setLabel('bottom', text='',
                                   units=spectrum_data.x.unit)
         self.plot_window.setLabel('left', text='',
                                   units=spectrum_data.y.unit)
 
-    def dropEvent(self, e):
-        pass
-        # self.receive_drop.emit((self, str(e.mimeData().text())))
+    def select_active(self, layer_data_item):
+        if layer_data_item not in self.plot_dict.keys():
+            return
 
-    def select_active(self, plot):
+        plot = self.plot_dict[layer_data_item]
+        print("Selecting active")
         if plot == self.active_plot:
             return
         elif self.active_plot is not None:
@@ -133,11 +132,11 @@ class SpectraGraph(BaseGraph):
 
         color = plot.opts['pen'].color()
         color.setAlpha(255)
-        plot.setPen(color)
-        self.set_active(plot)
+        plot.setPen(color, width=2)
+        self.set_active(layer_data_item)
 
     def get_active_item(self):
-        return self.plot_dict[self.active_plot]
+        return self.active_data
 
     def get_active_roi_mask(self):
         spec_data = self.get_active_item().item

@@ -1,7 +1,7 @@
 from PyQt4 import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
 
-from specview.ui.qt.menubars import MenuBar
+from specview.ui.qt.menubars import MainMainBar
 from specview.ui.qt.toolbars import SpectraToolBar
 from models import SpectrumDataTreeModel
 from docks import (DataDockWidget, InfoDockWidget, ConsoleDockWidget,
@@ -11,8 +11,9 @@ from docks import (DataDockWidget, InfoDockWidget, ConsoleDockWidget,
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+
         # Basic app info
-        self.menu_bar = MenuBar()
+        self.menu_bar = MainMainBar()
         self.setMenuBar(self.menu_bar)
         self.setWindowTitle('IFUpy')
         tb = QtGui.QToolBar()
@@ -47,6 +48,8 @@ class MainWindow(QtGui.QMainWindow):
         # Setup info view dock
         self.dock_model_editor = ModelDockWidget()
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock_model_editor)
+        self.dock_model_editor.setFloating(True)
+        self.dock_model_editor.hide()
 
         # Setup console dock
         self.dock_console = ConsoleDockWidget()

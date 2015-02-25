@@ -23,9 +23,17 @@ all_models = {
     'Polynomial1D': models.Polynomial1D,
 }
 
+
 all_fitters = {
     'Levenberg-Marquardt': fitting.LevMarLSQFitter,
 }
+
+
+def get_model(name):
+    if name not in all_models.keys():
+        raise NameError("There is no model named {}".format(name))
+
+    return all_models[name]()
 
 
 def gaussian(x, y):

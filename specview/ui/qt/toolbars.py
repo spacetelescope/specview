@@ -13,7 +13,7 @@ class BaseToolBar(QtGui.QToolBar):
         self.atn_insert_roi.setToolTip('Add rectangular region-of-interest')
 
         self.atn_create_layer = QtGui.QAction("&Create Layer", self)
-        self.atn_create_layer.setIcon(QtGui.QIcon("./qt/img/add_layer.png"))
+        self.atn_create_layer.setIcon(QtGui.QIcon("./qt/img/create_layer.png"))
         self.atn_create_layer.setToolTip("Create new layer from ROIs")
 
         # Setup buttons
@@ -27,10 +27,10 @@ class SpectraToolBar(BaseToolBar):
         super(SpectraToolBar, self).__init__(parent)
 
         self.atn_model_editor = QtGui.QAction("&Model Editor", self)
-        self.atn_model_editor.setIcon(QtGui.QIcon("./qt/img/rect_select.png"))
+        self.atn_model_editor.setIcon(QtGui.QIcon("./qt/img/model_editor.png"))
         self.atn_model_editor.setToolTip('Opens the model editor')
 
-        # self.addAction(self.atn_model_editor)
+        self.addAction(self.atn_model_editor)
 
         self.active_plots = QtGui.QAction('&Active Plot', self)
         self.active_plots.setStatusTip('Select visible plots.')

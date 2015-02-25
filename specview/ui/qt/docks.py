@@ -1,7 +1,6 @@
 from PyQt4 import QtGui, QtCore, Qt
 from pyqtgraph.console import ConsoleWidget
-from specview.ui.qt.views import SpectrumDataTree, ModelTree
-from specview.ui.qt.models import SpectrumDataTreeModel, SpectrumDataTreeItem
+from specview.ui.qt.tree_views import SpectrumDataTree, ModelTree
 
 
 class BaseDockWidget(QtGui.QDockWidget):
@@ -42,13 +41,19 @@ class DataDockWidget(BaseDockWidget):
 
         # Set Plotting buttons
         self.btn_create_plot = QtGui.QToolButton()
+        self.btn_create_plot.setIcon(QtGui.QIcon("./qt/img/new_plot.png"))
         self.btn_add_plot = QtGui.QToolButton()
+        self.btn_add_plot.setIcon(QtGui.QIcon("./qt/img/insert_plot.png"))
 
         # Arithmetic buttons
-        # self.btn_sum = QtGui.QToolButton()
-        # self.btn_diff = QtGui.QToolButton()
-        # self.btn_mult = QtGui.QToolButton()
-        # self.btn_div = QtGui.QToolButton()
+        self.btn_sum = QtGui.QToolButton()
+        self.btn_sum.setIcon(QtGui.QIcon("./qt/img/add.png"))
+        self.btn_diff = QtGui.QToolButton()
+        self.btn_diff.setIcon(QtGui.QIcon("./qt/img/subtract.png"))
+        self.btn_mult = QtGui.QToolButton()
+        self.btn_mult.setIcon(QtGui.QIcon("./qt/img/multiply.png"))
+        self.btn_div = QtGui.QToolButton()
+        self.btn_div.setIcon(QtGui.QIcon("./qt/img/divide.png"))
 
         # Add to main layout
         self.add_widget(self.wgt_data_tree)
@@ -58,6 +63,10 @@ class DataDockWidget(BaseDockWidget):
         hb_layout.addWidget(self.btn_create_plot)
         hb_layout.addWidget(self.btn_add_plot)
         hb_layout.addStretch()
+        hb_layout.addWidget(self.btn_sum)
+        hb_layout.addWidget(self.btn_diff)
+        hb_layout.addWidget(self.btn_mult)
+        hb_layout.addWidget(self.btn_div)
 
         self.add_layout(hb_layout)
 
@@ -87,6 +96,7 @@ class ConsoleDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_console)
 
         self.setVisible(False)
+
 
 class ModelDockWidget(BaseDockWidget):
     """
@@ -122,6 +132,10 @@ class ModelDockWidget(BaseDockWidget):
 
         self.add_layout(hb_layout)
         self.add_widget(self.wgt_model_tree)
+
+        self.btn_fit_model = QtGui.QPushButton()
+
+        self.add_widget(self.btn_fit_model)
 
         # Create combo box for selecting fitter
         self.wgt_fit_selector = QtGui.QComboBox()

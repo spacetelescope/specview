@@ -1,9 +1,9 @@
 from PyQt4 import QtGui, QtCore, Qt
 
 
-class MenuBar(QtGui.QMenuBar):
+class MainMainBar(QtGui.QMenuBar):
     def __init__(self):
-        super(MenuBar, self).__init__()
+        super(MainMainBar, self).__init__()
         # File
         self.atn_exit = QtGui.QAction('&Exit', self)
         self.atn_exit.setShortcut('Ctrl+Q')

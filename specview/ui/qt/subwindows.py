@@ -32,7 +32,7 @@ class ImageMdiSubWindow(BaseMdiSubWindow):
 class SpectraMdiSubWindow(BaseMdiSubWindow):
     def __init__(self, parent=None):
         super(SpectraMdiSubWindow, self).__init__(parent)
-
+        print("Creating spectra mdi sub window")
         self.graph = SpectraGraph()
         self.toolbar = SpectraToolBar()
 

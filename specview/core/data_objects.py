@@ -17,7 +17,7 @@ class SpectrumArray(NDSlicingMixin, NDArithmeticMixin, NDData):
 
     @property
     def shape(self):
-        return self._data.shape
+        return self.data.shape
 
     @property
     def data(self):
@@ -68,6 +68,10 @@ class SpectrumData(object):
         return self._y
 
     @property
+    def shape(self):
+        return self.x.shape[0], self.y.shape[0]
+
+    @property
     def mask(self):
         return self.x.mask
 
@@ -110,7 +114,7 @@ class ImageArray(NDSlicingMixin, NDArithmeticMixin, NDData):
         return self._data.shape
 
 
-class CubeData(NDSlicingMixin, NDArithmeticMixin, NDData):
+class CubeData():
     """
     Container object for IFU cube data. The internal data unit for the data
     array is whatever unit the counts are in. That is, the unit for this

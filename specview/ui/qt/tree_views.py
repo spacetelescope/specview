@@ -34,15 +34,19 @@ class SpectrumDataTree(QtGui.QTreeView):
 class ModelTree(QtGui.QTreeView):
     def __init__(self):
         super(ModelTree, self).__init__()
-        self.setDragEnabled(True)
+        self.active_layer = None
 
     # def selectionChanged(self, selected, deselected):
     #     index = self.selectedIndexes()[0]
     #     self.current_item = index.model().itemFromIndex(index).item
 
-    def set_root_index(self, item, index):
-        if isinstance(item, LayerDataTreeItem):
+    def set_root_index(self, layer, index):
+        if isinstance(layer, LayerDataTreeItem):
+            self.setEnabled(True)
             self.setRootIndex(index)
+            self.active_layer = layer
+        else:
+            self.setEnabled(False)
 
     @property
     def current_item(self):

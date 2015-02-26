@@ -28,7 +28,7 @@ def read_image(image):
     wcs = WCS(image.header)
     spectrum = SpectrumData()
     spectrum.set_y(image.data, unit=DEFAULT_FLUX_UNIT)
-    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 0), unit=DEFAULT_DISPERSION_UNIT)
+    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 0), unit=wcs.wcs.cunit[0])
 
     return spectrum
 

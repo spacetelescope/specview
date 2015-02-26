@@ -8,7 +8,7 @@ from specview.core import SpectrumData
 DEFAULT_FLUX_UNIT = 'count'
 DEFAULT_DISPERSION_UNIT = 'pixel'
 
-def read_image(image):
+def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
     '''Read 1D image
 
     Parameters
@@ -28,8 +28,10 @@ def read_image(image):
         raise RuntimeError('Attempting to read an image with more than one dimension.')
     wcs = WCS(image.header)
     spectrum = SpectrumData()
-    spectrum.set_y(image.data, unit=DEFAULT_FLUX_UNIT)
-    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 1)[0], unit=wcs.wcs.cunit[0])
+    unit = flux_unit if flux_unit else DEFAULT_FLUX_UNIT
+    spectrum.set_y(image.data, unit=unit)
+    unit = wcs.wcs.cunit[0] if not dispersion_unit else dispersion_unit
+    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 1)[0], unit=unit)
 
     return spectrum
 
@@ -108,7 +110,7 @@ def read_data(file_name, ext=None, **kwargs):
                     warnings.warn('File {}[{}]: {}'.format(file_name, idx, e.args[0]))
             elif isinstance(hdulist[idx], FITS_image):
                 try:
-                    data = read_image(hdulist[idx])
+                    data = read_image(hdulist[idx], **kwargs)
                     return data
                 except Exception as e:
                     warnings.warn('File {}[{}]: {}'.format(file_name, idx, e.args[0]))

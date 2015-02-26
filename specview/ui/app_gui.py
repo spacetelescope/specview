@@ -1,8 +1,9 @@
 from PyQt4 import QtGui
-from specview.ui.viewer import MainWindow
-from specview.ui.qt import ImageMdiSubWindow, SpectraMdiSubWindow
-import specview
 import numpy as np
+
+from specview.ui.viewer import MainWindow
+from specview.ui.qt.subwindows import SpectraMdiSubWindow
+import specview
 
 
 class AppGUI(MainWindow):

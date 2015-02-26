@@ -1,7 +1,7 @@
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph
-from toolbars import ImageToolBar, SpectraToolBar
+from specview.ui.qt.toolbars import ImageToolBar, SpectraToolBar
 
 
 class BaseMdiSubWindow(QtGui.QMdiSubWindow):

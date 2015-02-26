@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 
@@ -25,38 +25,40 @@ class FileEditDialog(QtGui.QDialog):
 
         # Extension selector
         self.ext_selector = QtGui.QComboBox()
-        self.ext_selector.addItems(["[{}] {}".format(i, self.hdulist[i].name) for i in
-                               range(len(self.hdulist))])
+        self.ext_selector.addItems(["[{}] {}".format(i, self.hdulist[i].name)
+                                    for i in range(len(self.hdulist))])
         self.ext_selector.currentIndexChanged.connect(self._set_selectors)
 
         # Manual units check box
-        self.manual_units_cb = QtGui.QCheckBox()
+        # self.manual_units_cb = QtGui.QCheckBox()
         # self.manual_units_cb.stateChanged.connect(self._on_checked)
+
+        # Manual input lines
         self.man_flux_unit = QtGui.QLineEdit()
         self.man_disp_unit = QtGui.QLineEdit()
 
         # Flux and dispersion unit selectors, labels, and layouts
-        flux_hb_layout = QtGui.QHBoxLayout()
-        self.flux_unit_selector = QtGui.QComboBox()
-        self.flux_unit_label = QtGui.QLabel("Test")
-        self.flux_hb_layout = flux_hb_layout
-        self.flux_hb_layout.addWidget(self.flux_unit_selector)
-        self.flux_hb_layout.addWidget(self.flux_unit_label)
-
-        disp_hb_layout = QtGui.QHBoxLayout()
-        self.disp_unit_selector = QtGui.QComboBox()
-        self.disp_unit_label = QtGui.QLabel("Test")
-        self.disp_hb_layout = disp_hb_layout
-        self.disp_hb_layout.addWidget(self.disp_unit_selector)
-        self.disp_hb_layout.addWidget(self.disp_unit_label)
-
-        self._set_selectors(0)
-
-        self.flux_unit_selector.currentIndexChanged.connect(self._set_labels)
-        self.disp_unit_selector.currentIndexChanged.connect(self._set_labels)
+        # flux_hb_layout = QtGui.QHBoxLayout()
+        # self.flux_unit_selector = QtGui.QComboBox()
+        # self.flux_unit_label = QtGui.QLabel("Test")
+        # self.flux_hb_layout = flux_hb_layout
+        # self.flux_hb_layout.addWidget(self.flux_unit_selector)
+        # self.flux_hb_layout.addWidget(self.flux_unit_label)
+        #
+        # disp_hb_layout = QtGui.QHBoxLayout()
+        # self.disp_unit_selector = QtGui.QComboBox()
+        # self.disp_unit_label = QtGui.QLabel("Test")
+        # self.disp_hb_layout = disp_hb_layout
+        # self.disp_hb_layout.addWidget(self.disp_unit_selector)
+        # self.disp_hb_layout.addWidget(self.disp_unit_label)
+        #
+        # self._set_selectors(0)
+        #
+        # self.flux_unit_selector.currentIndexChanged.connect(self._set_labels)
+        # self.disp_unit_selector.currentIndexChanged.connect(self._set_labels)
 
         # Label detailing how many extensions were found
-        hdu_count = QtGui.QLabel("Detected {} extensions in this FITs "
+        hdu_count = QtGui.QLabel("Detected {} extensions in this FITS "
                                  "file.".format(len(self.hdulist)))
 
         # Form layout
@@ -83,13 +85,16 @@ class FileEditDialog(QtGui.QDialog):
         self.vb_layout_main.addWidget(btn_accept)
 
     def _set_selectors(self, index):
-        if not self.manual_units_cb.isChecked():
-            self.flux_unit_selector.clear()
-            self.disp_unit_selector.clear()
-            self.flux_unit_selector.addItems(self.hdulist[index].header.keys())
-            self.disp_unit_selector.addItems(self.hdulist[index].header.keys())
-
-            self._set_labels()
+        pass
+        # if not self.manual_units_cb.isChecked():
+        #     self.flux_unit_selector.clear()
+        #     self.disp_unit_selector.clear()
+        #     self.flux_unit_selector.addItems(
+        #         self.hdulist[index].header.keys())
+        #     self.disp_unit_selector.addItems(
+        #         self.hdulist[index].header.keys())
+        #
+        #     self._set_labels()
 
     def _set_labels(self):
         index = self.ext_selector.currentIndex()

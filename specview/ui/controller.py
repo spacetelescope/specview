@@ -1,15 +1,12 @@
-import sys
-
-from PyQt4 import QtGui
 import numpy as np
 
 from specview.ui.viewer import MainWindow
 from specview.ui.model import SpectrumDataTreeModel
-from specview.ui.qt import ImageMdiSubWindow, SpectraMdiSubWindow
-from specview.io import read_data, read_table
 from specview.ui.qt.tree_items import LayerDataTreeItem
+from specview.ui.qt.subwindows import SpectraMdiSubWindow
 from specview.analysis.model_fitting import get_fitter
-from specview.core.data_objects import SpectrumData, SpectrumArray
+from specview.core.data_objects import SpectrumData
+from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
 
 
@@ -27,7 +24,6 @@ class Controller(object):
         self._connect_mdiarea()
         self._connect_model_editor_dock()
         self._connect_active_data()
-        self._connect_model_fit()
         self._connect_arithmetic()
 
         self._viewer.console_dock.wgt_console.localNamespace = {
@@ -53,11 +49,6 @@ class Controller(object):
                 np.sum(self.viewer.data_dock.wgt_data_tree.selected_items),
                 "Sum"))
 
-    def _connect_model_fit(self):
-        self.viewer.model_editor_dock.btn_fit_model.clicked.connect(lambda:
-            self.fit_model(
-                self.viewer.data_dock.wgt_data_tree.current_item))
-
     def _connect_active_data(self):
         self.viewer.data_dock.wgt_data_tree.clicked.connect(
             self.update_active_plots)
@@ -70,12 +61,16 @@ class Controller(object):
             self._perform_fit)
 
     def _connect_trees(self):
-        self.viewer.data_dock.wgt_data_tree.clicked.connect(lambda:
-            self.viewer.model_editor_dock.wgt_model_tree.set_root_index(
-                self.viewer.data_dock.wgt_data_tree.current_item,
-                self.viewer.data_dock.wgt_data_tree.currentIndex()
-            )
+        self.viewer.data_dock.wgt_data_tree.sig_current_changed.connect(
+            self.viewer.model_editor_dock.wgt_model_tree.set_root_index
         )
+
+        # self.viewer.data_dock.wgt_data_tree.clicked.connect(lambda:
+        #     self.viewer.model_editor_dock.wgt_model_tree.set_root_index(
+        #         self.viewer.data_dock.wgt_data_tree.current_item,
+        #         self.viewer.data_dock.wgt_data_tree.currentIndex()
+        #     )
+        # )
 
     def _connect_mdiarea(self):
         self.viewer.mdiarea.subWindowActivated.connect(self._set_toolbar)
@@ -90,11 +85,15 @@ class Controller(object):
 
     def _display_item(self):
         item = self.viewer.data_dock.wgt_data_tree.current_item
-        self.display_graph(item)
+
+        if item is not None:
+            self.display_graph(item)
 
     def _create_display(self):
         item = self.viewer.data_dock.wgt_data_tree.current_item
-        self.create_display(item)
+
+        if item is not None:
+            self.create_display(item)
 
     def _create_layer(self):
         sw = self.viewer.mdiarea.activeSubWindow()
@@ -141,11 +140,15 @@ class Controller(object):
         fit_spec_data.set_y(new_y, wcs=layer_data_item.item.y.wcs,
                             unit=layer_data_item.item.y.unit)
 
-        spec_data_item = self.add_data_set(fit_spec_data, name="Model Fit")
+        spec_data_item = self.add_data_set(fit_spec_data,
+                                           name="Model Fit ({}: {})".format(
+                                               layer_data_item.parent.text(),
+                                               layer_data_item.text()))
         self.display_graph(spec_data_item)
 
     def _open_file_dialog(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self.viewer, 'Open file')
+        fname = self.viewer.file_dialog.getOpenFileName(self.viewer,
+                                                        'Open file')
         self.open_file(fname)
 
     # ---- public functions
@@ -164,6 +167,7 @@ class Controller(object):
             return
 
         sub_window = self._viewer.mdiarea.addSubWindow(SpectraMdiSubWindow())
+        sub_window.show()
 
         # Connect add layer
         sub_window.toolbar.atn_create_layer.triggered.connect(
@@ -172,7 +176,13 @@ class Controller(object):
         # Connect open model editor
         sub_window.toolbar.atn_model_editor.triggered.connect(
             self.viewer.model_editor_dock.show)
-        sub_window.show()
+
+        # Connect measurement action
+        sub_window.toolbar.atn_measure.triggered.connect(lambda:
+            self.get_measurements(sub_window))
+
+        # Connect remove item
+        self.model.sig_removed_item.connect(sub_window.graph.remove_item)
 
         self.display_graph(spectrum_data, sub_window)
 
@@ -185,6 +195,9 @@ class Controller(object):
 
         sub_window.graph.add_item(spectrum_data)
 
+    def get_measurements(self, sub_window):
+        pass
+
     def open_file(self, path):
         dialog = FileEditDialog(path)
         dialog.exec_()
@@ -193,6 +206,7 @@ class Controller(object):
                               dispersion=dialog.dispersion,
                               flux_unit=dialog.flux_unit,
                               dispersion_unit=dialog.disp_unit)
+
         name = path.split('/')[-1].split('.')[-2]
         self.add_data_set(spec_data, name)
 
@@ -205,15 +219,3 @@ class Controller(object):
             self.viewer.set_toolbar(toolbar=tb)
         else:
             self.viewer.set_toolbar(hide_all=True)
-
-
-def main():
-    app = QtGui.QApplication(sys.argv)
-    app_gui = Controller()
-    app_gui.viewer.show()
-
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    main()

@@ -1,4 +1,3 @@
-from scipy.optimize import curve_fit
 import numpy as np
 from astropy.modeling import models, fitting
 
@@ -22,7 +21,6 @@ all_models = {
     'Legendre1D': models.Legendre1D,
     'Polynomial1D': models.Polynomial1D,
 }
-
 
 all_fitters = {
     'Levenberg-Marquardt': fitting.LevMarLSQFitter,

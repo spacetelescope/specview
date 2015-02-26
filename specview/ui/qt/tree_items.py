@@ -1,8 +1,10 @@
-from PyQt4 import QtGui, QtCore, Qt
-import numpy as np
-from specview.analysis import model_fitting
-from specview.core.data_objects import SpectrumData
 import inspect
+
+from PyQt4 import QtGui, QtCore
+import numpy as np
+
+from specview.core.data_objects import SpectrumData
+
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
     """Subclasses QStandarditem; provides the base class for all items listed
@@ -23,6 +25,10 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
         self._layers = []
         self.setText(name)
         self.setData(item)
+
+    @property
+    def parent(self):
+        return None
 
     @property
     def item(self):
@@ -92,6 +98,10 @@ class ModelDataTreeItem(QtGui.QStandardItem):
         self.setText(name)
 
         self._setup_children()
+
+    @property
+    def parent(self):
+        return self._parent
 
     def _setup_children(self):
         args = inspect.getargspec(self._model.__init__)

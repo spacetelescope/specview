@@ -6,7 +6,7 @@ import numpy as np
 from specview.ui.viewer import MainWindow
 from specview.ui.model import SpectrumDataTreeModel
 from specview.ui.qt import ImageMdiSubWindow, SpectraMdiSubWindow
-from specview.io import read_data
+from specview.io import read_data, read_table
 from specview.ui.qt.tree_items import LayerDataTreeItem
 from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData, SpectrumArray
@@ -189,7 +189,10 @@ class Controller(object):
         dialog = FileEditDialog(path)
         dialog.exec_()
 
-        spec_data = read_data(path)
+        spec_data = read_data(path, ext=dialog.ext, flux=dialog.flux,
+                              dispersion=dialog.dispersion,
+                              flux_unit=dialog.flux_unit,
+                              dispersion_unit=dialog.disp_unit)
         name = path.split('/')[-1].split('.')[-2]
         self.add_data_set(spec_data, name)
 

@@ -54,20 +54,3 @@ class AppGUI(MainWindow):
     def add_data_set(self, name):
         new_item = QtGui.QTreeWidgetItem(self.widget_tree_view_data)
         new_item.setText(0, name)
-
-
-class AppGUIInteractive(AppGUI):
-    '''Run the GUI interactively.'''
-
-    app = None
-
-    def __init__(self, model=None):
-        from specview.ui.qt.pyqt_nonblock import pyqtapplication
-        from specview.core.model import Model
-
-        if self.__class__.app is None:
-            self.__class__.app = pyqtapplication()
-
-        if model is None:
-            model = Model()
-        super(AppGUIInteractive, self).__init__(model)

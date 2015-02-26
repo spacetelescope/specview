@@ -1,10 +1,39 @@
 import warnings
-
+from astropy.wcs import WCS
 from astropy.io import fits
+from astropy.io.fits.hdu.image import _ImageBaseHDU as FITS_image
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
-
 from specview.core import SpectrumData
 
+DEFAULT_FLUX_UNIT = 'count'
+DEFAULT_DISPERSION_UNIT = 'pixel'
+
+def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
+    '''Read 1D image
+
+    Parameters
+    ----------
+    image: FITS Image HDU
+
+    Returns
+    -------
+    SpectrumData
+
+    Notes
+    -----
+    Assumes ONLY 1D and that the WCS has the dispersion
+    definition. If not, its just pixels.
+    '''
+    if len(image.data.shape) > 1:
+        raise RuntimeError('Attempting to read an image with more than one dimension.')
+    wcs = WCS(image.header)
+    spectrum = SpectrumData()
+    unit = flux_unit if flux_unit else DEFAULT_FLUX_UNIT
+    spectrum.set_y(image.data, unit=unit)
+    unit = wcs.wcs.cunit[0] if not dispersion_unit else dispersion_unit
+    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 1)[0], unit=unit)
+
+    return spectrum
 
 def read_table(table,
                flux='flux', dispersion='wavelength',
@@ -26,10 +55,11 @@ def read_table(table,
 
     flux_unit: str
                Unit of flux
-    '''
-    DEFAULT_FLUX_UNIT = 'count'
-    DEFAULT_DISPERSION_UNIT = 'pixel'
 
+    Returns
+    -------
+    SpectrumData
+    '''
     if dispersion_unit is None:
         try:
             dispersion_unit = table.columns[table.names.index(dispersion.upper())].unit
@@ -75,6 +105,12 @@ def read_data(file_name, ext=None, **kwargs):
             if isinstance(hdulist[idx], FITS_table):
                 try:
                     data = read_table(hdulist[idx].data, **kwargs)
+                    return data
+                except Exception as e:
+                    warnings.warn('File {}[{}]: {}'.format(file_name, idx, e.args[0]))
+            elif isinstance(hdulist[idx], FITS_image):
+                try:
+                    data = read_image(hdulist[idx], **kwargs)
                     return data
                 except Exception as e:
                     warnings.warn('File {}[{}]: {}'.format(file_name, idx, e.args[0]))

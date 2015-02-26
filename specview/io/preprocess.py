@@ -1,7 +1,36 @@
 import warnings
+from astropy.wcs import WCS
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 from specview.core import SpectrumData
+
+DEFAULT_FLUX_UNIT = 'count'
+DEFAULT_DISPERSION_UNIT = 'pixel'
+
+def read_image(image):
+    '''Read 1D image
+
+    Parameters
+    ----------
+    image: FITS Image HDU
+
+    Returns
+    -------
+    SpectrumData
+
+    Notes
+    -----
+    Assumes ONLY 1D and that the WCS has the dispersion
+    definition. If not, its just pixels.
+    '''
+    if len(image.data.shape) > 1:
+        raise RuntimeError('Attempting to read an image with more than one dimension.')
+    wcs = WCS(image.header)
+    spectrum = SpectrumData()
+    spectrum.set_y(image.data, unit=DEFAULT_FLUX_UNIT)
+    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 0), unit=DEFAULT_DISPERSION_UNIT)
+
+    return spectrum
 
 def read_table(table,
                flux='flux', dispersion='wavelength',
@@ -23,10 +52,11 @@ def read_table(table,
 
     flux_unit: str
                Unit of flux
-    '''
-    DEFAULT_FLUX_UNIT = 'count'
-    DEFAULT_DISPERSION_UNIT = 'pixel'
 
+    Returns
+    -------
+    SpectrumData
+    '''
     if dispersion_unit is None:
         try:
             dispersion_unit = table.columns[table.names.index(dispersion.upper())].unit

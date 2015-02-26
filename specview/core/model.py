@@ -1,8 +1,8 @@
-from specview.analysis import extract
-from specview.core import CubeData, SpectrumData, SpectrumArray
 import numpy as np
 from astropy.units import Unit
-from astropy.modeling import models, fitting
+from astropy.modeling import models
+
+from specview.core import CubeData, SpectrumData
 
 
 class Model(object):

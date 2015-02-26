@@ -1,8 +1,8 @@
 from PyQt4 import QtGui, QtCore
 
 from specview.ui.qt.menubars import MainMainBar
-from qt.docks import (DataDockWidget, InfoDockWidget, ConsoleDockWidget,
-               ModelDockWidget)
+from specview.ui.qt.docks import (DataDockWidget, InfoDockWidget,
+                                  ConsoleDockWidget,ModelDockWidget)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -17,8 +17,11 @@ class MainWindow(QtGui.QMainWindow):
         self.addToolBar(tb)
         tb.hide()
 
+        # File open dialog
+        self.file_dialog = QtGui.QFileDialog(self)
+
         # Set the MDI area as the central widget
-        self.mdiarea = QtGui.QMdiArea()
+        self.mdiarea = QtGui.QMdiArea(self)
         self.mdiarea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.mdiarea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.mdiarea.setActivationOrder(QtGui.QMdiArea.CreationOrder)
@@ -34,22 +37,22 @@ class MainWindow(QtGui.QMainWindow):
                        QtCore.Qt.RightDockWidgetArea)
 
         # Setup data dock
-        self.data_dock = DataDockWidget()
+        self.data_dock = DataDockWidget(self)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.data_dock)
 
         # Setup info view dock
-        self.info_dock = InfoDockWidget()
+        self.info_dock = InfoDockWidget(self)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.info_dock)
         self.info_dock.hide()
 
         # Setup info view dock
-        self.model_editor_dock = ModelDockWidget()
+        self.model_editor_dock = ModelDockWidget(self)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.model_editor_dock)
         self.model_editor_dock.setFloating(True)
         self.model_editor_dock.hide()
 
         # Setup console dock
-        self.console_dock = ConsoleDockWidget()
+        self.console_dock = ConsoleDockWidget(self)
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.console_dock)
 
         self._setup_menu_bar()

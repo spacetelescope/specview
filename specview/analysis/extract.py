@@ -1,7 +1,3 @@
-import numpy as np
-from astropy.nddata import NDData
-
-
 def extract(nddata, range, axes=(0, 1)):
     """Extracts a region out of an n-dimensional NDData object.
 

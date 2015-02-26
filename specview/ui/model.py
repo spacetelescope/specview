@@ -1,15 +1,16 @@
-from PyQt4 import QtGui, QtCore, Qt
+from PyQt4 import QtGui, QtCore
 import numpy as np
+
 from specview.analysis import model_fitting
-import inspect
-from qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
+from specview.ui.qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
                      LayerDataTreeItem, ParameterDataTreeItem)
 
 
 class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     """Custom TreeView model for displaying DataSetItems."""
-    added_model = QtCore.pyqtSignal(ModelDataTreeItem)
-
+    sig_added_item = QtCore.pyqtSignal(QtCore.QModelIndex)
+    sig_added_fit_model = QtCore.pyqtSignal(ModelDataTreeItem)
+    sig_removed_item = QtCore.pyqtSignal(object)
 
     def __init__(self):
         super(SpectrumDataTreeModel, self).__init__()
@@ -23,11 +24,18 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
                                          item.data().toPyObject())
 
     # --- public functions
+    def remove_data_item(self, index, parent_index):
+        item = index.model().itemFromIndex(index)
+        self.sig_removed_item.emit(item)
+        self.removeRow(index.row(), parent_index)
+
     def create_data_item(self, nddata, name=""):
-        ds_item = SpectrumDataTreeItem(nddata, name)
-        self._items.append(ds_item)
-        self.appendRow(ds_item)
-        return ds_item
+        spec_data_item = SpectrumDataTreeItem(nddata, name)
+        self._items.append(spec_data_item)
+        self.appendRow(spec_data_item)
+        self.sig_added_item.emit(spec_data_item.index())
+
+        return spec_data_item
 
     def create_layer(self, parent, mask=None, rois=None):
         if not isinstance(parent, SpectrumDataTreeItem):
@@ -41,12 +49,13 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
             print("Creating mask")
             spec_data = parent.item
             mask = np.zeros(spec_data.x.shape, dtype=bool)
-        print(parent.item.x.shape, parent.item.y.shape)
-        print(mask.shape)
+
         layer_data_item = LayerDataTreeItem(parent, mask, rois,
-                                            "Layer ({})".format(parent.text()))
+                                            "Layer {}".format(
+                                                parent.rowCount()+1))
         parent.add_layer(layer_data_item)
         parent.appendRow(layer_data_item)
+        self.sig_added_item.emit(layer_data_item.index())
 
         return layer_data_item
 
@@ -57,10 +66,11 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
 
         model = model_fitting.get_model(model_name)
         parent.add_model(model)
-        model_item = ModelDataTreeItem(parent, model, model_name)
-        parent.appendRow(model_item)
+        model_data_item = ModelDataTreeItem(parent, model, model_name)
 
-        self.added_model.emit(model_item)
+        parent.appendRow(model_data_item)
+        self.sig_added_item.emit(model_data_item.index())
+        self.sig_added_fit_model.emit(model_data_item)
 
     # --- overridden functions
     def setData(self, index, value, role=QtCore.Qt.EditRole):

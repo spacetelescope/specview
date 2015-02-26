@@ -1,6 +1,7 @@
 import numpy as np
-from specview.core import CubeData, ImageArray
 from astropy.units import Unit
+
+from specview.core import CubeData, ImageArray
 
 
 def collapse(cube_data, method='average', axis=0):

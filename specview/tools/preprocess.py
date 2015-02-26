@@ -1,7 +1,10 @@
 import warnings
+
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
+
 from specview.core import SpectrumData
+
 
 def read_table(table,
                flux='flux', dispersion='wavelength',

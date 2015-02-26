@@ -5,6 +5,7 @@ import sys
 import astropy
 import astropy.units as u
 
+from specview.core import SpectrumData
 
 '''
 Units converter.
@@ -33,6 +34,33 @@ class UnitsConverter(object):
     def __init__(self, wunit, funit):
         self._wunit = wunit
         self._funit = funit
+
+    def convertSpectrumData(self, sp_data, exception=False):
+        ''' Convert in-place a SpectrumData instance to target units.
+
+        Parameters
+        ----------
+        sp_data: SpectrumData
+          SpectrumData instance to be converted
+        exception: boolean, optional, default=False
+          if False, a units conversion exception will result in an
+          error message being printed at the console. If True, the
+          error message is printed AND the exception is raised again.
+          This behavior helps in debugging scripts.
+
+        '''
+        # Curiously, we have to force the SpectrumData input arrays into
+        # the Quantity format (via multiplication by the unit instance),
+        # so they can inherit a to() unit conversion method. Why not make
+        # the SpectrumData arrays Quantity themselves, from the constructor
+        # on?
+        wave = sp_data.x.data * sp_data.x.unit
+        flux = sp_data.y.data * sp_data.y.unit
+
+        cwave, cflux = converter.convert(wave, flux, exception)
+
+        sp_data.set_x(cwave)
+        sp_data.set_y(cflux)
 
     def convert(self, wave, flux, exception=False):
         ''' Convert arrays to target units.
@@ -77,6 +105,24 @@ def print_results(wave, flux, converted_wave, converted_flux):
 import test_data
 
 if __name__ == "__main__":
+    # real emission line from UV spectrum of NGC3516
+    x,y,e = test_data.get_data()
+
+
+    # test conversions from SpectrumData objects.
+    sp_data = SpectrumData()
+    sp_data.set_x(x, unit="Angstrom")
+    sp_data.set_y(y, unit="erg.s-1.cm**-2.Angstrom-1") # flam
+
+    converter = UnitsConverter(u.micron, u.Jy)
+    converter.convertSpectrumData(sp_data)
+
+    print(sp_data.x.unit, "  ", sp_data.y.unit)
+    for k in range(4):
+        print(sp_data.x.data[k], "   ", sp_data.y.data[k])
+
+
+    # test conversions from Quantity objects.
     wave = test_data.get_data()[0] * u.Unit('angstrom')
     flux = test_data.get_data()[1] * u.Unit("erg / (Angstrom cm2 s)")
 
@@ -99,6 +145,7 @@ if __name__ == "__main__":
     converted_wave, converted_flux = converter.convert(wave, flux)
 
     print_results(wave, flux, converted_wave, converted_flux)
+
 
     # test error handling.
     converter = UnitsConverter(u.eV, u.m)

@@ -1,39 +1,31 @@
 import numpy as np
 
 from specview.core import SpectrumData
-from proto.model_manager import test_data
 
 
-def extract(spectrum_data, range):
+def extract(spectrum_data, x_range):
     ''' Extracts a region from a spectrum.
 
     Paramaters
     ----------
     spectrum_data: SpectrumData
       Contains the spectrum to be extracted.
-    range: tuple
-      A wavelength range as in (wave1, wave2)
+    w_range: tuple
+      A spectral coordinate range as in (wave1, wave2)
 
     Returns
     -------
     SpectrumData with extracted region.
 
     '''
-    # this needs some small changes so as to use
-    # SpectrumArray instances for the slicing.
     x = spectrum_data.x.data
     y = spectrum_data.y.data
 
-    index1 = x >= range[0]
-    x1 = x[index1]
-    y1 = y[index1]
-    index2 = x1 < range[1]
-    x2 = x1[index2]
-    y2 = y1[index2]
+    slice = (x >= x_range[0]) & (x < x_range[1])
 
     result = SpectrumData()
-    result.set_x(x2, unit=spectrum_data.x.unit)
-    result.set_y(y2, unit=spectrum_data.y.unit)
+    result.set_x(x[slice], unit=spectrum_data.x.unit)
+    result.set_y(y[slice], unit=spectrum_data.y.unit)
 
     return result
 
@@ -66,7 +58,11 @@ def eq_width(cont1_stats, cont2_stats, line):
     regions, and a SpectrumData instance with the extracted
     spectral line region.
 
-    Paramaters
+    This uses for now a very simple continuum subtraction method:
+    it just subtracts a constant from the line spectrum, where the
+    constant is (continuum1[mean] + continuum2[mean]) / 2.
+
+    Parameters
     ----------
     cont1_stats: dict
       This is returned by the stats() function
@@ -77,7 +73,8 @@ def eq_width(cont1_stats, cont2_stats, line):
 
     Returns
     -------
-    equivalent width: float
+    flux, equivalent width: tuple
+      tuple with two floats
 
     '''
     # average of 2 continuum regions.
@@ -86,9 +83,15 @@ def eq_width(cont1_stats, cont2_stats, line):
     # average dispersion in the line region.
     avg_dx = np.mean(line.x.data[1:] - line.x.data[:-1])
 
-    #  EW = Sum( (Fc-Fl)/Fc * dw
-    return np.sum((avg_cont - line.y.data) / avg_cont * avg_dx)
+    # flux
+    flux = np.sum(line.y.data - avg_cont) * avg_dx
 
+    #  EW = Sum( (Fc-Fl)/Fc * dw
+    ew =  np.sum((avg_cont - line.y.data) / avg_cont * avg_dx)
+
+    return flux, ew
+
+from proto.model_manager import test_data
 
 def test1():
 
@@ -111,13 +114,13 @@ def test1():
     cont2_stats = stats(cont2)
     line_stats  = stats(line)
 
-    print '@@@@@@     line: 57  - ', cont1_stats
-    print '@@@@@@     line: 58  - ', cont2_stats
-    print '@@@@@@     line: 59  - ', line_stats
+    print 'continuum 1 stats:  ', cont1_stats
+    print 'continuum 2 stats:  ', cont2_stats
+    print 'line stats:         ', line_stats
 
-    ew = eq_width(cont1_stats, cont2_stats, line)
+    flux, ew = eq_width(cont1_stats, cont2_stats, line)
 
-    print '@@@@@@     line: 90  - ', ew
+    print 'flux and equivalent width:  ', flux, ew
 
 
 if __name__ == "__main__":

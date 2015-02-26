@@ -17,17 +17,25 @@ class SpectrumArray(NDSlicingMixin, NDArithmeticMixin, NDData):
 
     @property
     def shape(self):
-        return self._data.shape
+        return self.data.shape
+
+    @property
+    def data(self):
+        if self.mask is None:
+            return super(SpectrumArray, self).data
+        else:
+            return super(SpectrumArray, self).data[np.logical_not(self.mask)]
 
 
 class SpectrumData(object):
     """
-    Contains exactly two `SpectrumData` objects; one for flux, the other
+    Contains exactly two `SpectrumArray` objects; one for flux, the other
     for wavelength.
     """
     def __init__(self, x=None, y=None):
         self._x = x
         self._y = y
+        self._layers = []
 
     def set_x(self, data, wcs=None, unit=None, name=""):
         if not isinstance(wcs, WCS) and wcs is not None:
@@ -41,6 +49,16 @@ class SpectrumData(object):
 
         self._y = SpectrumArray(data, wcs=wcs, unit=unit)
 
+    def add_layer(self, mask):
+        self._layers.append(Layer(self, mask))
+
+    def remove_layer(self, layer):
+        self._layers.remove(layer)
+
+    @property
+    def models(self):
+        return self._models
+
     @property
     def x(self):
         return self._x
@@ -48,6 +66,37 @@ class SpectrumData(object):
     @property
     def y(self):
         return self._y
+
+    @property
+    def shape(self):
+        return self.x.shape[0], self.y.shape[0]
+
+    @property
+    def mask(self):
+        return self.x.mask
+
+    @mask.setter
+    def mask(self, value):
+        print("Setting mask")
+        print(value)
+        self.x.mask = value
+        self.y.mask = value
+
+
+class Layer(object):
+    """
+    Layer objects contain a masked array of the original data. They can also
+    contain any number of model objects.
+    """
+    def __init__(self, parent, mask):
+        self._parent = parent
+        self._mask = mask
+
+        self.data = np.ma.array(parent, mask=mask)
+        self._models = []
+
+    def add_model(self, model):
+        self._models.append(model)
 
 
 class ImageArray(NDSlicingMixin, NDArithmeticMixin, NDData):
@@ -65,7 +114,7 @@ class ImageArray(NDSlicingMixin, NDArithmeticMixin, NDData):
         return self._data.shape
 
 
-class CubeData(NDSlicingMixin, NDArithmeticMixin, NDData):
+class CubeData():
     """
     Container object for IFU cube data. The internal data unit for the data
     array is whatever unit the counts are in. That is, the unit for this

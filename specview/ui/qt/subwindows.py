@@ -1,5 +1,6 @@
-from PyQt4 import QtGui, QtCore, Qt
-from viewers import ImageViewer, SpectraViewer
+from PyQt4 import QtGui, QtCore
+
+from specview.ui.qt.graphs import ImageGraph, SpectraGraph
 from toolbars import ImageToolBar, SpectraToolBar
 
 
@@ -13,7 +14,7 @@ class BaseMdiSubWindow(QtGui.QMdiSubWindow):
         self.sw_widget.setLayout(self.vb_layout)
         self.setWidget(self.sw_widget)
 
-        self.viewer = None
+        self.graph = None
         self.toolbar = None
 
 
@@ -21,29 +22,23 @@ class ImageMdiSubWindow(BaseMdiSubWindow):
     def __init__(self, parent=None):
         super(ImageMdiSubWindow, self).__init__(parent)
 
-        self.viewer = ImageViewer()
+        self.graph = ImageGraph()
         self.toolbar = ImageToolBar()
 
-        self.vb_layout.addWidget(self.toolbar)
-        self.vb_layout.addWidget(self.viewer)
+        # self.vb_layout.addWidget(self.toolbar)
+        self.vb_layout.addWidget(self.graph)
 
 
 class SpectraMdiSubWindow(BaseMdiSubWindow):
     def __init__(self, parent=None):
         super(SpectraMdiSubWindow, self).__init__(parent)
-
-        self.viewer = SpectraViewer()
+        self.graph = SpectraGraph()
         self.toolbar = SpectraToolBar()
 
-        self.vb_layout.addWidget(self.toolbar)
-        self.vb_layout.addWidget(self.viewer)
+        # self.vb_layout.addWidget(self.toolbar)
+        self.vb_layout.addWidget(self.graph)
 
-        self.slot_toolbar()
+        self._connect_toolbar()
 
-    def slot_toolbar(self):
-        self.toolbar.button_insert_region.triggered.connect(
-            self.viewer._add_roi)
-        self.toolbar.button_delete_region.triggered.connect(
-            self.viewer._remove_region)
-        self.toolbar.button_fit_region.triggered.connect(
-            self.viewer._fit_region)
+    def _connect_toolbar(self):
+        self.toolbar.atn_insert_roi.triggered.connect(self.graph.add_roi)

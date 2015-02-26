@@ -64,7 +64,7 @@ def read_data(file_name, ext=None, **kwargs):
         Keyword arguments to pass to helper routines.
     """
     if ".fits" in file_name:
-        name = file_name.split("/")[-1].split(".")[-2]
+        name = file_name.split("/")[-1].split(".")[-1]
         hdulist = fits.open(str(file_name))
 
         exts = [ext] if ext is not None else range(len(hdulist))

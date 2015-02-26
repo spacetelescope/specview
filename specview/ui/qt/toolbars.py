@@ -1,4 +1,7 @@
-from PyQt4 import QtGui, QtCore, Qt
+from PyQt4 import QtGui
+from os import sys, path
+
+PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
 
 
 class BaseToolBar(QtGui.QToolBar):
@@ -9,11 +12,13 @@ class BaseToolBar(QtGui.QToolBar):
         # self.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
 
         self.atn_insert_roi = QtGui.QAction("&Insert \nROI", self)
-        self.atn_insert_roi.setIcon(QtGui.QIcon("./qt/img/rect_select.png"))
+        self.atn_insert_roi.setIcon(QtGui.QIcon(path.join(PATH,
+                                                          "rect_select.png")))
         self.atn_insert_roi.setToolTip('Add rectangular region-of-interest')
 
         self.atn_create_layer = QtGui.QAction("&Create Layer", self)
-        self.atn_create_layer.setIcon(QtGui.QIcon("./qt/img/create_layer.png"))
+        self.atn_create_layer.setIcon(QtGui.QIcon(path.join(PATH,
+                                                            "create_layer.png")))
         self.atn_create_layer.setToolTip("Create new layer from ROIs")
 
         # Setup buttons
@@ -27,15 +32,17 @@ class SpectraToolBar(BaseToolBar):
         super(SpectraToolBar, self).__init__(parent)
 
         self.atn_model_editor = QtGui.QAction("&Model Editor", self)
-        self.atn_model_editor.setIcon(QtGui.QIcon("./qt/img/model_editor.png"))
+        self.atn_model_editor.setIcon(QtGui.QIcon(path.join(PATH,
+                                                            "model_editor.png")))
         self.atn_model_editor.setToolTip('Opens the model editor')
 
         self.addAction(self.atn_model_editor)
 
-        self.active_plots = QtGui.QAction('&Active Plot', self)
-        self.active_plots.setStatusTip('Select visible plots.')
+        self.atn_measure = QtGui.QAction("&Measurements", self)
+        self.atn_measure.setIcon(QtGui.QIcon(path.join(PATH, "info_rect.png")))
+        self.atn_measure.setToolTip('Get measurements from current region')
 
-        self.active_plot_menu = QtGui.QMenu("Active Plot Menu", self)
+        self.addAction(self.atn_measure)
 
 
 class ImageToolBar(BaseToolBar):

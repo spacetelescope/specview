@@ -1,11 +1,10 @@
 from itertools import cycle
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 import pyqtgraph as pg
 import numpy as np
 
-from specview.analysis import model_fitting
-from specview.core import SpectrumData
+from specview.ui.qt.tree_items import SpectrumDataTreeItem, LayerDataTreeItem
 
 
 COLORS = cycle(['g', 'r', 'c', 'm', 'y', 'w'])
@@ -58,11 +57,13 @@ class BaseGraph(QtGui.QWidget):
         for roi in self._rois:
             roi_shape = roi.parentBounds()
             x1, y1, x2, y2 = roi_shape.getCoords()
+            print(roi_shape.getCoords())
             mask_holder.append((x_data >= x1) & (x_data <= x2) &
                                (y_data >= y1) & (y_data <= y2))
 
         mask = np.logical_not(reduce(np.logical_or, mask_holder))
         return mask
+
 
 class SpectraGraph(BaseGraph):
     def __init__(self):
@@ -87,14 +88,31 @@ class SpectraGraph(BaseGraph):
         return self.get_roi_mask(x_data, y_data)
 
     def add_item(self, layer_data_item):
-        self._plot_dict[layer_data_item] = None
+        if layer_data_item in self._plot_dict.keys():
+            self._plot_dict[layer_data_item].append(layer_data_item)
+        else:
+            self._plot_dict[layer_data_item] = []
         self._graph_data(layer_data_item)
 
-    def remove_item(self, layer_data_item):
-        for k, plot in self._plot_dict[layer_data_item].items():
-            self.plot_window.remove(plot)
+    def remove_item(self, data_item):
+        # TODO: it's possible have multiple sub_windows try and delete the
+        # same data. Need to implement a check to make sure the dictionary
+        # still holds the data. May cause KeyError otherwise.
+        layer_data_items = []
 
-        del self._plot_dict[layer_data_item]
+        if isinstance(data_item, LayerDataTreeItem):
+            layer_data_items.append(data_item)
+        elif isinstance(data_item, SpectrumDataTreeItem):
+            for layer in data_item.layers:
+                if layer in self._plot_dict.keys():
+                    layer_data_items.append(layer)
+
+        for layer_data_item in layer_data_items:
+            for plot in self._plot_dict[layer_data_item]:
+                self.plot_window.removeItem(plot)
+
+        for layer_data_item in layer_data_items:
+            del self._plot_dict[layer_data_item]
 
     def update_all(self):
         pass
@@ -114,28 +132,34 @@ class SpectraGraph(BaseGraph):
                                clickable=True,
                                stepMode=use_step)
 
-        self._plot_dict[layer_data_item] = plot
+        self._plot_dict[layer_data_item].append(plot)
         self.plot_window.addItem(plot)
 
         self.select_active(layer_data_item)
 
     def set_active(self, layer_data_item):
-        self._active_plot = self._plot_dict[layer_data_item]
+        self._active_plot = self._plot_dict[layer_data_item][-1]
         self._active_item = layer_data_item
 
         spectrum_data = layer_data_item.item
 
-        self.plot_window.setLabel('bottom', text='',
-                                  units=spectrum_data.x.unit)
-        self.plot_window.setLabel('left', text='',
-                                  units=spectrum_data.y.unit)
+        self.plot_window.setLabel('bottom',
+                                  text='Dispersion [{}]'.format(
+                                      spectrum_data.x.unit),
+                                  # units=spectrum_data.x.unit,
+        )
+        self.plot_window.setLabel('left',
+                                  text='Flux [{}]'.format(
+                                      spectrum_data.y.unit),
+                                  # units=spectrum_data.y.unit,
+        )
 
     def select_active(self, layer_data_item):
         if layer_data_item not in self._plot_dict.keys():
             return
 
-        plot = self._plot_dict[layer_data_item]
-        print("Selecting active")
+        plot = self._plot_dict[layer_data_item][-1]
+
         if plot == self._active_plot:
             return
         elif self._active_plot is not None:
@@ -147,9 +171,6 @@ class SpectraGraph(BaseGraph):
         color.setAlpha(255)
         plot.setPen(color, width=2)
         self.set_active(layer_data_item)
-
-    def get_active_item(self):
-        return self._active_item
 
 
 class ImageGraph(BaseGraph):

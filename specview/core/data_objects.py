@@ -1,6 +1,5 @@
 import numpy as np
-from astropy.nddata import (NDData, NDSlicingMixin, NDArithmeticMixin,
-                            support_nddata)
+from astropy.nddata import (NDData, NDSlicingMixin, NDArithmeticMixin)
 from astropy.wcs import WCS
 from astropy.units import Unit
 

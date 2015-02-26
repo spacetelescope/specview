@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from astropy.io import fits
+from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 
 
 class FileEditDialog(QtGui.QDialog):
@@ -108,8 +109,9 @@ class FileEditDialog(QtGui.QDialog):
 
     def _on_accept(self):
         self.ext = int(self.ext_selector.currentIndex())
-        self.flux = self.hdulist[self.ext].data.names[1]
-        self.dispersion = self.hdulist[self.ext].data.names[0]
+        if isinstance(self.hdulist[self.ext], FITS_table):
+            self.flux = self.hdulist[self.ext].data.names[1]
+            self.dispersion = self.hdulist[self.ext].data.names[0]
 
         # self.flux_unit = str(self.hdulist[self.ext].header[
         #     str(self.flux_unit_selector.currentText())]).lower()
@@ -119,5 +121,3 @@ class FileEditDialog(QtGui.QDialog):
         self.disp_unit = str(self.man_disp_unit.text())
 
         super(FileEditDialog, self).accept()
-
-

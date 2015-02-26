@@ -80,11 +80,11 @@ def eq_width(cont1_stats, cont2_stats, line):
     # average of 2 continuum regions.
     avg_cont = (cont1_stats['mean'] + cont2_stats['mean']) / 2.0
 
-    # flux
-    flux = np.sum(line.y.data - avg_cont)
-
     # average dispersion in the line region.
     avg_dx = np.mean(line.x.data[1:] - line.x.data[:-1])
+
+    # flux
+    flux = np.sum(line.y.data - avg_cont) * avg_dx
 
     #  EW = Sum( (Fc-Fl)/Fc * dw
     ew =  np.sum((avg_cont - line.y.data) / avg_cont * avg_dx)

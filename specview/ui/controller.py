@@ -31,8 +31,7 @@ class Controller(object):
             'model': self._model,
             'ui': self,
             'specview': specview,
-            'np': np,
-            'data': self.model.data_items}
+            'np': np}
 
     # ---- properties
     @property
@@ -49,8 +48,8 @@ class Controller(object):
             self.update_active_plots)
 
     def _connect_model_editor_dock(self):
-        self.viewer.model_editor_dock.btn_add_model.clicked.connect(
-            self._create_model)
+        self.viewer.model_editor_dock.wgt_model_selector.currentIndexChanged\
+            .connect(self._create_model)
 
         self.viewer.model_editor_dock.btn_perform_fit.clicked.connect(
             self._perform_fit)
@@ -182,11 +181,14 @@ class Controller(object):
             spectrum_data = self.model.create_layer(spectrum_data)
 
         if sub_window is None:
-            sub_window = self._viewer.mdiarea.activeSubWindow()
+            sub_window = self.viewer.mdiarea.activeSubWindow()
 
         sub_window.graph.add_item(spectrum_data, set_active, use_step)
 
     def get_measurements(self, sub_window):
+        if not sub_window.graph._active_roi:
+            return
+
         x_range, y_range = sub_window.graph._get_active_roi_coords()
         active_item = sub_window.graph.active_item
         active_data = active_item.item
@@ -194,12 +196,17 @@ class Controller(object):
         region = extract(active_data, x_range)
         stat = stats(region)
 
-        self.viewer.info_dock.set_labels(stat, name=active_item.text())
+        self.viewer.info_dock.set_labels(stat,
+                                         data_name=active_item.parent.text(),
+                                         layer_name=active_item.text())
         self.viewer.info_dock.show()
 
     def open_file(self, path):
         dialog = FileEditDialog(path)
         dialog.exec_()
+
+        if not dialog.result():
+            return
 
         spec_data = read_data(path, ext=dialog.ext, flux=dialog.flux,
                               dispersion=dialog.dispersion,

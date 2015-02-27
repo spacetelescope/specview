@@ -34,8 +34,10 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     # --- public functions
     def remove_data_item(self, index, parent_index):
         item = index.model().itemFromIndex(index)
-        self.sig_removed_item.emit(item)
         self.removeRow(index.row(), parent_index)
+        if item in self._items:
+            self._items.remove(item)
+        self.sig_removed_item.emit(item)
 
     def create_data_item(self, nddata, name="New Data Item"):
         spec_data_item = SpectrumDataTreeItem(nddata, name)
@@ -54,7 +56,6 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
             return
 
         if mask is None:
-            print("Creating mask")
             spec_data = parent.item
             mask = np.zeros(spec_data.x.shape, dtype=bool)
 

@@ -71,6 +71,7 @@ class InfoDockWidget(BaseDockWidget):
         self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
                              QtCore.Qt.RightDockWidgetArea)
 
+        self.lbl_data_set = QtGui.QLabel()
         self.lbl_layer = QtGui.QLabel()
         self.lbl_mean = QtGui.QLabel()
         self.lbl_median = QtGui.QLabel()
@@ -78,7 +79,6 @@ class InfoDockWidget(BaseDockWidget):
         self.lbl_total = QtGui.QLabel()
 
         form_layout = QtGui.QFormLayout()
-        form_layout.addWidget(self.lbl_layer)
         form_layout.addRow(self.tr("Mean:"), self.lbl_mean)
         form_layout.addRow(self.tr("Median:"), self.lbl_median)
         form_layout.addRow(self.tr("Std. Dev.:"), self.lbl_stddev)
@@ -87,10 +87,13 @@ class InfoDockWidget(BaseDockWidget):
         group_box = QtGui.QGroupBox("Statistics")
         group_box.setLayout(form_layout)
 
+        self.add_widget(self.lbl_data_set)
+        self.add_widget(self.lbl_layer)
         self.add_widget(group_box)
 
-    def set_labels(self, stats, name=""):
-        self.lbl_layer.setText(name)
+    def set_labels(self, stats, data_name="", layer_name=""):
+        self.lbl_data_set.setText("Data set: " + data_name)
+        self.lbl_layer.setText("Layer: " + layer_name)
         self.lbl_mean.setText(str(stats['mean']))
         self.lbl_median.setText(str(stats['median']))
         self.lbl_stddev.setText(str(stats['stddev']))
@@ -135,21 +138,22 @@ class ModelDockWidget(BaseDockWidget):
         self.wgt_model_selector.addItems(model_fitting.all_models.keys())
 
         # Create add model button
-        self.btn_add_model = QtGui.QToolButton()
+        # self.btn_add_model = QtGui.QToolButton()
 
         # Create horizontal layout for combo box + button
-        hb_layout = QtGui.QHBoxLayout()
-        hb_layout.addWidget(self.wgt_model_selector)
-        hb_layout.addWidget(self.btn_add_model)
+        # hb_layout = QtGui.QHBoxLayout()
+        # hb_layout.addWidget(self.wgt_model_selector)
+        # hb_layout.addWidget(self.btn_add_model)
 
         # Create combo box for selecting fitter
         self.wgt_fit_selector = QtGui.QComboBox()
         self.wgt_fit_selector.addItems(model_fitting.all_fitters.keys())
 
         # Create button for performing fit
-        self.btn_perform_fit = QtGui.QPushButton("&Fit Model to Data")
+        self.btn_perform_fit = QtGui.QPushButton("&Fit Model")
 
-        self.add_layout(hb_layout)
+        # self.add_layout(hb_layout)
+        self.add_widget(self.wgt_model_selector)
         self.add_widget(self.wgt_model_tree)
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)

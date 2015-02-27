@@ -1,14 +1,10 @@
-from itertools import cycle
+from itertools import cycle, tee
 
 from PyQt4 import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
-from astropy.units import Unit
 
 from specview.ui.qt.tree_items import SpectrumDataTreeItem, LayerDataTreeItem
-
-
-COLORS = cycle(['g', 'r', 'c', 'm', 'y', 'w'])
 
 
 class BaseGraph(QtGui.QWidget):
@@ -63,8 +59,8 @@ class BaseGraph(QtGui.QWidget):
         roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len * 0.5],
                          sideScalers=True, removable=True)
         self._rois.append(roi)
-        # Assign roi
         self.view_box.addItem(roi)
+
         # Connect the remove functionality
         roi.sigRemoveRequested.connect(remove)
         roi.sigRegionChangeFinished.connect(self._set_active_roi)
@@ -100,6 +96,10 @@ class SpectraGraph(BaseGraph):
         self._active_plot = None
         self._active_item = None
 
+
+        self.__colors = ['g', 'r', 'c', 'm', 'y', 'w']
+        self._icolors = cycle(self.__colors)
+
         self.plot_window = self.w.addPlot(row=1, col=0)
         self.plot_window.showGrid(x=True, y=True)
         self.view_box = self.plot_window.getViewBox()
@@ -124,21 +124,34 @@ class SpectraGraph(BaseGraph):
 
         return x_data[~mask], y_data[~mask]
 
-    def _get_active_roi_coords(self):
-        roi_shape = self._active_roi.parentBounds()
+    def _get_roi_coords(self, roi):
+        roi_shape = roi.parentBounds()
         x1, y1, x2, y2 = roi_shape.getCoords()
         return [x1, x2], [y1, y2]
 
-    def update_all(self):
+    def update_all(self, use_step=True):
         layer_data_items = self._plot_dict.keys()
 
         for layer_data_item in layer_data_items:
             self.remove_item(layer_data_item)
 
-        for layer_data_item in layer_data_items:
-            self.add_item(layer_data_item)
+        self._icolors = cycle(self.__colors)
 
-    def add_item(self, layer_data_item, set_active=True, use_step=True):
+        for layer_data_item in layer_data_items:
+            self.add_item(layer_data_item, use_step)
+
+    def update_item(self, layer_data_item=None, style='histogram'):
+        if layer_data_item is None:
+            layer_data_item = self._active_item
+
+        plot = self._plot_dict[layer_data_item][-1]
+        color = plot.opts['pen'].color()
+        self.remove_item(layer_data_item)
+        self.add_item(layer_data_item, style=style, color=color)
+
+    def add_item(self, layer_data_item, set_active=True, style='histogram',
+                 color=None):
+        color = next(self._icolors) if not color else color
         if layer_data_item in self._plot_dict.keys():
             self._plot_dict[layer_data_item].append(layer_data_item)
         else:
@@ -149,12 +162,9 @@ class SpectraGraph(BaseGraph):
         if self._units is None:
             self._units = [layer_data.x.unit, layer_data.y.unit, None]
 
-        self._graph_data(layer_data_item, set_active, use_step)
+        self._graph_data(layer_data_item, set_active, style, color)
 
     def remove_item(self, data_item):
-        # TODO: it's possible have multiple sub_windows try and delete the
-        # same data. Need to implement a check to make sure the dictionary
-        # still holds the data. May cause KeyError otherwise.
         layer_data_items = []
 
         if isinstance(data_item, LayerDataTreeItem):
@@ -163,6 +173,8 @@ class SpectraGraph(BaseGraph):
             for layer in data_item.layers:
                 if layer in self._plot_dict.keys():
                     layer_data_items.append(layer)
+        else:
+            return
 
         for layer_data_item in layer_data_items:
             for plot in self._plot_dict[layer_data_item]:
@@ -171,33 +183,36 @@ class SpectraGraph(BaseGraph):
         for layer_data_item in layer_data_items:
             del self._plot_dict[layer_data_item]
 
-    def _graph_data(self, layer_data_item, set_active=True, use_step=True):
+    def _graph_data(self, layer_data_item, set_active=True,
+                    style='histogram', color=None):
+        color = next(self._icolors) if not color else color
         spec_data = layer_data_item.item
         spec_x_array = spec_data.x.convert_unit_to(self._units[0])
         spec_y_array = spec_data.y.convert_unit_to(self._units[1])
 
-        fin_pnt = spec_x_array.data[-1] - spec_x_array.data[-2] +\
-                  spec_x_array.data[-1]
+        if style is not 'scatter':
+            if style is 'histogram':
+                fin_pnt = spec_x_array.data[-1] - spec_x_array.data[-2] +\
+                          spec_x_array.data[-1]
+                x_data = np.append(spec_x_array.data, fin_pnt)
+            else:
+                x_data = spec_x_array.data
 
-        x_data = np.append(spec_x_array.data, fin_pnt) if use_step else \
-                           spec_x_array.data
-
-        plot = pg.PlotDataItem(x_data,
-                               spec_y_array.data,
-                               pen=pg.mkPen(next(COLORS)),
-                               clickable=True,
-                               stepMode=use_step)
+            plot = pg.PlotDataItem(x_data,
+                                   spec_y_array.data,
+                                   pen=pg.mkPen(color),
+                                   stepMode=style == 'histogram')
+        else:
+            plot = pg.ScatterPlotItem(spec_x_array.data,
+                                      spec_y_array.data,
+                                      pen=pg.mkPen(color))
 
         self.plot_window.setLabel('bottom',
                                   text='Dispersion [{}]'.format(
-                                      spec_x_array.unit),
-                                  # units=spectrum_data.x.unit,
-        )
+                                      spec_x_array.unit))
         self.plot_window.setLabel('left',
                                   text='Flux [{}]'.format(
-                                      spec_y_array.unit),
-                                  # units=spectrum_data.y.unit,
-        )
+                                      spec_y_array.unit))
 
         self._plot_dict[layer_data_item].append(plot)
         self.plot_window.addItem(plot)

@@ -2,8 +2,7 @@ from PyQt4 import QtGui
 from astropy.units import Unit
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph
-from specview.ui.qt.toolbars import (ImageToolBar, SpectraToolBar,
-                                     SpectraPlotToolBar)
+from specview.ui.qt.toolbars import ImageToolBar, SpectraToolBar, SpectraPlotToolBar
 
 
 class BaseMdiSubWindow(QtGui.QMdiSubWindow):
@@ -51,6 +50,15 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
         self.plot_toolbar.unit_dialog.accepted.connect(
             self._update_graph_units)
 
+        self.plot_toolbar.atn_line_style.triggered.connect(lambda:
+            self.graph.update_item(style='line'))
+
+        self.plot_toolbar.atn_hist_style.triggered.connect(lambda:
+            self.graph.update_item(style='histogram'))
+
+        self.plot_toolbar.atn_scat_style.triggered.connect(lambda:
+            self.graph.update_item(style='scatter'))
+
     def _update_graph_units(self):
         x_unit = self.plot_toolbar.unit_dialog.disp_unit
         y_unit = self.plot_toolbar.unit_dialog.flux_unit
@@ -58,3 +66,6 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
         self.graph.set_units(x=Unit(x_unit) if x_unit is not "" else None,
                              y=Unit(y_unit) if y_unit is not "" else None,
                              z=None)
+
+    def _toggle_graph_step(self):
+        pass

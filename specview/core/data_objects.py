@@ -132,6 +132,18 @@ class SpectrumData(object):
         new_y = self._y.divide(operand.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
+    def __add__(self, other):
+        return self.add(other)
+
+    def __sub__(self, other):
+        return self.subtract(other)
+
+    def __mul__(self, other):
+        return self.multiply(other)
+
+    def __div__(self, other):
+        return self.divide(other)
+
 
 class ImageArray(NDSlicingMixin, NDArithmeticMixin, NDData):
     """

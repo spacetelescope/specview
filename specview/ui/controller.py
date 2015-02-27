@@ -48,16 +48,15 @@ class Controller(object):
             self.update_active_plots)
 
     def _connect_model_editor_dock(self):
-        self.viewer.model_editor_dock.wgt_model_selector.currentIndexChanged\
-            .connect(self._create_model)
+        model_selector = self.viewer.model_editor_dock.wgt_model_selector
+        model_selector.currentIndexChanged.connect(self._create_model)
 
         self.viewer.model_editor_dock.btn_perform_fit.clicked.connect(
             self._perform_fit)
 
     def _connect_trees(self):
         self.viewer.data_dock.wgt_data_tree.sig_current_changed.connect(
-            self.viewer.model_editor_dock.wgt_model_tree.set_root_index
-        )
+            self.viewer.model_editor_dock.wgt_model_tree.set_root_index)
 
     def _connect_mdiarea(self):
         self.viewer.mdiarea.subWindowActivated.connect(self._set_toolbar)
@@ -97,10 +96,13 @@ class Controller(object):
             str(self.viewer.model_editor_dock.wgt_model_selector.currentText()))
 
     def _perform_fit(self):
+        layer_data_item = self.viewer.data_dock.wgt_data_tree.current_item
+
+        if not isinstance(layer_data_item, LayerDataTreeItem):
+            return
+
         fitter_name = self.viewer.model_editor_dock.wgt_fit_selector.currentText()
         fitter = get_fitter(str(fitter_name))
-
-        layer_data_item = self.viewer.data_dock.wgt_data_tree.current_item
         init_model = layer_data_item.model
 
         x, y = layer_data_item.item.x.data, layer_data_item.item.y.data
@@ -170,26 +172,32 @@ class Controller(object):
         sub_window.toolbar.atn_measure.triggered.connect(lambda:
             self.get_measurements(sub_window))
 
+        # Connect equivalent width action
+        sub_window.toolbar.atn_equiv_width.triggered.connect(lambda:
+            self.get_equivalent_widths(sub_window))
+
         # Connect remove item
         self.model.sig_removed_item.connect(sub_window.graph.remove_item)
 
         self.display_graph(spectrum_data, sub_window)
 
     def display_graph(self, spectrum_data, sub_window=None, set_active=True,
-                      use_step=True):
+                      style='histogram'):
         if not isinstance(spectrum_data, LayerDataTreeItem):
             spectrum_data = self.model.create_layer(spectrum_data)
 
         if sub_window is None:
             sub_window = self.viewer.mdiarea.activeSubWindow()
 
-        sub_window.graph.add_item(spectrum_data, set_active, use_step)
+        sub_window.graph.add_item(spectrum_data, set_active, style)
 
     def get_measurements(self, sub_window):
-        if not sub_window.graph._active_roi:
+        roi = sub_window.graph._active_roi
+
+        if roi is None:
             return
 
-        x_range, y_range = sub_window.graph._get_active_roi_coords()
+        x_range, y_range = sub_window.graph._get_roi_coords(roi)
         active_item = sub_window.graph.active_item
         active_data = active_item.item
 
@@ -200,6 +208,9 @@ class Controller(object):
                                          data_name=active_item.parent.text(),
                                          layer_name=active_item.text())
         self.viewer.info_dock.show()
+
+    def get_equivalent_widths(self, sub_window):
+        pass
 
     def open_file(self, path):
         dialog = FileEditDialog(path)

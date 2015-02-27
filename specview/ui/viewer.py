@@ -2,17 +2,16 @@ from PyQt4 import QtGui, QtCore
 
 from specview.ui.qt.menubars import MainMainBar
 from specview.ui.qt.docks import (DataDockWidget, InfoDockWidget,
-                                  ConsoleDockWidget,ModelDockWidget)
+                                  ConsoleDockWidget, ModelDockWidget)
 
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-
         # Basic app info
         self.menu_bar = MainMainBar()
         self.setMenuBar(self.menu_bar)
-        self.setWindowTitle('IFUpy')
+        self.setWindowTitle('SpecPy')
         tb = QtGui.QToolBar()
         self.addToolBar(tb)
         tb.hide()

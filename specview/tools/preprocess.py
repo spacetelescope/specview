@@ -8,6 +8,7 @@ from specview.core import SpectrumData
 DEFAULT_FLUX_UNIT = 'count'
 DEFAULT_DISPERSION_UNIT = 'pixel'
 
+
 def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
     '''Read 1D image
 
@@ -34,6 +35,7 @@ def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
     spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 1)[0], unit=unit)
 
     return spectrum
+
 
 def read_table(table,
                flux='flux', dispersion='wavelength',
@@ -80,6 +82,7 @@ def read_table(table,
     spectrum.set_y(table[flux], unit=flux_unit)
 
     return spectrum
+
 
 def read_data(file_name, ext=None, **kwargs):
     """Simple function to read in a file and retrieve extensions that

@@ -24,10 +24,19 @@ class BaseGraph(QtGui.QWidget):
         self.vb_layout.addWidget(self.w)
         # Create roi container
         self._rois = []
+        self._active_roi = None
+
+    @property
+    def active_roi(self):
+        return self._active_roi
 
     @property
     def rois(self):
         return self._rois
+
+    def _set_active_roi(self):
+        self._active_roi = self.sender()
+        print(self._active_roi)
 
     def dragEnterEvent(self, e):
         e.accept()
@@ -50,6 +59,7 @@ class BaseGraph(QtGui.QWidget):
         self.view_box.addItem(roi)
         # Connect the remove functionality
         roi.sigRemoveRequested.connect(remove)
+        roi.sigRegionChangeFinished.connect(self._set_active_roi)
 
     def get_roi_mask(self, x_data, y_data):
         mask_holder = []
@@ -57,11 +67,21 @@ class BaseGraph(QtGui.QWidget):
         for roi in self._rois:
             roi_shape = roi.parentBounds()
             x1, y1, x2, y2 = roi_shape.getCoords()
-            print(roi_shape.getCoords())
+
             mask_holder.append((x_data >= x1) & (x_data <= x2) &
                                (y_data >= y1) & (y_data <= y2))
 
         mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        return mask
+
+    def get_active_roi_mask(self, x_data, y_data):
+        roi_shape = self._active_roi.parentBounds()
+        x1, y1, x2, y2 = roi_shape.getCoords()
+
+        mask = ((x_data >= x1) & (x_data <= x2) &
+                (y_data >= y1) & (y_data <= y2))
+
+        mask = np.logical_not(mask)
         return mask
 
 
@@ -87,12 +107,25 @@ class SpectraGraph(BaseGraph):
 
         return self.get_roi_mask(x_data, y_data)
 
-    def add_item(self, layer_data_item):
+    def _get_active_roi_data(self):
+        spec_data = self.active_item.item
+        x_data, y_data = spec_data.x.data, spec_data.y.data
+        mask = self.get_active_roi_mask(x_data, y_data)
+
+        return x_data[~mask], y_data[~mask]
+
+    def _get_active_roi_coords(self):
+        roi_shape = self._active_roi.parentBounds()
+        x1, y1, x2, y2 = roi_shape.getCoords()
+        return [x1, x2], [y1, y2]
+
+    def add_item(self, layer_data_item, set_active=True, use_step=True):
         if layer_data_item in self._plot_dict.keys():
             self._plot_dict[layer_data_item].append(layer_data_item)
         else:
             self._plot_dict[layer_data_item] = []
-        self._graph_data(layer_data_item)
+
+        self._graph_data(layer_data_item, set_active, use_step)
 
     def remove_item(self, data_item):
         # TODO: it's possible have multiple sub_windows try and delete the
@@ -117,7 +150,7 @@ class SpectraGraph(BaseGraph):
     def update_all(self):
         pass
 
-    def _graph_data(self, layer_data_item, use_step=True):
+    def _graph_data(self, layer_data_item, set_active=True, use_step=True):
         spec_data = layer_data_item.item
 
         fin_pnt = spec_data.x.data[-1] - spec_data.x.data[-2] +\
@@ -135,7 +168,8 @@ class SpectraGraph(BaseGraph):
         self._plot_dict[layer_data_item].append(plot)
         self.plot_window.addItem(plot)
 
-        self.select_active(layer_data_item)
+        if set_active:
+            self.select_active(layer_data_item)
 
     def set_active(self, layer_data_item):
         self._active_plot = self._plot_dict[layer_data_item][-1]

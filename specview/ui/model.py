@@ -17,6 +17,14 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         self._items = []
         self.itemChanged.connect(self._item_changed)
 
+    @property
+    def items(self):
+        return self._items
+
+    @property
+    def data_items(self):
+        return [x.item for x in self._items]
+
     # --- protected functions
     def _item_changed(self, item):
         if isinstance(item, ParameterDataTreeItem):
@@ -29,7 +37,7 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         self.sig_removed_item.emit(item)
         self.removeRow(index.row(), parent_index)
 
-    def create_data_item(self, nddata, name=""):
+    def create_data_item(self, nddata, name="New Data Item"):
         spec_data_item = SpectrumDataTreeItem(nddata, name)
         self._items.append(spec_data_item)
         self.appendRow(spec_data_item)
@@ -55,6 +63,7 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
                                                 parent.rowCount()+1))
         parent.add_layer(layer_data_item)
         parent.appendRow(layer_data_item)
+
         self.sig_added_item.emit(layer_data_item.index())
 
         return layer_data_item

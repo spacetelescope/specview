@@ -115,7 +115,6 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             self.appendRow([para_name, para_value])
 
     def update_parameter(self, name, value):
-        print("Model has been updated {} {}".format(name, value))
         setattr(self._model, name, float(str(value)))
         self._parent.sig_update()
 

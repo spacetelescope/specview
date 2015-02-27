@@ -104,15 +104,18 @@ class ModelTree(BaseDataTree):
         if isinstance(item, LayerDataTreeItem):
             self.showColumn(0)
             self.showColumn(1)
-            self.setEnabled(True)
+            # self.setEnabled(True)
+            self.parentWidget().setEnabled(True)
             self.setRootIndex(selected)
             self.setColumnWidth(0, 150)
             self.setColumnWidth(1, 100)
             self.active_layer = item
         else:
+            self.active_layer = None
             self.hideColumn(0)
             self.hideColumn(1)
-            self.setEnabled(False)
+            # self.setEnabled(False)
+            self.parentWidget().setEnabled(False)
 
     @property
     def current_item(self):

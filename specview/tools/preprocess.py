@@ -10,7 +10,7 @@ DEFAULT_DISPERSION_UNIT = 'pixel'
 
 
 def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
-    '''Read 1D image
+    """Read 1D image
 
     Parameters
     ----------
@@ -24,15 +24,17 @@ def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
     -----
     Assumes ONLY 1D and that the WCS has the dispersion
     definition. If not, its just pixels.
-    '''
+    """
     if len(image.data.shape) > 1:
-        raise RuntimeError('Attempting to read an image with more than one dimension.')
+        raise RuntimeError('Attempting to read an image with more than one '
+                           'dimension.')
     wcs = WCS(image.header)
     spectrum = SpectrumData()
     unit = flux_unit if flux_unit else DEFAULT_FLUX_UNIT
     spectrum.set_y(image.data, unit=unit)
     unit = wcs.wcs.cunit[0] if not dispersion_unit else dispersion_unit
-    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 1)[0], unit=unit)
+    spectrum.set_x(wcs.all_pix2world(range(image.data.shape[0]), 1)[0],
+                   unit=unit)
 
     return spectrum
 
@@ -40,7 +42,7 @@ def read_image(image, flux_unit=None, dispersion_unit=None, **kwargs):
 def read_table(table,
                flux='flux', dispersion='wavelength',
                flux_unit=None, dispersion_unit=None):
-    '''Read FITS table
+    """Read FITS table
 
     Parameters
     ----------
@@ -61,7 +63,7 @@ def read_table(table,
     Returns
     -------
     SpectrumData
-    '''
+    '"""
     if dispersion_unit is None:
         try:
             dispersion_unit = table.columns[table.names.index(dispersion.upper())].unit

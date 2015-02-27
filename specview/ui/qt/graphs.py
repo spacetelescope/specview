@@ -36,7 +36,6 @@ class BaseGraph(QtGui.QWidget):
 
     def _set_active_roi(self):
         self._active_roi = self.sender()
-        print(self._active_roi)
 
     def dragEnterEvent(self, e):
         e.accept()
@@ -102,13 +101,13 @@ class SpectraGraph(BaseGraph):
 
     @property
     def active_mask(self):
-        spec_data = self.active_item.item
+        spec_data = self.active_item.parent.item
         x_data, y_data = spec_data.x.data, spec_data.y.data
 
         return self.get_roi_mask(x_data, y_data)
 
     def _get_active_roi_data(self):
-        spec_data = self.active_item.item
+        spec_data = self.active_item.parent.item
         x_data, y_data = spec_data.x.data, spec_data.y.data
         mask = self.get_active_roi_mask(x_data, y_data)
 

@@ -1,5 +1,6 @@
 from PyQt4 import QtGui
 from os import sys, path
+from specview.ui.qt.dialogs import PlotUnitsDialog
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
 
@@ -44,6 +45,20 @@ class SpectraToolBar(BaseToolBar):
 
         self.addAction(self.atn_measure)
 
+
+class SpectraPlotToolBar(QtGui.QToolBar):
+    def __init__(self, parent=None):
+        super(SpectraPlotToolBar, self).__init__(parent)
+
+        self.atn_edit_units = QtGui.QAction("&Change Units", self)
+        self.atn_edit_units.setToolTip("Convert the plot units")
+
+        self.addAction(self.atn_edit_units)
+        self.atn_edit_units.triggered.connect(self._show_edit_units)
+
+    def _show_edit_units(self):
+        dialog = PlotUnitsDialog()
+        dialog.exec_()
 
 class ImageToolBar(BaseToolBar):
     def __init__(self):

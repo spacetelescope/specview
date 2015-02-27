@@ -1,7 +1,8 @@
 from PyQt4 import QtGui
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph
-from specview.ui.qt.toolbars import ImageToolBar, SpectraToolBar
+from specview.ui.qt.toolbars import (ImageToolBar, SpectraToolBar,
+                                     SpectraPlotToolBar)
 
 
 class BaseMdiSubWindow(QtGui.QMdiSubWindow):
@@ -34,8 +35,9 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
         super(SpectraMdiSubWindow, self).__init__(parent)
         self.graph = SpectraGraph()
         self.toolbar = SpectraToolBar()
+        self.plot_toolbar = SpectraPlotToolBar()
 
-        # self.vb_layout.addWidget(self.toolbar)
+        self.vb_layout.addWidget(self.plot_toolbar)
         self.vb_layout.addWidget(self.graph)
 
         self._connect_toolbar()

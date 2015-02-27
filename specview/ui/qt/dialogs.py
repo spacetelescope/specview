@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 
@@ -50,10 +50,6 @@ class FileEditDialog(QtGui.QDialog):
         self.form_layout.addRow(self.tr("Flux Unit"), self.man_flux_unit)
         self.form_layout.addRow(self.tr("Dispersion Unit"), self.man_disp_unit)
 
-        # Accept button
-        btn_accept = QtGui.QPushButton("&Accept")
-        btn_accept.clicked.connect(self._on_accept)
-
         # Add widgets to form layout
         vb_layout.addWidget(hdu_count)
         vb_layout.addLayout(self.form_layout)
@@ -64,7 +60,13 @@ class FileEditDialog(QtGui.QDialog):
 
         # Add form layout and accept button to main layout
         self.vb_layout_main.addWidget(group_box)
-        self.vb_layout_main.addWidget(btn_accept)
+        # self.vb_layout_main.addWidget(btn_accept)
+        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+                                            QtGui.QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self._on_accept)
+        button_box.rejected.connect(self._on_reject)
+
+        self.vb_layout_main.addWidget(button_box)
 
     def _set_selectors(self, index):
         self.flux_col_selector.clear()
@@ -84,10 +86,53 @@ class FileEditDialog(QtGui.QDialog):
         self.ext = int(self.ext_selector.currentIndex())
 
         if isinstance(self.hdulist[self.ext], FITS_table):
-            self.flux = self.hdulist[self.ext].data.names[1]
-            self.dispersion = self.hdulist[self.ext].data.names[0]
+            flux_ind = self.flux_col_selector.currentIndex()
+            disp_ind = self.disp_col_selector.currentIndex()
+            self.flux = self.hdulist[self.ext].data.names[flux_ind]
+            self.dispersion = self.hdulist[self.ext].data.names[disp_ind]
 
         self.flux_unit = str(self.man_flux_unit.text())
         self.disp_unit = str(self.man_disp_unit.text())
 
         super(FileEditDialog, self).accept()
+
+    def _on_reject(self):
+        super(FileEditDialog, self).reject()
+
+
+class PlotUnitsDialog(QtGui.QDialog):
+    def __init__(self, parent=None):
+        super(PlotUnitsDialog, self).__init__(parent)
+
+        self.vb_layout_main = QtGui.QVBoxLayout()
+        self.setLayout(self.vb_layout_main)
+
+        self.flux_unit = None
+        self.disp_unit = None
+
+        self._setup_basic()
+
+    def _setup_basic(self):
+        self.flux_unit = QtGui.QLineEdit()
+        self.disp_unit = QtGui.QLineEdit()
+
+        form_layout = QtGui.QFormLayout()
+        form_layout.addRow(self.tr("&Flux Unit:"), self.flux_unit)
+        form_layout.addRow(self.tr("&Dispersion Unit:"), self.disp_unit)
+
+        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+                                            QtGui.QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self._on_accept)
+        button_box.rejected.connect(self._on_reject)
+
+        self.vb_layout_main.addLayout(form_layout)
+        self.vb_layout_main.addWidget(button_box)
+
+    def _on_accept(self):
+        self.flux_unit = str(self.wgt_flux_unit.text())
+        self.disp_unit = str(self.wgt_disp_unit.text())
+
+        super(PlotUnitsDialog, self).accept()
+
+    def _on_reject(self):
+        super(PlotUnitsDialog, self).reject()

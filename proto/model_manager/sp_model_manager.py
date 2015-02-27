@@ -356,7 +356,7 @@ class ModelManager(object):
         self.manager.changed.connect(self._broadcastModelChange)
 
     def _broadcastModelChange(self):
-        self.changed()
+        self.changed.emit()
 
     # Use delegation to decouple the ModelManager API from
     # the GUI model manager API.

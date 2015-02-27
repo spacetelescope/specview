@@ -5,6 +5,9 @@ from specview.ui.qt.menus import SpectrumDataContextMenu
 
 
 class BaseDataTree(QtGui.QTreeView):
+    sig_current_changed = QtCore.pyqtSignal(QtCore.QModelIndex)
+    sig_selected_changed = QtCore.pyqtSignal(list)
+
     def __init__(self, parent=None):
         super(BaseDataTree, self).__init__(parent)
         self._current_item = None
@@ -54,9 +57,6 @@ class SpectrumDataTree(BaseDataTree):
     Subclass TreeView so that we can implement events that'll give
     information about interacting with the view.
     """
-    sig_current_changed = QtCore.pyqtSignal(QtCore.QModelIndex)
-    sig_selected_changed = QtCore.pyqtSignal(list)
-
     def __init__(self):
         super(SpectrumDataTree, self).__init__()
         self.setDragEnabled(True)
@@ -106,7 +106,8 @@ class ModelTree(BaseDataTree):
             self.showColumn(1)
             self.setEnabled(True)
             self.setRootIndex(selected)
-            # self.resizeColumnToContents(0)
+            self.setColumnWidth(0, 150)
+            self.setColumnWidth(1, 100)
             self.active_layer = item
         else:
             self.hideColumn(0)

@@ -34,7 +34,6 @@ class SpectrumData(object):
     def __init__(self, x=None, y=None):
         self._x = x
         self._y = y
-        self._layers = []
 
     def set_x(self, data, wcs=None, unit=None, name=""):
         if not isinstance(wcs, WCS) and wcs is not None:
@@ -47,16 +46,6 @@ class SpectrumData(object):
             raise TypeError("wcs object is not of type WCS.")
 
         self._y = SpectrumArray(data, wcs=wcs, unit=unit)
-
-    def add_layer(self, mask):
-        self._layers.append(Layer(self, mask))
-
-    def remove_layer(self, layer):
-        self._layers.remove(layer)
-
-    @property
-    def models(self):
-        return self._models
 
     @property
     def x(self):
@@ -76,33 +65,31 @@ class SpectrumData(object):
 
     @mask.setter
     def mask(self, value):
-        print("Setting mask")
-        print(value)
         self.x.mask = value
         self.y.mask = value
 
+    def add(self, operand, propagate_uncertainties=False):
+        new_y = self._y.add(operand.y, propagate_uncertainties)
+        return SpectrumData(self._x, new_y)
 
-class Layer(object):
-    """
-    Layer objects contain a masked array of the original data. They can also
-    contain any number of model objects.
-    """
-    def __init__(self, parent, mask):
-        self._parent = parent
-        self._mask = mask
+    def subtract(self, operand, propagate_uncertainties=False):
+        new_y = self._y.subtract(operand.y, propagate_uncertainties)
+        return SpectrumData(self._x, new_y)
 
-        self.data = np.ma.array(parent, mask=mask)
-        self._models = []
+    def multiply(self, operand, propagate_uncertainties=False):
+        new_y = self._y.multiply(operand.y, propagate_uncertainties)
+        return SpectrumData(self._x, new_y)
 
-    def add_model(self, model):
-        self._models.append(model)
+    def divide(self, operand, propagate_uncertainties=False):
+        new_y = self._y.divide(operand.y, propagate_uncertainties)
+        return SpectrumData(self._x, new_y)
 
 
 class ImageArray(NDSlicingMixin, NDArithmeticMixin, NDData):
     """
     Basic container for image data.
 
-    Contains additional metadata such as uncertaintier, a mask, units,
+    Contains additional metadata such as uncertainties, a mask, units,
     and/or coordinate system.
     """
     def __init__(self, *args, **kwargs):
@@ -110,10 +97,10 @@ class ImageArray(NDSlicingMixin, NDArithmeticMixin, NDData):
 
     @property
     def shape(self):
-        return self._data.shape
+        return self.data.shape
 
 
-class CubeData():
+class CubeData(NDSlicingMixin, NDArithmeticMixin, NDData):
     """
     Container object for IFU cube data. The internal data unit for the data
     array is whatever unit the counts are in. That is, the unit for this
@@ -139,8 +126,7 @@ class CubeData():
 
     @property
     def shape(self):
-        return self._data.shape
-
+        return self.data.shape
 
 
 if __name__ == '__main__':

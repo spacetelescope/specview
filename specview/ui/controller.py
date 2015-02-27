@@ -8,6 +8,8 @@ from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
+from specview.analysis.statistics import stats, eq_width, extract
+import specview
 
 
 class Controller(object):
@@ -24,14 +26,13 @@ class Controller(object):
         self._connect_mdiarea()
         self._connect_model_editor_dock()
         self._connect_active_data()
-        self._connect_arithmetic()
 
         self._viewer.console_dock.wgt_console.localNamespace = {
             'model': self._model,
             'ui': self,
-            # 'specview': specview,
-            'np': np
-        }
+            'specview': specview,
+            'np': np,
+            'data': self.model.data_items}
 
     # ---- properties
     @property
@@ -43,12 +44,6 @@ class Controller(object):
         return self._model
 
     # ---- protected functions
-    def _connect_arithmetic(self):
-        self.viewer.data_dock.btn_sum.clicked.connect(lambda:
-            self.model.create_data_item(
-                np.sum(self.viewer.data_dock.wgt_data_tree.selected_items),
-                "Sum"))
-
     def _connect_active_data(self):
         self.viewer.data_dock.wgt_data_tree.clicked.connect(
             self.update_active_plots)
@@ -65,13 +60,6 @@ class Controller(object):
             self.viewer.model_editor_dock.wgt_model_tree.set_root_index
         )
 
-        # self.viewer.data_dock.wgt_data_tree.clicked.connect(lambda:
-        #     self.viewer.model_editor_dock.wgt_model_tree.set_root_index(
-        #         self.viewer.data_dock.wgt_data_tree.current_item,
-        #         self.viewer.data_dock.wgt_data_tree.currentIndex()
-        #     )
-        # )
-
     def _connect_mdiarea(self):
         self.viewer.mdiarea.subWindowActivated.connect(self._set_toolbar)
 
@@ -83,6 +71,7 @@ class Controller(object):
             self._create_display)
         self._viewer.data_dock.btn_add_plot.clicked.connect(self._display_item)
 
+    # --- protected functions
     def _display_item(self):
         item = self.viewer.data_dock.wgt_data_tree.current_item
 
@@ -144,6 +133,7 @@ class Controller(object):
                                            name="Model Fit ({}: {})".format(
                                                layer_data_item.parent.text(),
                                                layer_data_item.text()))
+
         self.display_graph(spec_data_item)
 
     def _open_file_dialog(self):
@@ -186,17 +176,26 @@ class Controller(object):
 
         self.display_graph(spectrum_data, sub_window)
 
-    def display_graph(self, spectrum_data, sub_window=None):
+    def display_graph(self, spectrum_data, sub_window=None, set_active=True,
+                      use_step=True):
         if not isinstance(spectrum_data, LayerDataTreeItem):
             spectrum_data = self.model.create_layer(spectrum_data)
 
         if sub_window is None:
             sub_window = self._viewer.mdiarea.activeSubWindow()
 
-        sub_window.graph.add_item(spectrum_data)
+        sub_window.graph.add_item(spectrum_data, set_active, use_step)
 
     def get_measurements(self, sub_window):
-        pass
+        x_range, y_range = sub_window.graph._get_active_roi_coords()
+        active_item = sub_window.graph.active_item
+        active_data = active_item.item
+
+        region = extract(active_data, x_range)
+        stat = stats(region)
+
+        self.viewer.info_dock.set_labels(stat, name=active_item.text())
+        self.viewer.info_dock.show()
 
     def open_file(self, path):
         dialog = FileEditDialog(path)

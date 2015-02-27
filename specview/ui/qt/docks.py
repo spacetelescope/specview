@@ -51,16 +51,6 @@ class DataDockWidget(BaseDockWidget):
         self.btn_add_plot.setIcon(QtGui.QIcon(path.join(PATH,
                                                         "insert_plot.png")))
 
-        # Arithmetic buttons
-        self.btn_sum = QtGui.QToolButton()
-        self.btn_sum.setIcon(QtGui.QIcon(path.join(PATH,"add.png")))
-        self.btn_diff = QtGui.QToolButton()
-        self.btn_diff.setIcon(QtGui.QIcon(path.join(PATH, "subtract.png")))
-        self.btn_mult = QtGui.QToolButton()
-        self.btn_mult.setIcon(QtGui.QIcon(path.join(PATH, "multiply.png")))
-        self.btn_div = QtGui.QToolButton()
-        self.btn_div.setIcon(QtGui.QIcon(path.join(PATH, "divide.png")))
-
         # Add to main layout
         self.add_widget(self.wgt_data_tree)
 
@@ -69,10 +59,6 @@ class DataDockWidget(BaseDockWidget):
         hb_layout.addWidget(self.btn_create_plot)
         hb_layout.addWidget(self.btn_add_plot)
         hb_layout.addStretch()
-        hb_layout.addWidget(self.btn_sum)
-        hb_layout.addWidget(self.btn_diff)
-        hb_layout.addWidget(self.btn_mult)
-        hb_layout.addWidget(self.btn_div)
 
         self.add_layout(hb_layout)
 
@@ -93,12 +79,22 @@ class InfoDockWidget(BaseDockWidget):
 
         form_layout = QtGui.QFormLayout()
         form_layout.addWidget(self.lbl_layer)
-        form_layout.addRow(self.tr("Mean"), self.lbl_mean)
-        form_layout.addRow(self.tr("Median"), self.lbl_median)
-        form_layout.addRow(self.tr("Std. Dev."), self.lbl_stddev)
-        form_layout.addRow(self.tr("Total"), self.lbl_total)
+        form_layout.addRow(self.tr("Mean:"), self.lbl_mean)
+        form_layout.addRow(self.tr("Median:"), self.lbl_median)
+        form_layout.addRow(self.tr("Std. Dev.:"), self.lbl_stddev)
+        form_layout.addRow(self.tr("Total:"), self.lbl_total)
 
-        self.add_layout(form_layout)
+        group_box = QtGui.QGroupBox("Statistics")
+        group_box.setLayout(form_layout)
+
+        self.add_widget(group_box)
+
+    def set_labels(self, stats, name=""):
+        self.lbl_layer.setText(name)
+        self.lbl_mean.setText(str(stats['mean']))
+        self.lbl_median.setText(str(stats['median']))
+        self.lbl_stddev.setText(str(stats['stddev']))
+        self.lbl_total.setText(str(stats['total']))
 
 
 class ConsoleDockWidget(BaseDockWidget):

@@ -1,8 +1,9 @@
 from itertools import cycle
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
+from astropy.units import Unit
 
 from specview.ui.qt.tree_items import SpectrumDataTreeItem, LayerDataTreeItem
 
@@ -11,6 +12,8 @@ COLORS = cycle(['g', 'r', 'c', 'm', 'y', 'w'])
 
 
 class BaseGraph(QtGui.QWidget):
+    sig_units_changed = QtCore.pyqtSignal()
+
     def __init__(self):
         super(BaseGraph, self).__init__()
         # Accept drag events
@@ -25,6 +28,7 @@ class BaseGraph(QtGui.QWidget):
         # Create roi container
         self._rois = []
         self._active_roi = None
+        self._units = None
 
     @property
     def active_roi(self):
@@ -33,6 +37,11 @@ class BaseGraph(QtGui.QWidget):
     @property
     def rois(self):
         return self._rois
+
+    def set_units(self, x=None, y=None, z=None):
+        self._units = [u if u is not None else self._units[i]
+                       for i, u in enumerate([x, y, z])]
+        self.sig_units_changed.emit()
 
     def _set_active_roi(self):
         self._active_roi = self.sender()
@@ -95,6 +104,8 @@ class SpectraGraph(BaseGraph):
         self.plot_window.showGrid(x=True, y=True)
         self.view_box = self.plot_window.getViewBox()
 
+        self.sig_units_changed.connect(self.update_all)
+
     @property
     def active_item(self):
         return self._active_item
@@ -118,11 +129,25 @@ class SpectraGraph(BaseGraph):
         x1, y1, x2, y2 = roi_shape.getCoords()
         return [x1, x2], [y1, y2]
 
+    def update_all(self):
+        layer_data_items = self._plot_dict.keys()
+
+        for layer_data_item in layer_data_items:
+            self.remove_item(layer_data_item)
+
+        for layer_data_item in layer_data_items:
+            self.add_item(layer_data_item)
+
     def add_item(self, layer_data_item, set_active=True, use_step=True):
         if layer_data_item in self._plot_dict.keys():
             self._plot_dict[layer_data_item].append(layer_data_item)
         else:
             self._plot_dict[layer_data_item] = []
+
+        layer_data = layer_data_item.item
+
+        if self._units is None:
+            self._units = [layer_data.x.unit, layer_data.y.unit, None]
 
         self._graph_data(layer_data_item, set_active, use_step)
 
@@ -146,23 +171,33 @@ class SpectraGraph(BaseGraph):
         for layer_data_item in layer_data_items:
             del self._plot_dict[layer_data_item]
 
-    def update_all(self):
-        pass
-
     def _graph_data(self, layer_data_item, set_active=True, use_step=True):
         spec_data = layer_data_item.item
+        spec_x_array = spec_data.x.convert_unit_to(self._units[0])
+        spec_y_array = spec_data.y.convert_unit_to(self._units[1])
 
-        fin_pnt = spec_data.x.data[-1] - spec_data.x.data[-2] +\
-                  spec_data.x.data[-1]
+        fin_pnt = spec_x_array.data[-1] - spec_x_array.data[-2] +\
+                  spec_x_array.data[-1]
 
-        x_data = np.append(spec_data.x.data, fin_pnt) if use_step else \
-                           spec_data.x.data
+        x_data = np.append(spec_x_array.data, fin_pnt) if use_step else \
+                           spec_x_array.data
 
         plot = pg.PlotDataItem(x_data,
-                               spec_data.y.data,
+                               spec_y_array.data,
                                pen=pg.mkPen(next(COLORS)),
                                clickable=True,
                                stepMode=use_step)
+
+        self.plot_window.setLabel('bottom',
+                                  text='Dispersion [{}]'.format(
+                                      spec_x_array.unit),
+                                  # units=spectrum_data.x.unit,
+        )
+        self.plot_window.setLabel('left',
+                                  text='Flux [{}]'.format(
+                                      spec_y_array.unit),
+                                  # units=spectrum_data.y.unit,
+        )
 
         self._plot_dict[layer_data_item].append(plot)
         self.plot_window.addItem(plot)
@@ -175,17 +210,6 @@ class SpectraGraph(BaseGraph):
         self._active_item = layer_data_item
 
         spectrum_data = layer_data_item.item
-
-        self.plot_window.setLabel('bottom',
-                                  text='Dispersion [{}]'.format(
-                                      spectrum_data.x.unit),
-                                  # units=spectrum_data.x.unit,
-        )
-        self.plot_window.setLabel('left',
-                                  text='Flux [{}]'.format(
-                                      spectrum_data.y.unit),
-                                  # units=spectrum_data.y.unit,
-        )
 
     def select_active(self, layer_data_item):
         if layer_data_item not in self._plot_dict.keys():

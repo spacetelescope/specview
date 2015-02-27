@@ -107,18 +107,18 @@ class PlotUnitsDialog(QtGui.QDialog):
         self.vb_layout_main = QtGui.QVBoxLayout()
         self.setLayout(self.vb_layout_main)
 
-        self.flux_unit = None
-        self.disp_unit = None
+        self.wgt_flux_unit = None
+        self.wgt_disp_unit = None
 
         self._setup_basic()
 
     def _setup_basic(self):
-        self.flux_unit = QtGui.QLineEdit()
-        self.disp_unit = QtGui.QLineEdit()
+        self.wgt_flux_unit = QtGui.QLineEdit()
+        self.wgt_disp_unit = QtGui.QLineEdit()
 
         form_layout = QtGui.QFormLayout()
-        form_layout.addRow(self.tr("&Flux Unit:"), self.flux_unit)
-        form_layout.addRow(self.tr("&Dispersion Unit:"), self.disp_unit)
+        form_layout.addRow(self.tr("&Flux Unit:"), self.wgt_flux_unit)
+        form_layout.addRow(self.tr("&Dispersion Unit:"), self.wgt_disp_unit)
 
         button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
                                             QtGui.QDialogButtonBox.Cancel)

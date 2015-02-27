@@ -1,4 +1,5 @@
 from PyQt4 import QtGui
+from astropy.units import Unit
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph
 from specview.ui.qt.toolbars import (ImageToolBar, SpectraToolBar,
@@ -41,6 +42,19 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
         self.vb_layout.addWidget(self.graph)
 
         self._connect_toolbar()
+        self._connect_tools()
 
     def _connect_toolbar(self):
         self.toolbar.atn_insert_roi.triggered.connect(self.graph.add_roi)
+
+    def _connect_tools(self):
+        self.plot_toolbar.unit_dialog.accepted.connect(
+            self._update_graph_units)
+
+    def _update_graph_units(self):
+        x_unit = self.plot_toolbar.unit_dialog.disp_unit
+        y_unit = self.plot_toolbar.unit_dialog.flux_unit
+
+        self.graph.set_units(x=Unit(x_unit) if x_unit is not "" else None,
+                             y=Unit(y_unit) if y_unit is not "" else None,
+                             z=None)

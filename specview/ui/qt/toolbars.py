@@ -49,7 +49,7 @@ class SpectraToolBar(BaseToolBar):
 class SpectraPlotToolBar(QtGui.QToolBar):
     def __init__(self, parent=None):
         super(SpectraPlotToolBar, self).__init__(parent)
-
+        self.unit_dialog = PlotUnitsDialog()
         self.atn_edit_units = QtGui.QAction("&Change Units", self)
         self.atn_edit_units.setToolTip("Convert the plot units")
 
@@ -57,8 +57,8 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         self.atn_edit_units.triggered.connect(self._show_edit_units)
 
     def _show_edit_units(self):
-        dialog = PlotUnitsDialog()
-        dialog.exec_()
+        self.unit_dialog.exec_()
+
 
 class ImageToolBar(BaseToolBar):
     def __init__(self):

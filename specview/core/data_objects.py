@@ -28,7 +28,7 @@ class SpectrumArray(NDSlicingMixin, NDArithmeticMixin, NDData):
     def convert_unit_to(self, unit, equivalencies=[]):
         """
         Returns a new `NDData` object whose values have been converted
-        to a new unit.
+        to a new unit. Adapted from `compat.py` of Astropy.
 
         Parameters
         ----------

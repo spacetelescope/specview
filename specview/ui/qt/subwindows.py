@@ -2,7 +2,8 @@ from PyQt4 import QtGui
 from astropy.units import Unit
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph
-from specview.ui.qt.toolbars import ImageToolBar, SpectraToolBar, SpectraPlotToolBar
+from specview.ui.qt.toolbars import (ImageToolBar, SpectraToolBar,
+                                     SpectraPlotToolBar)
 
 
 class BaseMdiSubWindow(QtGui.QMdiSubWindow):

@@ -1,8 +1,9 @@
 from PyQt4 import QtGui, QtCore
 
 from specview.ui.qt.menubars import MainMainBar
-from specview.ui.qt.docks import (DataDockWidget, InfoDockWidget,
-                                  ConsoleDockWidget, ModelDockWidget)
+from specview.ui.qt.docks import (DataDockWidget, MeasurementDockWidget,
+                                  ConsoleDockWidget, ModelDockWidget,
+                                  EquivalentWidthDockWidget)
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -39,16 +40,24 @@ class MainWindow(QtGui.QMainWindow):
         self.data_dock = DataDockWidget(self)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.data_dock)
 
-        # Setup info view dock
-        self.info_dock = InfoDockWidget(self)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.info_dock)
-        self.info_dock.hide()
+        # Setup measurement dock
+        self.measurement_dock = MeasurementDockWidget(self)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.measurement_dock)
+        self.measurement_dock.hide()
 
-        # Setup info view dock
+        # Setup model dock
         self.model_editor_dock = ModelDockWidget(self)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.model_editor_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea,
+                           self.model_editor_dock)
         self.model_editor_dock.setFloating(True)
         self.model_editor_dock.hide()
+
+        # Setup equivalent width dock
+        self.equiv_width_dock = EquivalentWidthDockWidget(self)
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea,
+                           self.model_editor_dock)
+        self.equiv_width_dock.setFloating(True)
+        self.equiv_width_dock.hide()
 
         # Setup console dock
         self.console_dock = ConsoleDockWidget(self)
@@ -57,11 +66,13 @@ class MainWindow(QtGui.QMainWindow):
         self._setup_menu_bar()
 
     def _setup_menu_bar(self):
-        self.menu_bar.docks_menu.addAction(
+        self.menu_bar.window_menu.addAction(
             self.data_dock.toggleViewAction())
-        self.menu_bar.docks_menu.addAction(
-            self.info_dock.toggleViewAction())
-        self.menu_bar.docks_menu.addAction(
+        self.menu_bar.window_menu.addAction(
+            self.measurement_dock.toggleViewAction())
+        # self.menu_bar.docks_menu.addAction(
+        #     self.equiv_width_dock.toggleViewAction())
+        self.menu_bar.window_menu.addAction(
             self.console_dock.toggleViewAction())
 
     def set_toolbar(self, toolbar=None, hide_all=False):

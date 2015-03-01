@@ -38,8 +38,10 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     def remove_data_item(self, index, parent_index):
         item = index.model().itemFromIndex(index)
         self.removeRow(index.row(), parent_index)
+
         if item in self._items:
             self._items.remove(item)
+
         self.sig_removed_item.emit(item)
 
     def create_data_item(self, nddata, name="New"):

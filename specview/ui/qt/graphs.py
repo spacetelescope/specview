@@ -144,6 +144,9 @@ class SpectraGraph(BaseGraph):
         if layer_data_item is None:
             layer_data_item = self._active_item
 
+            if layer_data_item is None:
+                return
+
         plot = self._plot_dict[layer_data_item][-1]
         color = plot.opts['pen'].color()
         self.remove_item(layer_data_item)

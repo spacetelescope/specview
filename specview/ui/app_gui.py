@@ -22,11 +22,11 @@ class AppGUI(MainWindow):
                                               'np': np}
 
     def slot_menu_bar(self):
-        self.menu_bar.docks_menu.addAction(
+        self.menu_bar.window_menu.addAction(
             self.dock_tree_view.toggleViewAction())
-        self.menu_bar.docks_menu.addAction(
+        self.menu_bar.window_menu.addAction(
             self.dock_info_view.toggleViewAction())
-        self.menu_bar.docks_menu.addAction(
+        self.menu_bar.window_menu.addAction(
             self.dock_console.toggleViewAction())
 
     def slot_data_sets(self):

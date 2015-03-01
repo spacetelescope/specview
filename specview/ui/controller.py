@@ -9,7 +9,6 @@ from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
 from specview.analysis.statistics import stats, eq_width, extract
-import specview
 
 
 class Controller(object):
@@ -20,20 +19,30 @@ class Controller(object):
         self._viewer.data_dock.wgt_data_tree.setModel(self._model)
         self._viewer.model_editor_dock.wgt_model_tree.setModel(self._model)
 
-        self._connect_trees()
-        self._connect_menu_bar()
-        self._connect_data_dock()
-        self._connect_mdiarea()
-        self._connect_model_editor_dock()
-        self._connect_active_data()
+        self.__connect_trees()
+        self.__connect_menu_bar()
+        self.__connect_data_dock()
+        self.__connect_mdiarea()
+        self.__connect_model_editor_dock()
+        self.__connect_active_data()
+        self.__connect_console()
 
-        self._viewer.console_dock.wgt_console.localNamespace = {
-            'model': self._model,
-            'ui': self,
-            'specview': specview,
-            'np': np}
+        # This should definitely be formalized, but for the sake of the
+        # demo, it's good enough
+        self._main_name_space = {'np': np,
+                                 'eq_width': eq_width,
+                                 'stats': stats,
+                                 'add': lambda x, y: self.add_data_set(x + y),
+                                 'subtract': lambda x, y: self.add_data_set(
+                                     x - y),
+                                 'divide': lambda x, y: self.add_data_set(
+                                     x / y),
+                                 'multiple': lambda x, y: self.add_data_set(
+                                     x * y)}
 
-    # ---- properties
+        self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+
+    # -- properties
     @property
     def viewer(self):
         return self._viewer
@@ -42,45 +51,59 @@ class Controller(object):
     def model(self):
         return self._model
 
-    # ---- protected functions
-    def _connect_active_data(self):
+    # -- private functions
+    def __connect_active_data(self):
         self.viewer.data_dock.wgt_data_tree.clicked.connect(
             self.update_active_plots)
 
-    def _connect_model_editor_dock(self):
+    def __connect_model_editor_dock(self):
         model_selector = self.viewer.model_editor_dock.wgt_model_selector
         model_selector.currentIndexChanged.connect(self._create_model)
 
         self.viewer.model_editor_dock.btn_perform_fit.clicked.connect(
             self._perform_fit)
 
-    def _connect_trees(self):
+    def __connect_trees(self):
         self.viewer.data_dock.wgt_data_tree.sig_current_changed.connect(
             self.viewer.model_editor_dock.wgt_model_tree.set_root_index)
 
-    def _connect_mdiarea(self):
+    def __connect_mdiarea(self):
         self.viewer.mdiarea.subWindowActivated.connect(self._set_toolbar)
 
-    def _connect_menu_bar(self):
+    def __connect_menu_bar(self):
         self.viewer.menu_bar.atn_open.triggered.connect(self._open_file_dialog)
 
-    def _connect_data_dock(self):
-        self._viewer.data_dock.btn_create_plot.clicked.connect(
+    def __connect_data_dock(self):
+        self.viewer.data_dock.btn_create_plot.clicked.connect(
             self._create_display)
-        self._viewer.data_dock.btn_add_plot.clicked.connect(self._display_item)
+        self.viewer.data_dock.btn_add_plot.clicked.connect(self._display_item)
+        self.viewer.data_dock.btn_remove_plot.clicked.connect(
+            self._remove_display_item)
 
-    # --- protected functions
+    def __connect_console(self):
+        self.model.itemChanged.connect(self._update_namespace)
+        self.model.sig_added_item.connect(self._update_namespace)
+        self.model.sig_removed_item.connect(self._update_namespace)
+
+    # -- protected functions
+    def _create_display(self):
+        item = self.viewer.data_dock.wgt_data_tree.current_item
+
+        if item is not None:
+            self.create_display(item)
+
     def _display_item(self):
         item = self.viewer.data_dock.wgt_data_tree.current_item
 
         if item is not None:
             self.display_graph(item)
 
-    def _create_display(self):
-        item = self.viewer.data_dock.wgt_data_tree.current_item
+    def _remove_display_item(self):
+        items = self.viewer.data_dock.wgt_data_tree.selected_items
 
-        if item is not None:
-            self.create_display(item)
+        if items is not None:
+            for item in [x for x in items if x is not None]:
+                self.remove_graph(item)
 
     def _create_layer(self):
         sw = self.viewer.mdiarea.activeSubWindow()
@@ -142,8 +165,8 @@ class Controller(object):
                                                         'Open file')
         self.open_file(fname)
 
-    # ---- public functions
-    def update_active_plots(self, index):
+    # -- public functions
+    def update_active_plots(self, *args):
         item = self.viewer.data_dock.wgt_data_tree.current_item
 
         if isinstance(item, LayerDataTreeItem):
@@ -181,15 +204,24 @@ class Controller(object):
 
         self.display_graph(spectrum_data, sub_window)
 
-    def display_graph(self, spectrum_data, sub_window=None, set_active=True,
+    def display_graph(self, layer_data_item, sub_window=None, set_active=True,
                       style='histogram'):
-        if not isinstance(spectrum_data, LayerDataTreeItem):
-            spectrum_data = self.model.create_layer(spectrum_data)
+        if not isinstance(layer_data_item, LayerDataTreeItem):
+            layer_data_item = self.model.create_layer(layer_data_item)
 
         if sub_window is None:
             sub_window = self.viewer.mdiarea.activeSubWindow()
 
-        sub_window.graph.add_item(spectrum_data, set_active, style)
+        sub_window.graph.add_item(layer_data_item, set_active, style)
+
+    def remove_graph(self, layer_data_item, sub_window=None):
+        if not isinstance(layer_data_item, LayerDataTreeItem):
+            return
+
+        if sub_window is None:
+            sub_window = self.viewer.mdiarea.activeSubWindow()
+
+        sub_window.graph.remove_item(layer_data_item)
 
     def get_measurements(self, sub_window):
         roi = sub_window.graph._active_roi
@@ -204,15 +236,31 @@ class Controller(object):
         region = extract(active_data, x_range)
         stat = stats(region)
 
-        self.viewer.info_dock.set_labels(stat,
+        self.viewer.measurement_dock.set_labels(stat,
                                          data_name=active_item.parent.text(),
                                          layer_name=active_item.text())
-        self.viewer.info_dock.show()
+        self.viewer.measurement_dock.show()
 
     def get_equivalent_widths(self, sub_window):
-        pass
+        # TODO: finish implementing this
+        stat_list = []
+
+        for roi in sub_window.graph.rois[-2:]:
+            if roi is None:
+                continue
+
+            x_range, y_range = sub_window.graph._get_roi_coords(roi)
+            active_item = sub_window.graph.active_item
+            active_data = active_item.item
+
+            region = extract(active_data, x_range)
+            stat_list.append(stats(region))
+
 
     def open_file(self, path):
+        if not path:
+            return
+
         dialog = FileEditDialog(path)
         dialog.exec_()
 
@@ -227,7 +275,7 @@ class Controller(object):
         name = path.split('/')[-1].split('.')[-2]
         self.add_data_set(spec_data, name)
 
-    # ---- slot functions
+    # -- slot functions
     def _set_toolbar(self):
         sw = self.viewer.mdiarea.activeSubWindow()
 
@@ -236,3 +284,16 @@ class Controller(object):
             self.viewer.set_toolbar(toolbar=tb)
         else:
             self.viewer.set_toolbar(hide_all=True)
+
+    def _update_namespace(self, item=None):
+        local_namespace = self._main_name_space
+
+        for data_item in self.model.items:
+            local_namespace[str(data_item.text().replace(" ", "_"))] = \
+                data_item.item
+
+            for layer_item in data_item.layers:
+                local_namespace[str(layer_item.text().replace(" ", "_"))] = \
+                    layer_item.item
+
+        self.viewer.console_dock.wgt_console.localNamespace = local_namespace

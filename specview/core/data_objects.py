@@ -117,20 +117,69 @@ class SpectrumData(object):
         self.y.mask = value
 
     def add(self, operand, propagate_uncertainties=False):
-        new_y = self._y.add(operand.y, propagate_uncertainties)
+        # new_y = self._y.add(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand)
+        new_y = a.y.add(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def subtract(self, operand, propagate_uncertainties=False):
-        new_y = self._y.subtract(operand.y, propagate_uncertainties)
+        # new_y = self._y.subtract(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand)
+        new_y = a.y.subtract(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def multiply(self, operand, propagate_uncertainties=False):
-        new_y = self._y.multiply(operand.y, propagate_uncertainties)
+        # new_y = self._y.multiply(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand, fill=1)
+        new_y = a.y.multiply(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def divide(self, operand, propagate_uncertainties=False):
-        new_y = self._y.divide(operand.y, propagate_uncertainties)
+        # new_y = self._y.divide(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand, fill=1)
+        new_y = a.y.divide(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
+
+    def _fit_shape(self, a, b, fill=0):
+        if a.x.shape[0] > b.x.shape[0]:
+            # Make y the same shape
+            x_start = a.x.data[a.x.data < b.x.data[0]]
+            x_end = a.x.data[a.x.data > b.x.data[-1]]
+            new_x = np.concatenate((x_start, b.x.data, x_end))
+
+            y_fill = np.empty(new_x.size)
+            y_fill.fill(fill)
+
+            y_start = y_fill[new_x < b.x.data[0]]
+            y_end = y_fill[new_x > b.x.data[-1]]
+            new_y = np.concatenate((y_start, b.y.data, y_end))
+
+            yp = np.interp(a.x.data, new_x, new_y)
+
+            fin_x = a
+            fin_y = SpectrumData(SpectrumArray(new_x, unit=b.x.unit, wcs=b.x.wcs),
+                                 SpectrumArray(yp, unit=b.y.unit, wcs=b.y.wcs))
+
+        else:
+            # Make y the same shape
+            x_start = b.x.data[b.x.data < a.x.data[0]]
+            x_end = b.x.data[b.x.data > a.x.data[-1]]
+            new_x = np.concatenate((x_start, a.x.data, x_end))
+
+            y_fill = np.empty(new_x.size)
+            y_fill.fill(fill)
+
+            y_start = y_fill[new_x < a.x.data[0]]
+            y_end = y_fill[new_x > a.x.data[-1]]
+            new_y = np.concatenate((y_start, a.y.data, y_end))
+
+            yp = np.interp(b.x.data, new_x, new_y)
+
+            fin_x = a
+            fin_y = SpectrumData(SpectrumArray(new_x, unit=a.x.unit, wcs=a.x.wcs),
+                                 SpectrumArray(yp, unit=a.y.unit, wcs=a.y.wcs))
+
+        return fin_x, fin_y
 
     def __add__(self, other):
         return self.add(other)

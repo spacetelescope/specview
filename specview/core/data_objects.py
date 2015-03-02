@@ -117,19 +117,27 @@ class SpectrumData(object):
         self.y.mask = value
 
     def add(self, operand, propagate_uncertainties=False):
-        new_y = self._y.add(operand.y, propagate_uncertainties)
+        # new_y = self._y.add(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand)
+        new_y = a.y.add(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def subtract(self, operand, propagate_uncertainties=False):
-        new_y = self._y.subtract(operand.y, propagate_uncertainties)
+        # new_y = self._y.subtract(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand)
+        new_y = a.y.subtract(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def multiply(self, operand, propagate_uncertainties=False):
-        new_y = self._y.multiply(operand.y, propagate_uncertainties)
+        # new_y = self._y.multiply(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand, fill=1)
+        new_y = a.y.multiply(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def divide(self, operand, propagate_uncertainties=False):
-        new_y = self._y.divide(operand.y, propagate_uncertainties)
+        # new_y = self._y.divide(operand.y, propagate_uncertainties)
+        a, b = self._fit_shape(self, operand, fill=1)
+        new_y = a.y.divide(b.y, propagate_uncertainties)
         return SpectrumData(self._x, new_y)
 
     def _fit_shape(self, a, b, fill=0):

@@ -81,7 +81,12 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         if not isinstance(parent, LayerDataTreeItem):
             return
 
-        model = model_fitting.get_model(model_name)
+        try:
+            model = model_fitting.get_model(model_name)
+        except TypeError:
+            print("Current model is not implemented.")
+            return
+
         parent.add_model(model)
         model_data_item = ModelDataTreeItem(parent, model, model_name)
         model_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'model.png')))

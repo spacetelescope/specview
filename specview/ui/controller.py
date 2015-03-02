@@ -58,7 +58,7 @@ class Controller(object):
 
     def __connect_model_editor_dock(self):
         model_selector = self.viewer.model_editor_dock.wgt_model_selector
-        model_selector.currentIndexChanged.connect(self._create_model)
+        model_selector.activated.connect(self._create_model)
 
         self.viewer.model_editor_dock.btn_perform_fit.clicked.connect(
             self._perform_fit)

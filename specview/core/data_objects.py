@@ -143,15 +143,15 @@ class SpectrumData(object):
     def _fit_shape(self, a, b, fill=0):
         if a.x.shape[0] > b.x.shape[0]:
             # Make y the same shape
-            x_start = a.x.data[a.x.data < b.x.data]
-            x_end = a.x.data[a.x.data > b.x.data]
+            x_start = a.x.data[a.x.data < b.x.data[0]]
+            x_end = a.x.data[a.x.data > b.x.data[-1]]
             new_x = np.concatenate((x_start, b.x.data, x_end))
 
             y_fill = np.empty(new_x.size)
             y_fill.fill(fill)
 
-            y_start = y_fill[new_x < b.x.data]
-            y_end = y_fill[new_x < b.x.data]
+            y_start = y_fill[new_x < b.x.data[0]]
+            y_end = y_fill[new_x > b.x.data[-1]]
             new_y = np.concatenate((y_start, b.y.data, y_end))
 
             yp = np.interp(a.x.data, new_x, new_y)
@@ -162,15 +162,15 @@ class SpectrumData(object):
 
         else:
             # Make y the same shape
-            x_start = b.x.data[b.x.data < a.x.data]
-            x_end = b.x.data[b.x.data > a.x.data]
+            x_start = b.x.data[b.x.data < a.x.data[0]]
+            x_end = b.x.data[b.x.data > a.x.data[-1]]
             new_x = np.concatenate((x_start, a.x.data, x_end))
 
             y_fill = np.empty(new_x.size)
             y_fill.fill(fill)
 
-            y_start = y_fill[new_x < a.x.data]
-            y_end = y_fill[new_x < a.x.data]
+            y_start = y_fill[new_x < a.x.data[0]]
+            y_end = y_fill[new_x > a.x.data[-1]]
             new_y = np.concatenate((y_start, a.y.data, y_end))
 
             yp = np.interp(b.x.data, new_x, new_y)

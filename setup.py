@@ -11,8 +11,11 @@ setup(name='SpecView',
       packages=find_packages(),
       entry_points={
           'console_scripts': [
-              'specview = specview.main:main'
+              'sview = specview.main:main'
           ]
+      },
+      package_data={
+          'qt': ['img/*']
       },
       zip_safe=False,
       install_requires=['numpy>=1.9.1',

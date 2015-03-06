@@ -5,7 +5,7 @@ from os import sys, path
 from specview.ui.controller import Controller
 
 
-class Main(Controller):
+class SView(Controller):
     """Main entry point"""
 
     qt_app = None
@@ -16,15 +16,14 @@ class Main(Controller):
         if self.__class__.qt_app is None:
             self.__class__.qt_app = pyqtapplication(argv)
 
-        super(Main, self).__init__()
+        super(SView, self).__init__()
         self.viewer.show()
 
         
 def main():
-    app_gui = Main(sys.argv)
+    app_gui = SView(sys.argv)
     sys.exit(app_gui.qt_app.exec_())
 
 
-if __name__ == '__main__' and __package__ is None:
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+if __name__ == '__main__':
     main()

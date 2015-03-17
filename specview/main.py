@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from os import sys, path
+from os import sys
 
 from specview.ui.controller import Controller
 
@@ -19,7 +19,7 @@ class SView(Controller):
         super(SView, self).__init__()
         self.viewer.show()
 
-        
+
 def main():
     app_gui = SView(sys.argv)
     sys.exit(app_gui.qt_app.exec_())

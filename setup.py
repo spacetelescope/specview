@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(name='SpecView',
@@ -8,7 +8,15 @@ setup(name='SpecView',
       author='Harry Ferguson',
       author_email='ferguson@stsci.edu',
       license='AURA',
-      packages=['specview'],
+      packages=find_packages(),
+      entry_points={
+          'console_scripts': [
+              'sview = specview.main:main'
+          ]
+      },
+      package_data={
+          'qt': ['img/*']
+      },
       zip_safe=False,
       install_requires=['numpy>=1.9.1',
                         'scipy>=0.15',

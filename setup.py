@@ -15,7 +15,7 @@ setup(name='SpecView',
           ]
       },
       package_data={
-          'qt': ['img/*']
+          'specview': ['ui/qt/img/*']
       },
       zip_safe=False,
       install_requires=['numpy>=1.9.1',

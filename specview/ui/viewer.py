@@ -88,3 +88,6 @@ class MainWindow(QtGui.QMainWindow):
 
                 if hide_all:
                     child.hide()
+
+    def close(self):
+        QtCore.QCoreApplication.instance().quit()

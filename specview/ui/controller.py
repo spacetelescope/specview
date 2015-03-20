@@ -72,6 +72,7 @@ class Controller(object):
 
     def __connect_menu_bar(self):
         self.viewer.menu_bar.atn_open.triggered.connect(self._open_file_dialog)
+        self.viewer.menu_bar.atn_exit.triggered.connect(self.viewer.close)
 
     def __connect_data_dock(self):
         self.viewer.data_dock.btn_create_plot.clicked.connect(

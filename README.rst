@@ -23,7 +23,7 @@ Development
 
 Whether or not this code base will become an astropy affiliate
 package, the current framework as been placed under the
-`package-template` using the `managing the template files via git`
+`package-template`_ using the `managing the template files via git`_
 method.
 
 .. _JWST Data Analysis Task Force: https://confluence.stsci.edu/display/JWSTDATF/JWST+Data+Analysis+Task+Force+Home

@@ -3,10 +3,28 @@ from os import sys, path
 from PyQt4 import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
 
+from specview.ui.qt.boxes import StatisticsGroupBox
 from specview.ui.qt.tree_views import SpectrumDataTree, ModelTree
 from specview.analysis import model_fitting
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
+QPUSHBUTTON_CSS = """QPushButton {
+                         border: 0px solid #8f8f91;
+                         border-radius: 4px;
+                     }
+
+                     QPushButton:pressed {
+                         background-color: qlineargradient(
+                             x1: 0, y1: 0, x2: 0, y2: 1,
+                             stop: 0 #dadbde, stop: 1 #f6f7fa
+                         );
+                     }
+
+                     QPushButton:hover {
+                         border: 1px solid #999;
+                         border-radius: 4px;
+                     }
+                  """
 
 
 class BaseDockWidget(QtGui.QDockWidget):
@@ -44,60 +62,107 @@ class DataDockWidget(BaseDockWidget):
             QtGui.QAbstractItemView.ExtendedSelection)
 
         # Set Plotting buttons
-        self.btn_create_plot = QtGui.QToolButton()
+        self.btn_create_plot = QtGui.QPushButton()
+        self.btn_create_plot.setFlat(True)
+        self.btn_create_plot.setToolTip("Create a new plot window from data")
         self.btn_create_plot.setIcon(QtGui.QIcon(
             path.join(PATH, "new_plot.png")))
-        self.btn_add_plot = QtGui.QToolButton()
+        self.btn_create_plot.setIconSize(QtCore.QSize(32, 32))
+        self.btn_create_plot.setStyleSheet(QPUSHBUTTON_CSS)
+
+        self.btn_add_plot = QtGui.QPushButton()
+        self.btn_add_plot.setFlat(True)
+        self.btn_add_plot.setToolTip("Add layer to current plot window")
         self.btn_add_plot.setIcon(QtGui.QIcon(path.join(PATH,
                                                         "insert_plot.png")))
+        self.btn_add_plot.setIconSize(QtCore.QSize(32, 32))
+        self.btn_add_plot.setStyleSheet(QPUSHBUTTON_CSS)
+
+        self.btn_remove_plot = QtGui.QPushButton()
+        self.btn_remove_plot.setFlat(True)
+        self.btn_remove_plot.setToolTip("Remove layer from current plot")
+        self.btn_remove_plot.setIcon(QtGui.QIcon(path.join(PATH,
+                                                        "remove_item.png")))
+        self.btn_remove_plot.setIconSize(QtCore.QSize(32, 32))
+        self.btn_remove_plot.setStyleSheet(QPUSHBUTTON_CSS)
 
         # Add to main layout
         self.add_widget(self.wgt_data_tree)
 
         # Setup buttons
         hb_layout = QtGui.QHBoxLayout()
+        hb_layout.setSpacing(2)
         hb_layout.addWidget(self.btn_create_plot)
         hb_layout.addWidget(self.btn_add_plot)
         hb_layout.addStretch()
+        hb_layout.addWidget(self.btn_remove_plot)
 
         self.add_layout(hb_layout)
 
 
-class InfoDockWidget(BaseDockWidget):
+class MeasurementDockWidget(BaseDockWidget):
     def __init__(self, parent=None):
-        super(InfoDockWidget, self).__init__(parent)
-        self.setWindowTitle("Info")
+        super(MeasurementDockWidget, self).__init__(parent)
+        self.setWindowTitle("Measurement Info")
 
         self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
                              QtCore.Qt.RightDockWidgetArea)
 
         self.lbl_data_set = QtGui.QLabel()
         self.lbl_layer = QtGui.QLabel()
-        self.lbl_mean = QtGui.QLabel()
-        self.lbl_median = QtGui.QLabel()
-        self.lbl_stddev = QtGui.QLabel()
-        self.lbl_total = QtGui.QLabel()
 
-        form_layout = QtGui.QFormLayout()
-        form_layout.addRow(self.tr("Mean:"), self.lbl_mean)
-        form_layout.addRow(self.tr("Median:"), self.lbl_median)
-        form_layout.addRow(self.tr("Std. Dev.:"), self.lbl_stddev)
-        form_layout.addRow(self.tr("Total:"), self.lbl_total)
+        title_form_layout = QtGui.QFormLayout()
+        title_form_layout.addRow(self.tr("Data set:"), self.lbl_data_set)
+        title_form_layout.addRow(self.tr("Layer:"), self.lbl_layer)
 
-        group_box = QtGui.QGroupBox("Statistics")
-        group_box.setLayout(form_layout)
+        # Measurements tab
+        self.measurement_stats_box = StatisticsGroupBox("Statistics")
 
-        self.add_widget(self.lbl_data_set)
-        self.add_widget(self.lbl_layer)
-        self.add_widget(group_box)
+        self.add_layout(title_form_layout)
+        self.add_widget(self.measurement_stats_box)
 
     def set_labels(self, stats, data_name="", layer_name=""):
-        self.lbl_data_set.setText("Data set: " + data_name)
-        self.lbl_layer.setText("Layer: " + layer_name)
-        self.lbl_mean.setText(str(stats['mean']))
-        self.lbl_median.setText(str(stats['median']))
-        self.lbl_stddev.setText(str(stats['stddev']))
-        self.lbl_total.setText(str(stats['total']))
+        self.lbl_data_set.setText(data_name)
+        self.lbl_layer.setText(layer_name)
+        self.measurement_stats_box.set_labels(stats)
+
+
+class EquivalentWidthDockWidget(BaseDockWidget):
+    def __init__(self, parent=None):
+        super(EquivalentWidthDockWidget, self).__init__(parent)
+        self.setWindowTitle("Equivalent Width")
+
+        self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
+                             QtCore.Qt.RightDockWidgetArea)
+
+        self.lbl_data_set = QtGui.QLabel()
+        self.lbl_layer = QtGui.QLabel()
+
+        title_form_layout = QtGui.QFormLayout()
+        title_form_layout.addRow(self.tr("Data set:"), self.lbl_data_set)
+        title_form_layout.addRow(self.tr("Layer:"), self.lbl_layer)
+
+        # Equivalent width tab
+        self.stats_box1 = StatisticsGroupBox("Statistics 1")
+        self.stats_box2 = StatisticsGroupBox("Statistics 2")
+        self.lbl_equiv_width = QtGui.QLabel()
+
+        ew_form_layout = QtGui.QFormLayout()
+
+        ew_form_layout.addRow(self.tr("Equivalent Width:"),
+                              self.lbl_equiv_width)
+
+        self.add_layout(title_form_layout)
+        self.add_widget(self.stats_box1)
+        self.add_widget(self.stats_box2)
+        self.add_layout(ew_form_layout)
+
+    def set_labels(self, value, stats1, stats2, data_name="", layer_name=""):
+        self.lbl_data_set.setText(data_name)
+        self.lbl_layer.setText(layer_name)
+        self.stats_box1.set_labels(stats1)
+        self.stats_box2.set_labels(stats2)
+        self.lbl_equiv_width.setText(str(value))
 
 
 class ConsoleDockWidget(BaseDockWidget):

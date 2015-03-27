@@ -7,5 +7,3 @@ class SpectrumDataContextMenu(QtGui.QMenu):
 
         self.atn_remove = QtGui.QAction("&Remove", self)
         self.addAction(self.atn_remove)
-        self.addSeparator()
-        self.atn_equiv_width = QtGui.QAction("&Equivalent Widths", self)

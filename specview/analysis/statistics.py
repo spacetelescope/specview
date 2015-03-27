@@ -90,39 +90,3 @@ def eq_width(cont1_stats, cont2_stats, line):
     ew =  np.sum((avg_cont - line.y.data) / avg_cont * avg_dx)
 
     return flux, ew
-
-from proto.model_manager import test_data
-
-def test1():
-
-    # real emission line from UV spectrum of NGC3516
-    x,y,e = test_data.get_data()
-
-    sp_data = SpectrumData()
-    sp_data.set_x(x, unit="Angstrom")
-    sp_data.set_y(y, unit="erg.s-1.cm**-2.Angstrom-1")
-
-    range_c1 = (1160., 1190.)
-    range_c2 = (1281., 1305.)
-    range_li = (1190., 1280.)
-
-    cont1 = extract(sp_data, range_c1)
-    cont2 = extract(sp_data, range_c2)
-    line  = extract(sp_data, range_li)
-
-    cont1_stats = stats(cont1)
-    cont2_stats = stats(cont2)
-    line_stats  = stats(line)
-
-    print 'continuum 1 stats:  ', cont1_stats
-    print 'continuum 2 stats:  ', cont2_stats
-    print 'line stats:         ', line_stats
-
-    flux, ew = eq_width(cont1_stats, cont2_stats, line)
-
-    print 'flux and equivalent width:  ', flux, ew
-
-
-if __name__ == "__main__":
-    test1()
-  

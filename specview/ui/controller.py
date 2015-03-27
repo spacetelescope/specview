@@ -12,7 +12,7 @@ from specview.analysis.statistics import stats, eq_width, extract
 
 
 class Controller(object):
-    def __init__(self):
+    def __init__(self, argv):
         super(Controller, self).__init__()
         self._model = SpectrumDataTreeModel()
         self._viewer = MainWindow()
@@ -41,6 +41,9 @@ class Controller(object):
                                      x * y)}
 
         self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+
+        if len(argv) > 1:
+            self.open_file(argv[1])
 
     # -- properties
     @property

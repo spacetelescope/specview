@@ -16,7 +16,7 @@ class SView(Controller):
         if self.__class__.qt_app is None:
             self.__class__.qt_app = pyqtapplication(argv)
 
-        super(SView, self).__init__()
+        super(SView, self).__init__(argv)
         self.viewer.show()
 
 

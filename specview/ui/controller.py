@@ -42,8 +42,11 @@ class Controller(object):
 
         self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
 
-        if len(argv) > 1:
-            self.open_file(argv[1])
+        try:
+            if len(argv) > 1:
+                self.open_file(argv[1])
+        except TypeError:
+            pass
 
     # -- properties
     @property

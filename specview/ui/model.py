@@ -1,5 +1,5 @@
 from os import path, sys
-from PyQt4 import QtGui, QtCore
+from ..external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.analysis import model_fitting

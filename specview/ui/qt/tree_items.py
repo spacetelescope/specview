@@ -1,6 +1,6 @@
 import inspect
 
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.core.data_objects import SpectrumData

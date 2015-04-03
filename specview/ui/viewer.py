@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ..external.qt import QtGui, QtCore
 
 from specview.ui.qt.menubars import MainMainBar
 from specview.ui.qt.docks import (DataDockWidget, MeasurementDockWidget,

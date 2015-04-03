@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 from os import sys, path
 from specview.ui.qt.dialogs import PlotUnitsDialog
 

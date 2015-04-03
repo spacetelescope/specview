@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 
 from specview.ui.model import LayerDataTreeItem
 from specview.ui.qt.menus import SpectrumDataContextMenu

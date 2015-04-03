@@ -1,6 +1,6 @@
 from os import sys, path
 
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
 
 from specview.ui.qt.boxes import StatisticsGroupBox

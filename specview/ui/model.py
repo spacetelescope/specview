@@ -32,7 +32,7 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     def _item_changed(self, item):
         if isinstance(item, ParameterDataTreeItem):
             item.parent.update_parameter(item._name,
-                                         item.data().toPyObject())
+                                         item.data())
 
     # --- public functions
     def remove_data_item(self, index, parent_index):
@@ -100,11 +100,11 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
             item.setData(value)
-            item.setText(str(value.toPyObject()))
+            item.setText(str(value))
 
             # TODO: insert check to make sure value actually is a float
             if isinstance(item, ParameterDataTreeItem):
-                item.setText(str(float(str(value.toPyObject()))))
+                item.setText(str(float(str(value))))
 
             self.dataChanged.emit(index, index)
 

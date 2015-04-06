@@ -92,6 +92,11 @@ class Controller(object):
         self.model.sig_added_item.connect(self._update_namespace)
         self.model.sig_removed_item.connect(self._update_namespace)
 
+        self.viewer.console_dock.wgt_console.kernel_manager = self.kernel['manager']
+        self.viewer.console_dock.wgt_console.kernel_client = self.kernel['client']
+        self.viewer.console_dock.wgt_console.kernel = self.kernel['kernel']
+        self.viewer.console_dock.wgt_console.exit_requested.connect(self.kernel['shutdown'])
+
     # -- protected functions
     def _create_display(self):
         item = self.viewer.data_dock.wgt_data_tree.current_item
@@ -304,3 +309,4 @@ class Controller(object):
                     layer_item.item
 
         self.viewer.console_dock.wgt_console.localNamespace = local_namespace
+        self.viewer.console_dock.wgt_console.kernel.shell.push(local_namespace)

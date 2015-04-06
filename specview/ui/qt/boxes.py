@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 
 
 class StatisticsGroupBox(QtGui.QGroupBox):

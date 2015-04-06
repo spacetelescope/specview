@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from ...external.qt import QtGui
 
 
 class MainMainBar(QtGui.QMenuBar):

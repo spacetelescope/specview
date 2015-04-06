@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 

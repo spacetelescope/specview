@@ -4,8 +4,6 @@ from IPython.qt.inprocess import QtInProcessKernelManager
 
 def ipython_inprocess_kernel_start():
     # Create an in-process kernel
-    # >>> print_process_id()
-    # will print the same process ID as the main process
     kernel_manager = QtInProcessKernelManager()
     kernel_manager.start_kernel()
     kernel = kernel_manager.kernel

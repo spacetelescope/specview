@@ -38,9 +38,11 @@ class Controller(object):
                                  'divide': lambda x, y: self.add_data_set(
                                      x / y),
                                  'multiple': lambda x, y: self.add_data_set(
-                                     x * y)}
+                                     x * y),
+                                 'add_data_set': self.add_data_set}
 
-        self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+        #self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+        self._update_namespace()
 
         try:
             if len(argv) > 1:

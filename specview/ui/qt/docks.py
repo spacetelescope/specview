@@ -173,7 +173,6 @@ class ConsoleDockWidget(BaseDockWidget):
 
         self.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
 
-        #self.wgt_console = ConsoleWidget()
         self.wgt_console = RichIPythonWidget()
 
         self.add_widget(self.wgt_console)

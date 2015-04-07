@@ -1,25 +1,65 @@
-"""Start and IPython kernel"""
+"""Start an IPython kernel"""
+from IPython import get_ipython
+from IPython.qt.client import QtKernelClient
 from IPython.qt.inprocess import QtInProcessKernelManager
+from IPython.kernel.connect import get_connection_file
+from IPython.kernel.inprocess.ipkernel import InProcessInteractiveShell
 
 
-def ipython_inprocess_kernel_start():
-    # Create an in-process kernel
-    kernel_manager = QtInProcessKernelManager()
-    kernel_manager.start_kernel()
-    kernel = kernel_manager.kernel
+def ipython_kernel_start(**kwargs):
+    shell = get_ipython()
+    if shell is None or isinstance(shell, InProcessInteractiveShell):
+        kernel_info = in_process_kernel(**kwargs)
+    else:
+        kernel_info = connected_kernel(**kwargs)
+
+    return kernel_info
+
+
+def in_process_kernel(**kwargs):
+    """Connect to an in-process Kernel
+
+    This only works on IPython v 0.13 and above
+
+    Parameters
+    ----------
+    kwargs : Extra variables to put into the namespace
+    """
+
+    kernel_info = {}
+    kernel_info['manager'] = QtInProcessKernelManager()
+    kernel_info['manager'].start_kernel()
+
+    kernel = kernel_info['manager'].kernel
     kernel.gui = 'qt4'
 
-    kernel_client = kernel_manager.client()
-    kernel_client.start_channels()
+    kernel_info['client'] = kernel_info['manager'].client()
+    kernel_info['client'].start_channels()
+    kernel_info['shell'] = kernel.shell
 
-    def stop():
-        kernel_client.stop_channels()
-        kernel_manager.shutdown_kernel()
+    return kernel_info
 
-    kernel_info = {
-        'kernel': kernel,
-        'manager': kernel_manager,
-        'client':  kernel_client,
-        'shutdown': stop
-    }
+
+def connected_kernel(**kwargs):
+    """Connect to another kernel running in
+       the current process
+
+    This only works on IPython v1.0 and above
+
+    Parameters
+    ----------
+    kwargs : Extra variables to put into the namespace
+    """
+    kernel_info = {}
+
+    shell = get_ipython()
+    if shell is None:
+        raise RuntimeError("There is no IPython kernel in this process")
+
+    client = QtKernelClient(connection_file=get_connection_file())
+    client.load_connection_file()
+    client.start_channels()
+    kernel_info['client'] = client
+    kernel_info['shell'] = shell
+
     return kernel_info

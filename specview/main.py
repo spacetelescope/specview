@@ -3,7 +3,7 @@
 from os import sys
 
 from .ui.controller import Controller
-from .ui.ipython.kernel import ipython_inprocess_kernel_start
+from .ui.ipython.kernel import ipython_kernel_start
 
 class SView(Controller):
     """Main entry point"""
@@ -16,7 +16,7 @@ class SView(Controller):
         if self.__class__.qt_app is None:
             self.__class__.qt_app = pyqtapplication(argv)
 
-        self.kernel = ipython_inprocess_kernel_start()
+        self.kernel = ipython_kernel_start()
         super(SView, self).__init__(argv)
         self.viewer.show()
 

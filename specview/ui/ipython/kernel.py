@@ -56,10 +56,15 @@ def connected_kernel(**kwargs):
     if shell is None:
         raise RuntimeError("There is no IPython kernel in this process")
 
-    client = QtKernelClient(connection_file=get_connection_file())
-    client.load_connection_file()
-    client.start_channels()
-    kernel_info['client'] = client
+    try:
+        client = QtKernelClient(connection_file=get_connection_file())
+        client.load_connection_file()
+        client.start_channels()
+        kernel_info['client'] = client
+    except Exception:
+        print 'Cannot connect to client. Just using the command line.'
+        kernel_info['client'] = None
+        pass
     kernel_info['shell'] = shell
 
     return kernel_info

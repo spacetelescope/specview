@@ -15,7 +15,7 @@ class Controller(object):
     def __init__(self, argv):
         super(Controller, self).__init__()
         self._model = SpectrumDataTreeModel()
-        self._viewer = MainWindow()
+        self._viewer = MainWindow(show_console=self.kernel['client'] is not None)
         self._viewer.data_dock.wgt_data_tree.setModel(self._model)
         self._viewer.model_editor_dock.wgt_model_tree.setModel(self._model)
 
@@ -38,9 +38,11 @@ class Controller(object):
                                  'divide': lambda x, y: self.add_data_set(
                                      x / y),
                                  'multiple': lambda x, y: self.add_data_set(
-                                     x * y)}
+                                     x * y),
+                                 'add_data_set': self.add_data_set}
 
-        self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+        #self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+        self._update_namespace()
 
         try:
             if len(argv) > 1:
@@ -91,6 +93,10 @@ class Controller(object):
         self.model.itemChanged.connect(self._update_namespace)
         self.model.sig_added_item.connect(self._update_namespace)
         self.model.sig_removed_item.connect(self._update_namespace)
+
+        self.viewer.console_dock.wgt_console.kernel_manager = getattr(self.kernel, 'manager', None)
+        self.viewer.console_dock.wgt_console.kernel_client = self.kernel['client']
+        self.viewer.console_dock.wgt_console.shell = self.kernel['shell']
 
     # -- protected functions
     def _create_display(self):
@@ -304,3 +310,4 @@ class Controller(object):
                     layer_item.item
 
         self.viewer.console_dock.wgt_console.localNamespace = local_namespace
+        self.viewer.console_dock.wgt_console.shell.push(local_namespace)

@@ -2,6 +2,7 @@ from os import sys, path
 
 from ...external.qt import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
+from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
 
 from specview.ui.qt.boxes import StatisticsGroupBox
 from specview.ui.qt.tree_views import SpectrumDataTree, ModelTree
@@ -172,7 +173,7 @@ class ConsoleDockWidget(BaseDockWidget):
 
         self.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
 
-        self.wgt_console = ConsoleWidget()
+        self.wgt_console = RichIPythonWidget()
 
         self.add_widget(self.wgt_console)
 

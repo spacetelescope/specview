@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ..external.qt import QtGui, QtCore
 
 from specview.ui.qt.menubars import MainMainBar
 from specview.ui.qt.docks import (DataDockWidget, MeasurementDockWidget,
@@ -7,9 +7,10 @@ from specview.ui.qt.docks import (DataDockWidget, MeasurementDockWidget,
 
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self):
+    def __init__(self, show_console=True):
         super(MainWindow, self).__init__()
         # Basic app info
+        self.show_console = show_console
         self.menu_bar = MainMainBar()
         self.setMenuBar(self.menu_bar)
         self.setWindowTitle('SpecPy')
@@ -72,8 +73,9 @@ class MainWindow(QtGui.QMainWindow):
             self.measurement_dock.toggleViewAction())
         # self.menu_bar.docks_menu.addAction(
         #     self.equiv_width_dock.toggleViewAction())
-        self.menu_bar.window_menu.addAction(
-            self.console_dock.toggleViewAction())
+        if self.show_console:
+            self.menu_bar.window_menu.addAction(
+                self.console_dock.toggleViewAction())
 
     def set_toolbar(self, toolbar=None, hide_all=False):
         if toolbar is not None:
@@ -88,3 +90,6 @@ class MainWindow(QtGui.QMainWindow):
 
                 if hide_all:
                     child.hide()
+
+    def close(self):
+        QtCore.QCoreApplication.instance().quit()

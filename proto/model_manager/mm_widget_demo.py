@@ -1,9 +1,9 @@
 import numpy as np
 
+import astropy
 import astropy.modeling.models as models
 
 from sp_model_manager import SpectralModelManagerApp
-
 
 def debug_print(manager):
     # when GUI is killed, continue execution - here, we print components
@@ -24,7 +24,7 @@ def test1():
     manager = SpectralModelManagerApp(components)
 
     debug_print(manager)
-    
+
 
 if __name__ == "__main__":
     test1()

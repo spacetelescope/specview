@@ -13,6 +13,7 @@ registry = {
     'Lorentz1D':                  models.Lorentz1D(1.0, 1.0, 1.0),
     'MexicanHat1D':               models.MexicanHat1D(1.0, 1.0, 1.0),
     'Trapezoid1D':                models.Trapezoid1D(1.0, 1.0, 1.0, 1.0),
+    'Moffat1D':                   models.Moffat1D(1.0, 1.0, 1.0, 1.0),
     'ExponentialCutoffPowerLaw1D':models.ExponentialCutoffPowerLaw1D(1.0, 1.0, 1.0, 1.0),
     'BrokenPowerLaw1D':           models.BrokenPowerLaw1D(1.0, 1.0, 1.0, 1.0),
     'LogParabola1D' :             models.LogParabola1D(1.0, 1.0, 1.0, 1.0),

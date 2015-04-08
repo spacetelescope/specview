@@ -35,7 +35,7 @@ class SpectralModelManagerApp(SpectralModelManager):
 
 
 # Functions and classes that run the model manager in non-block
-# mode so it can be called from an interactive session without
+# mode so it can be called from an interactive session iswithout
 # blocking the interaction. Multiple models are supported; they
 # are told apart by the 'name' parameter passed to the
 # ModelManager constructor.

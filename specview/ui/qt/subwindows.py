@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from ...external.qt import QtGui
 from astropy.units import Unit
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph

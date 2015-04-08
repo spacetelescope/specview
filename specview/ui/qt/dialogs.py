@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 
@@ -136,39 +136,3 @@ class PlotUnitsDialog(QtGui.QDialog):
 
     def _on_reject(self):
         super(PlotUnitsDialog, self).reject()
-
-
-class EquivalentWidthDialog(QtGui.QDialog):
-    def __init__(self, parent=None):
-        super(EquivalentWidthDialog, self).__init__(parent)
-
-        self.vb_layout_main = QtGui.QVBoxLayout()
-        self.setLayout(self.vb_layout_main)
-
-        self.wgt_cont_line1 = QtGui.QLineEdit()
-        self.wgt_cont_line2 = QtGui.QLineEdit()
-        self.wgt_line = QtGui.QLineEdit()
-
-        form_layout = QtGui.QFormLayout()
-        form_layout.addRow(self.tr("&First Continuum Line:"),
-                           self.wgt_cont_line1)
-        form_layout.addRow(self.tr("&Second Continuum Line:"),
-                           self.wgt_cont_line1)
-        form_layout.addRow(self.tr("&Line:"), self.wgt_line)
-
-        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-                                            QtGui.QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self._on_accept)
-        button_box.rejected.connect(self._on_reject)
-
-        self.vb_layout_main.addLayout(form_layout)
-
-    def _on_accept(self):
-        self.cont_line1 = str(self.wgt_cont_line1.text())
-        self.cont_line2 = str(self.wgt_cont_line2.text())
-        self.line = str(self.wgt_line.text())
-
-        super(EquivalentWidthDialog, self).accept()
-
-    def _on_reject(self):
-        super(EquivalentWidthDialog, self).reject()

@@ -5,20 +5,28 @@
 *.so
 __pycache__
 
+# Ignore .c files by default to avoid including generated code. If you want to
+# add a non-generated .c extension, use `git add -f filename.c`.
+*.c
+
 # Other generated files
 */version.py
 */cython_version.py
 htmlcov
-MANIFEST
 .coverage
-docs/api/
-
-# Test output
-drizzle/tests/data/difference_*
-drizzle/tests/data/output_*
+MANIFEST
 
 # Sphinx
-_build
+docs/api
+docs/_build
+
+# Eclipse editor project files
+.project
+.pydevproject
+.settings
+
+# Pycharm editor project files
+.idea
 
 # Packages/installer info
 *.egg

@@ -62,7 +62,8 @@ def connected_kernel(**kwargs):
         client.start_channels()
         kernel_info['client'] = client
     except Exception:
-        print 'Cannot connect to client. Just using the command line.'
+        print ('Detected running from an ipython interpreter.\n'
+               'The GUI console will be disabled.')
         kernel_info['client'] = None
         pass
     kernel_info['shell'] = shell

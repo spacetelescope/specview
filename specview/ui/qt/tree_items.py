@@ -49,6 +49,7 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 
 
 class LayerDataTreeItem(QtGui.QStandardItem):
+    # TODO: get rid of nasty try/excepts
     try:
         sig_updated = QtCore.pyqtSignal()
     except AttributeError:

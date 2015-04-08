@@ -5,6 +5,7 @@ from specview.ui.qt.menus import SpectrumDataContextMenu
 
 
 class BaseDataTree(QtGui.QTreeView):
+    # TODO: get rid of nasty try/excepts
     try:
         sig_current_changed = QtCore.pyqtSignal(QtCore.QModelIndex)
         sig_selected_changed = QtCore.pyqtSignal(list)

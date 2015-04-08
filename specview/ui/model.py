@@ -11,6 +11,7 @@ PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
 class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     """Custom TreeView model for displaying DataSetItems."""
+    # TODO: get rid of nasty try/excepts
     try:
         sig_added_item = QtCore.pyqtSignal(QtCore.QModelIndex)
         sig_added_fit_model = QtCore.pyqtSignal(ModelDataTreeItem)

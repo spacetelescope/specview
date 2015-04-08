@@ -8,6 +8,7 @@ from specview.ui.qt.tree_items import SpectrumDataTreeItem, LayerDataTreeItem
 
 
 class BaseGraph(QtGui.QWidget):
+    # TODO: get rid of nasty try/excepts
     try:
         sig_units_changed = QtCore.pyqtSignal()
     except AttributeError:

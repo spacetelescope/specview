@@ -15,7 +15,7 @@ class Controller(object):
     def __init__(self, argv):
         super(Controller, self).__init__()
         self._model = SpectrumDataTreeModel()
-        self._viewer = MainWindow()
+        self._viewer = MainWindow(show_console=self.kernel['client'] is not None)
         self._viewer.data_dock.wgt_data_tree.setModel(self._model)
         self._viewer.model_editor_dock.wgt_model_tree.setModel(self._model)
 

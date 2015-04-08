@@ -48,6 +48,11 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         if item in self._items:
             self._items.remove(item)
 
+        # if it's a layer
+        for sdt_item in self._items:
+            if item in sdt_item.layers:
+                sdt_item.layers.remove(item)
+
         self.sig_removed_item.emit(item)
 
     def create_data_item(self, nddata, name="New"):

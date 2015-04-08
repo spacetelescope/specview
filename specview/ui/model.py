@@ -11,9 +11,14 @@ PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
 class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     """Custom TreeView model for displaying DataSetItems."""
-    sig_added_item = QtCore.pyqtSignal(QtCore.QModelIndex)
-    sig_added_fit_model = QtCore.pyqtSignal(ModelDataTreeItem)
-    sig_removed_item = QtCore.pyqtSignal(object)
+    try:
+        sig_added_item = QtCore.pyqtSignal(QtCore.QModelIndex)
+        sig_added_fit_model = QtCore.pyqtSignal(ModelDataTreeItem)
+        sig_removed_item = QtCore.pyqtSignal(object)
+    except AttributeError:
+        sig_added_item = QtCore.Signal(QtCore.QModelIndex)
+        sig_added_fit_model = QtCore.Signal(ModelDataTreeItem)
+        sig_removed_item = QtCore.Signal(object)
 
     def __init__(self):
         super(SpectrumDataTreeModel, self).__init__()

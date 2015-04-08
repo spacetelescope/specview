@@ -8,7 +8,10 @@ from specview.ui.qt.tree_items import SpectrumDataTreeItem, LayerDataTreeItem
 
 
 class BaseGraph(QtGui.QWidget):
-    sig_units_changed = QtCore.pyqtSignal()
+    try:
+        sig_units_changed = QtCore.pyqtSignal()
+    except AttributeError:
+        sig_units_changed = QtCore.Signal()
 
     def __init__(self):
         super(BaseGraph, self).__init__()

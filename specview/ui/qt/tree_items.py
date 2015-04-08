@@ -49,7 +49,10 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 
 
 class LayerDataTreeItem(QtGui.QStandardItem):
-    sig_updated = QtCore.pyqtSignal()
+    try:
+        sig_updated = QtCore.pyqtSignal()
+    except AttributeError:
+        sig_updated = QtCore.Signal()
 
     def __init__(self, parent, mask, rois, name="Layer"):
         super(LayerDataTreeItem, self).__init__()

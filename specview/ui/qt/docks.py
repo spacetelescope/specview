@@ -222,3 +222,4 @@ class ModelDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_model_tree)
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)
+        self.setMinimumSize(self.sizeHint())

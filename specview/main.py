@@ -1,5 +1,6 @@
 from os import sys, path
 from PyQt4 import QtGui
+import astropy.extern.six
 
 
 def main():

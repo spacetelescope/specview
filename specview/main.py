@@ -2,8 +2,13 @@
 
 from os import sys
 
-from ui.controller import Controller
-from ui.ipython.kernel import ipython_kernel_start
+# TODO: get rid of nasty try/excepts
+try:
+    from .ui.controller import Controller
+    from .ui.ipython.kernel import ipython_kernel_start
+except:
+    from ui.controller import Controller
+    from ui.ipython.kernel import ipython_kernel_start
 
 class SView(Controller):
     """Main entry point"""

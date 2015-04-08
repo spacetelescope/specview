@@ -42,6 +42,7 @@ class SpectrumArray(NDSlicingMixin, NDArithmeticMixin, NDData):
         -------
         result : `~specview.core.data_objects.SpectrumArray`
             The resulting dataset
+
         Raises
         ------
         UnitsError

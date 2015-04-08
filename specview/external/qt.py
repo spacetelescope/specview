@@ -8,15 +8,14 @@ Do not use this if you need PyQt4 with the old QString/QVariant API.
 
 import os
 
-from qt_loaders import (load_qt, QT_API_PYSIDE,
-                        QT_API_PYQT)
+from qt_loaders import (load_qt, QT_API_PYQT, QT_API_PYSIDE)
 
 QT_API = os.environ.get('QT_API', None)
-if QT_API not in [QT_API_PYSIDE, QT_API_PYQT, None]:
+if QT_API not in [QT_API_PYQT, QT_API_PYSIDE, None]:
     raise RuntimeError("Invalid Qt API %r, valid values are: %r, %r" %
-                       (QT_API, QT_API_PYSIDE, QT_API_PYQT))
+                       (QT_API, QT_API_PYQT, QT_API_PYSIDE))
 if QT_API is None:
-    api_opts = [QT_API_PYSIDE, QT_API_PYQT]
+    api_opts = [QT_API_PYQT, QT_API_PYSIDE]
 else:
     api_opts = [QT_API]
 

@@ -46,6 +46,7 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
 
     def _connect_toolbar(self):
         self.toolbar.atn_insert_roi.triggered.connect(self.graph.add_roi)
+        # self.toolbar.atn_equiv_width.triggered.connect()
 
     def _connect_tools(self):
         self.plot_toolbar.unit_dialog.accepted.connect(

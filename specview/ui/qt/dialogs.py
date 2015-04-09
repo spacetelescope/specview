@@ -12,7 +12,11 @@ class FileEditDialog(QtGui.QDialog):
         self.flux_unit = None
         self.dispersion_unit = None
 
-        self.hdulist = fits.open(str(file_path))
+        # TODO: get rid of nasty try/excepts
+        try:
+            self.hdulist = fits.open(str(file_path))
+        except IOError:
+            self.hdulist = fits.open(str(file_path[0]))
 
         self.vb_layout_main = QtGui.QVBoxLayout()
         self.setLayout(self.vb_layout_main)

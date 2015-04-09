@@ -5,8 +5,13 @@ from specview.ui.qt.menus import SpectrumDataContextMenu
 
 
 class BaseDataTree(QtGui.QTreeView):
-    sig_current_changed = QtCore.pyqtSignal(QtCore.QModelIndex)
-    sig_selected_changed = QtCore.pyqtSignal(list)
+    # TODO: get rid of nasty try/excepts
+    try:
+        sig_current_changed = QtCore.pyqtSignal(QtCore.QModelIndex)
+        sig_selected_changed = QtCore.pyqtSignal(list)
+    except AttributeError:
+        sig_current_changed = QtCore.Signal(QtCore.QModelIndex)
+        sig_selected_changed = QtCore.Signal(list)
 
     def __init__(self, parent=None):
         super(BaseDataTree, self).__init__(parent)

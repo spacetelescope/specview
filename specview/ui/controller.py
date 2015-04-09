@@ -32,7 +32,6 @@ class Controller(object):
         self._main_name_space = {'np': np,
                                  'eq_width': eq_width,
                                  'stats': stats,
-                                 'add': lambda x, y: self.add_data_set(x + y),
                                  'subtract': lambda x, y: self.add_data_set(
                                      x - y),
                                  'divide': lambda x, y: self.add_data_set(

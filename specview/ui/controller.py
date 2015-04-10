@@ -8,7 +8,7 @@ from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
-from specview.analysis.statistics import stats, eq_width, extract
+from specview.tools.plugins import plugins, namespace
 
 
 class Controller(object):
@@ -28,23 +28,13 @@ class Controller(object):
         self.__connect_console()
 
         # Load in plugins
-        from specview.tools.plugins import plugins
         self.ops = plugins()
 
         # This should definitely be formalized, but for the sake of the
         # demo, it's good enough
         self._main_name_space = {'np': np,
-                                 'eq_width': eq_width,
-                                 'stats': stats,
-                                 'subtract': lambda x, y: self.add_data_set(
-                                     x - y),
-                                 'divide': lambda x, y: self.add_data_set(
-                                     x / y),
-                                 'multiple': lambda x, y: self.add_data_set(
-                                     x * y),
                                  'add_data_set': self.add_data_set}
-
-        #self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+        self._main_name_space.update(namespace(self.ops))
         self._update_namespace()
 
         try:

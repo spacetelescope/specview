@@ -21,7 +21,7 @@ class SView(Controller):
         if self.__class__.qt_app is None:
             self.__class__.qt_app = pyqtapplication(argv)
 
-        self.kernel = ipython_kernel_start()
+        self._kernel = ipython_kernel_start()
         super(SView, self).__init__(argv)
         self.viewer.show()
 

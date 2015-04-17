@@ -1,4 +1,6 @@
 """Plugin loading machinery"""
+import importlib
+import pkgutil
 from inspect import getmembers, isfunction
 
 
@@ -10,10 +12,8 @@ def plugins():
     Plugins instances with the imported functions set as methods.
     """
     plugin_pkg = 'specview.plugins'
-    default_plugins = ['default_ops']
-    user_plugins = ['ops']
 
-    return Plugins(plugin_pkg, default_plugins + user_plugins)
+    return Plugins(plugin_pkg)
 
 
 class Plugins(object):
@@ -36,30 +36,34 @@ class Plugins(object):
     ----------
     All the functions in the imported modules.
     """
-    def __init__(self, pkg_name, module_names):
-        modules = []
-        for module_name in module_names:
-            try:
-                modules.append(__import__('.'.join([pkg_name, module_name]),
-                                          fromlist=module_name))
-            except ImportError:
-                pass
-        funcs = [func for module in modules
+    def __init__(self, pkg_name):
+        modules = import_submodules(pkg_name)
+        funcs = [func for module in modules.itervalues()
                  for func in getmembers(module, isfunction)]
         for name, func in funcs:
-            setattr(self, name, func)
+            if not name.startswith('_'):
+                setattr(self, name, func)
 
 
-def namespace(plugins):
+def namespace(obj):
     """Return a dictionary of the member methods."""
-    result = {name: func for name, func  in getmembers(plugins, isfunction)}
+    result = {name: func for name, func in getmembers(obj, isfunction)}
     return result
 
-def decorate(plugins, decorator):
-    """Return a dictionary of the member methods,
-    surrounded with the decorator"""
-    result = {}
-    for name, func in namespace(plugins):
-        decorated = lambda *args, **kwargs: decorator(func(*args, **kwargs))
-        result[name] = decorated
-    return result
+
+def import_submodules(package, recursive=True):
+    """ Import all submodules of a module, recursively, including subpackages
+
+    :param package: package (name or actual module)
+    :type package: str | module
+    :rtype: dict[str, types.ModuleType]
+    """
+    if isinstance(package, str):
+        package = importlib.import_module(package)
+    results = {}
+    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
+        full_name = package.__name__ + '.' + name
+        results[full_name] = importlib.import_module(full_name)
+        if recursive and is_pkg:
+            results.update(import_submodules(full_name))
+    return results

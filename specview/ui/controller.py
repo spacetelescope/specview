@@ -28,7 +28,7 @@ class Controller(object):
         self.__connect_console()
 
         # Load in plugins
-        self.ops = plugins()
+        self.ops = plugins({'controller': self})
 
         # This should definitely be formalized, but for the sake of the
         # demo, it's good enough

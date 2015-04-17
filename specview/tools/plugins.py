@@ -4,16 +4,24 @@ import pkgutil
 from inspect import getmembers, isfunction
 
 
-def plugins():
+def plugins(namespace):
     """Return plugins as specifically designed for the specview package
+
+    Parameters
+    ----------
+    namespace: dict
+        The namespace context for the plugins
 
     Returns
     -------
     Plugins instances with the imported functions set as methods.
     """
     plugin_pkg = 'specview.plugins'
+    submodule = 'decorate'
 
-    return Plugins(plugin_pkg)
+    return Plugins(package=plugin_pkg,
+                   namespace=namespace,
+                   submodule=submodule)
 
 
 class Plugins(object):
@@ -21,24 +29,24 @@ class Plugins(object):
 
     Parameters
     ----------
-    pkg_name: str
+    package: str
         The root name of the namespace package
 
-    modules_names: [str,]
-        The list of module names to be imported.
+    namespace: dict
+        The context in which the plugins will run.
 
-    hander: function(x)
-        A function that needs to be applied to the result
-        of any plugin. This is so the main app can control
-        how results are handled. Default is a simple passthrough.
+    submodule: str
+        Submodule to place the namespace.
 
     Attributes
     ----------
     All the functions in the imported modules.
     """
-    def __init__(self, pkg_name):
+    def __init__(self, package, namespace=None, submodule=None):
         # Gather functions
-        modules = import_submodules(pkg_name)
+        modules = import_submodules(package=package,
+                                    namespace=namespace,
+                                    submodule=submodule)
         funcs = [func for module in modules.itervalues()
                  for func in getmembers(module, isfunction)
                  if not func[0].startswith('_')]
@@ -49,7 +57,7 @@ class Plugins(object):
         self.namespace = funcs
 
 
-def import_submodules(package, recursive=True):
+def import_submodules(package, recursive=True, namespace=None, submodule=None):
     """ Import all submodules of a module, recursively, including subpackages
 
     :param package: package (name or actual module)
@@ -62,6 +70,13 @@ def import_submodules(package, recursive=True):
     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
         full_name = package.__name__ + '.' + name
         results[full_name] = importlib.import_module(full_name)
+        try:
+            ns_module = getattr(results[full_name], submodule)
+        except AttributeError:
+            ns_module = results[full_name]
+        ns_module.__dict__.update(namespace)
         if recursive and is_pkg:
-            results.update(import_submodules(full_name))
+            results.update(import_submodules(full_name,
+                                             namespace=namespace,
+                                             submodule=submodule))
     return results

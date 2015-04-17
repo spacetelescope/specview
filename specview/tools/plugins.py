@@ -37,18 +37,16 @@ class Plugins(object):
     All the functions in the imported modules.
     """
     def __init__(self, pkg_name):
+        # Gather functions
         modules = import_submodules(pkg_name)
         funcs = [func for module in modules.itervalues()
-                 for func in getmembers(module, isfunction)]
+                 for func in getmembers(module, isfunction)
+                 if not func[0].startswith('_')]
+
+        # Make functions available.
         for name, func in funcs:
-            if not name.startswith('_'):
-                setattr(self, name, func)
-
-
-def namespace(obj):
-    """Return a dictionary of the member methods."""
-    result = {name: func for name, func in getmembers(obj, isfunction)}
-    return result
+            setattr(self, name, func)
+        self.namespace = funcs
 
 
 def import_submodules(package, recursive=True):

@@ -8,7 +8,7 @@ from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
-from specview.tools.plugins import plugins, namespace
+from specview.tools.plugins import plugins
 
 
 class Controller(object):
@@ -34,7 +34,7 @@ class Controller(object):
         # demo, it's good enough
         self._main_name_space = {'np': np,
                                  'add_data_set': self.add_data_set}
-        self._main_name_space.update(namespace(self.ops))
+        self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
 
         try:

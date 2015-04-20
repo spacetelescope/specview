@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-
 from os import sys
+from os.path import expanduser
+
+# Where to find plugins
+_plugin_paths = ['', expanduser('~/.specview')]
 
 # TODO: get rid of nasty try/excepts
 try:
@@ -21,12 +24,17 @@ class SView(Controller):
         if self.__class__.qt_app is None:
             self.__class__.qt_app = pyqtapplication(argv)
 
-        self.kernel = ipython_kernel_start()
+        self._kernel = ipython_kernel_start()
         super(SView, self).__init__(argv)
         self.viewer.show()
 
 
 def main():
+
+    # Setup plugin search path.
+    for path in reversed(_plugin_paths):
+        sys.path.insert(0, path)
+
     app_gui = SView(sys.argv)
     sys.exit(app_gui.qt_app.exec_())
 

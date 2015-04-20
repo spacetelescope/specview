@@ -8,14 +8,14 @@ from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
-from specview.analysis.statistics import stats, eq_width, extract
+from specview.tools.plugins import plugins
 
 
 class Controller(object):
     def __init__(self, argv):
         super(Controller, self).__init__()
         self._model = SpectrumDataTreeModel()
-        self._viewer = MainWindow(show_console=self.kernel['client'] is not None)
+        self._viewer = MainWindow(show_console=self._kernel['client'] is not None)
         self._viewer.data_dock.wgt_data_tree.setModel(self._model)
         self._viewer.model_editor_dock.wgt_model_tree.setModel(self._model)
 
@@ -27,21 +27,14 @@ class Controller(object):
         self.__connect_active_data()
         self.__connect_console()
 
+        # Load in plugins
+        self.ops = plugins({'controller': self})
+
         # This should definitely be formalized, but for the sake of the
         # demo, it's good enough
         self._main_name_space = {'np': np,
-                                 'eq_width': eq_width,
-                                 'stats': stats,
-                                 'add': lambda x, y: self.add_data_set(x + y),
-                                 'subtract': lambda x, y: self.add_data_set(
-                                     x - y),
-                                 'divide': lambda x, y: self.add_data_set(
-                                     x / y),
-                                 'multiple': lambda x, y: self.add_data_set(
-                                     x * y),
                                  'add_data_set': self.add_data_set}
-
-        #self._viewer.console_dock.wgt_console.localNamespace = self._main_name_space
+        self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
 
         try:
@@ -94,9 +87,8 @@ class Controller(object):
         self.model.sig_added_item.connect(self._update_namespace)
         self.model.sig_removed_item.connect(self._update_namespace)
 
-        self.viewer.console_dock.wgt_console.kernel_manager = getattr(self.kernel, 'manager', None)
-        self.viewer.console_dock.wgt_console.kernel_client = self.kernel['client']
-        self.viewer.console_dock.wgt_console.shell = self.kernel['shell']
+        self.viewer.console_dock.wgt_console.kernel_client = self._kernel['client']
+        self.viewer.console_dock.wgt_console.shell = self._kernel['shell']
 
     # -- protected functions
     def _create_display(self):
@@ -299,15 +291,15 @@ class Controller(object):
             self.viewer.set_toolbar(hide_all=True)
 
     def _update_namespace(self, item=None):
-        local_namespace = self._main_name_space
+        if self.viewer.console_dock.wgt_console.shell is not None:
+            local_namespace = self._main_name_space
 
-        for data_item in self.model.items:
-            local_namespace[str(data_item.text().replace(" ", "_"))] = \
-                data_item.item
+            for data_item in self.model.items:
+                local_namespace[str(data_item.text().replace(" ", "_"))] = \
+                    data_item.item
 
-            for layer_item in data_item.layers:
-                local_namespace[str(layer_item.text().replace(" ", "_"))] = \
-                    layer_item.item
+                for layer_item in data_item.layers:
+                    local_namespace[str(layer_item.text().replace(" ", "_"))] = \
+                        layer_item.item
 
-        self.viewer.console_dock.wgt_console.localNamespace = local_namespace
-        self.viewer.console_dock.wgt_console.shell.push(local_namespace)
+            self.viewer.console_dock.wgt_console.shell.push(local_namespace)

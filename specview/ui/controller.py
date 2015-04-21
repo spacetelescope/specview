@@ -293,13 +293,5 @@ class Controller(object):
     def _update_namespace(self, item=None):
         if self.viewer.console_dock.wgt_console.shell is not None:
             local_namespace = self._main_name_space
-
-            for data_item in self.model.items:
-                local_namespace[str(data_item.text().replace(" ", "_"))] = \
-                    data_item.item
-
-                for layer_item in data_item.layers:
-                    local_namespace[str(layer_item.text().replace(" ", "_"))] = \
-                        layer_item.item
-
+            local_namespace.update({name: data for name, data  in self.model})
             self.viewer.console_dock.wgt_console.shell.push(local_namespace)

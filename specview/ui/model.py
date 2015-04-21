@@ -1,5 +1,8 @@
 from os import path, sys
+from collections import ItemsView
+
 from ..external.qt import QtGui, QtCore
+
 import numpy as np
 
 from specview.analysis import model_fitting
@@ -33,6 +36,24 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     @property
     def data_items(self):
         return [x.item for x in self._items]
+
+
+    # --- Make iterable, over both data and layers.
+    def __iter__(self):
+        for data_item in self.items:
+            yield (clean_special(data_item.text()), data_item.item)
+            for layer_item in data_item.layers:
+                yield(clean_special(layer_item.text()), layer_item.item)
+
+    def __len__(self):
+        return sum(1 for _ in self)
+
+    def __getitem__(self, key):
+        for (existing_key, value) in self:
+            if key == existing_key:
+                return value
+        raise KeyError('Data "{}" does not exist.'.format(key))
+
 
     # --- protected functions
     def _item_changed(self, item):
@@ -141,3 +162,7 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
 
         return super(SpectrumDataTreeModel, self).rowCount(parent_index,
                                                            *args, **kwargs)
+
+def clean_special(text):
+    """Remove special characters."""
+    return text.replace(' ', '_')

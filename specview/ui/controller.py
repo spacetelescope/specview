@@ -12,7 +12,7 @@ from specview.tools.plugins import plugins
 
 
 class Controller(object):
-    def __init__(self, argv):
+    def __init__(self):
         super(Controller, self).__init__()
         self._model = SpectrumDataTreeModel()
         self._viewer = MainWindow(show_console=self._kernel['client'] is not None)
@@ -36,12 +36,6 @@ class Controller(object):
                                  'add_data_set': self.add_data_set}
         self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
-
-        try:
-            if len(argv) > 1:
-                self.open_file(argv[1])
-        except TypeError:
-            pass
 
     # -- properties
     @property

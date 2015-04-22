@@ -137,7 +137,7 @@ class Controller(object):
             model_data_item = layer_data_item.child(i)
 
             for j in range(model_data_item.rowCount()):
-                parameter_data_item = model_data_item.child(i, 1)
+                parameter_data_item = model_data_item.child(j, 1)
 
                 if layer_data_item.rowCount() > 1:
                     value = fit_model[i].parameters[j]

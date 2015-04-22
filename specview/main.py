@@ -29,14 +29,15 @@ class SView(Controller):
     """
 
     qt_app = None
-    plugin_path_added = False
+
+    _plugin_path_added = False
 
     def __init__(self, filename=None, argv=None):
         # Setup plugin search path.
-        if not self.__class__.plugin_path_added:
+        if not self.__class__._plugin_path_added:
             for path in reversed(_plugin_paths):
-                sys.path.insert(0, path)
-            self.__class__.plugin_path_added = True
+                sys.path.insert(1, path)
+            self.__class__._plugin_path_added = True
 
         # Start the Qt application, if necessary.
         if self.__class__.qt_app is None:

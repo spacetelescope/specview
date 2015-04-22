@@ -37,6 +37,9 @@ class Controller(object):
         self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
 
+        # Expose the data and fits.
+        self.dc = self._model.dc
+
     # -- properties
     @property
     def viewer(self):

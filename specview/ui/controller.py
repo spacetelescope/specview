@@ -37,6 +37,10 @@ class Controller(object):
         self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
 
+        # Expose the data and fits.
+        self.dc = self._model.dc
+        self.fc = self._model.fc
+
     # -- properties
     @property
     def viewer(self):
@@ -133,20 +137,18 @@ class Controller(object):
         new_y = fit_model(x)
 
         # Update using model approach
-        for i in range(layer_data_item.rowCount()):
-            model_data_item = layer_data_item.child(i)
+        for model_idx in range(layer_data_item.rowCount()):
+            model_data_item = layer_data_item.child(model_idx)
 
-            for j in range(model_data_item.rowCount()):
-                parameter_data_item = model_data_item.child(j, 1)
+            for param_idx in range(model_data_item.rowCount()):
+                parameter_data_item = model_data_item.child(param_idx, 1)
 
                 if layer_data_item.rowCount() > 1:
-                    value = fit_model[i].parameters[j]
-                    parameter_data_item.setData(value)
-                    parameter_data_item.setText(str(value))
+                    value = fit_model[model_idx].parameters[param_idx]
                 else:
-                    value = fit_model.parameters[j]
-                    parameter_data_item.setData(value)
-                    parameter_data_item.setText(str(value))
+                    value = fit_model.parameters[param_idx]
+                parameter_data_item.setData(value)
+                parameter_data_item.setText(str(value))
 
         fit_spec_data = SpectrumData(x=layer_data_item.item.x)
         fit_spec_data.set_y(new_y, wcs=layer_data_item.item.y.wcs,
@@ -173,9 +175,23 @@ class Controller(object):
                 sub_window.graph.select_active(item)
 
     def add_data_set(self, nddata, name="Data", parent=None):
+        """Add a dataset to the list.
+
+        Parameters
+        ----------
+        nddata: SpectrumData
+            The data to add.
+        """
         return self.model.create_data_item(nddata, name)
 
     def create_display(self, spectrum_data):
+        """Create a plot display with the given data.
+
+        Parameters
+        ----------
+        spectrum_data: SpectrumData
+            The data to display
+        """
         if spectrum_data is None:
             return
 

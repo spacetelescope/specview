@@ -29,6 +29,7 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         self._items = []
         self.itemChanged.connect(self._item_changed)
         self.dc = self.DataCollection(self)
+        self.fc = self.FitCollection(self)
 
     @property
     def items(self):
@@ -147,17 +148,16 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         return super(SpectrumDataTreeModel, self).rowCount(parent_index,
                                                            *args, **kwargs)
 
-    class DataCollection(object):
-        """Provide direct access to all the data in the tree."""
+    # Subclasses to expose Data, Fits, and any other deeply
+    # embedded information
+    class Collections(object):
+        """Provide direct access to embedded information."""
         def __init__(self, model):
             self._model = model
 
         # --- Make iterable, over both data and layers.
         def __iter__(self):
-            for data_item in self._model.items:
-                yield (clean_special(data_item.text()), data_item.item)
-                for layer_item in data_item.layers:
-                    yield(clean_special(layer_item.text()), layer_item.item)
+            raise NotImplementedError('__iter__ must be implemented in a subclass.')
 
         def __len__(self):
             return sum(1 for _ in self)
@@ -166,7 +166,25 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
             for (existing_key, value) in self:
                 if key == existing_key:
                     return value
-            raise KeyError('Data "{}" does not exist.'.format(key))
+            raise KeyError('Key "{}" does not exist.'.format(key))
+
+    class DataCollection(Collections):
+        """Provide direct access to all the data in the tree."""
+        def __iter__(self):
+            for data_item in self._model.items:
+                yield (clean_special(data_item.text()), data_item.item)
+                for layer_item in data_item.layers:
+                    yield(clean_special(layer_item.text()), layer_item.item)
+
+    class FitCollection(Collections):
+        """Provide direct access to all the fits in the tree."""
+        def __iter__(self):
+            for data_item in self._model.items:
+                for layer_item in data_item.layers:
+                    models = layer_item._models
+                    if (len(models)):
+                        yield(clean_special(layer_item.text()),
+                              models)
 
 
 def clean_special(text):

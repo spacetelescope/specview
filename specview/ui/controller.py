@@ -39,6 +39,7 @@ class Controller(object):
 
         # Expose the data and fits.
         self.dc = self._model.dc
+        self.fc = self._model.fc
 
     # -- properties
     @property

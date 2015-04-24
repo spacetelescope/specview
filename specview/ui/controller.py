@@ -9,6 +9,7 @@ from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
 from specview.tools.plugins import plugins
+from specview.analysis.statistics import stats, eq_width, extract
 
 
 class Controller(object):
@@ -30,16 +31,19 @@ class Controller(object):
         # Load in plugins
         self.ops = plugins({'controller': self})
 
+        # Expose the data, results from internal calculations.
+        self.dc = self._model.dc
+        self.fc = self._model.fc
+        self._results = None
+
         # This should definitely be formalized, but for the sake of the
         # demo, it's good enough
         self._main_name_space = {'np': np,
-                                 'add_data_set': self.add_data_set}
+                                 'add_data_set': self.add_data_set,
+                                 'results': lambda : self.results,
+        }
         self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
-
-        # Expose the data and fits.
-        self.dc = self._model.dc
-        self.fc = self._model.fc
 
     # -- properties
     @property
@@ -49,6 +53,10 @@ class Controller(object):
     @property
     def model(self):
         return self._model
+
+    @property
+    def results(self):
+        return self._results
 
     # -- private functions
     def __connect_active_data(self):
@@ -255,11 +263,12 @@ class Controller(object):
                                          data_name=active_item.parent.text(),
                                          layer_name=active_item.text())
         self.viewer.measurement_dock.show()
+        self._results = stat
 
     def get_equivalent_widths(self, sub_window):
-        # TODO: finish implementing this
+        # Get ROI stats
         stat_list = []
-
+        x_rois = []
         for roi in sub_window.graph.rois[-2:]:
             if roi is None:
                 continue
@@ -270,7 +279,17 @@ class Controller(object):
 
             region = extract(active_data, x_range)
             stat_list.append(stats(region))
+            x_rois.append(x_range)
 
+        # Determine feature bounds
+        if x_rois[0][1] < x_rois[1][0]:
+            feature_roi = (x_rois[0][1], x_rois[1][0])
+        else:
+            feature_roi = (x_rois[1][1], x_rois[0][0])
+
+        # Get the equivalent width
+        self._results = eq_width(stat_list[0], stat_list[1], extract(active_data, feature_roi))
+        print 'Equivelent width = {}'.format(self._results)
 
     def open_file(self, path):
         if not path:
@@ -303,5 +322,5 @@ class Controller(object):
     def _update_namespace(self, item=None):
         if self.viewer.console_dock.wgt_console.shell is not None:
             local_namespace = self._main_name_space
-            local_namespace.update({name: data for name, data  in self.model})
+            local_namespace.update(dict(self.model.dc))
             self.viewer.console_dock.wgt_console.shell.push(local_namespace)

@@ -1,5 +1,6 @@
 import numpy as np
 
+from specview.core.history import history
 from specview.ui.viewer import MainWindow
 from specview.ui.model import SpectrumDataTreeModel
 from specview.ui.qt.tree_items import LayerDataTreeItem
@@ -34,13 +35,13 @@ class Controller(object):
         # Expose the data, results from internal calculations.
         self.dc = self._model.dc
         self.fc = self._model.fc
-        self._results = None
+        self.history = history
 
         # This should definitely be formalized, but for the sake of the
         # demo, it's good enough
         self._main_name_space = {'np': np,
                                  'add_data_set': self.add_data_set,
-                                 'results': lambda : self.results,
+                                 'history': self.history
         }
         self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
@@ -53,10 +54,6 @@ class Controller(object):
     @property
     def model(self):
         return self._model
-
-    @property
-    def results(self):
-        return self._results
 
     # -- private functions
     def __connect_active_data(self):
@@ -263,7 +260,6 @@ class Controller(object):
                                          data_name=active_item.parent.text(),
                                          layer_name=active_item.text())
         self.viewer.measurement_dock.show()
-        self._results = stat
 
     def get_equivalent_widths(self, sub_window):
         # Get ROI stats
@@ -288,8 +284,7 @@ class Controller(object):
             feature_roi = (x_rois[1][1], x_rois[0][0])
 
         # Get the equivalent width
-        self._results = eq_width(stat_list[0], stat_list[1], extract(active_data, feature_roi))
-        print 'Equivelent width = {}'.format(self._results)
+        self.ops.eq_width(stat_list[0], stat_list[1], extract(active_data, feature_roi))
 
     def open_file(self, path):
         if not path:

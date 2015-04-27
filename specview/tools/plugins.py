@@ -3,6 +3,7 @@ import importlib
 import pkgutil
 from inspect import getmembers, isfunction
 
+from ..core.history import Register
 
 def plugins(namespace):
     """Return plugins as specifically designed for the specview package
@@ -47,9 +48,9 @@ class Plugins(object):
         modules = import_submodules(package=package,
                                     namespace=namespace,
                                     submodule=submodule)
-        funcs = [func for module in modules.itervalues()
-                 for func in getmembers(module, isfunction)
-                 if not func[0].startswith('_')]
+        funcs = [(name, Register(func_name=name)(func)) for module in modules.itervalues()
+                 for (name, func) in getmembers(module, isfunction)
+                 if not name.startswith('_')]
 
         # Make functions available.
         for name, func in funcs:

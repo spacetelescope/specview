@@ -1,6 +1,6 @@
 import numpy as np
 
-from specview.core.history import history
+from specview.core.log import log
 from specview.ui.viewer import MainWindow
 from specview.ui.model import SpectrumDataTreeModel
 from specview.ui.qt.tree_items import LayerDataTreeItem
@@ -10,7 +10,7 @@ from specview.core.data_objects import SpectrumData
 from specview.tools.preprocess import read_data
 from specview.ui.qt.dialogs import FileEditDialog
 from specview.tools.plugins import plugins
-from specview.analysis.statistics import stats, eq_width, extract
+from specview.analysis.statistics import stats, extract
 
 
 class Controller(object):
@@ -35,14 +35,15 @@ class Controller(object):
         # Expose the data, results from internal calculations.
         self.dc = self._model.dc
         self.fc = self._model.fc
-        self.history = history
+        self.log = log
 
         # This should definitely be formalized, but for the sake of the
         # demo, it's good enough
         self._main_name_space = {'np': np,
                                  'add_data_set': self.add_data_set,
-                                 'history': self.history
-        }
+                                 'dc': self.dc,
+                                 'fc': self.fc,
+                                 'log': self.log}
         self._main_name_space.update(self.ops.namespace)
         self._update_namespace()
 

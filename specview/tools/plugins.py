@@ -3,7 +3,7 @@ import importlib
 import pkgutil
 from inspect import getmembers, isfunction
 
-from ..core.history import Register
+from ..core.log import Register
 
 def plugins(namespace):
     """Return plugins as specifically designed for the specview package

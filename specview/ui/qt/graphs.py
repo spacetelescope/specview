@@ -69,6 +69,10 @@ class BaseGraph(QtGui.QWidget):
         roi.sigRemoveRequested.connect(remove)
         roi.sigRegionChangeFinished.connect(self._set_active_roi)
 
+        # Let everyone know, ROI is ready for use.
+        roi.sigRegionChangeFinished.emit(self)
+
+
     def get_roi_mask(self, x_data, y_data):
         mask_holder = []
 

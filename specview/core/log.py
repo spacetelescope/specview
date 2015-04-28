@@ -39,7 +39,7 @@ class Register(object):
                               args=args,
                               kwargs=kwargs,
                               result=result))
-            self.echo(result)
+            #self.echo(result)
             return result
 
         return wrapper

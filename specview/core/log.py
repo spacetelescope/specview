@@ -22,8 +22,10 @@ log = _logger()
 class Register(object):
     """Register a function to log itself."""
 
-    def __init__(self, func_name=None):
+    def __init__(self, controller, func_name=None):
         self._func_name = func_name
+        self._controller = controller
+        self.echo = lambda obj: self._controller.viewer.console_dock.wgt_console.append_stream(echo_format(obj))
 
     def __call__(self, func):
         if self._func_name is None:
@@ -37,6 +39,10 @@ class Register(object):
                               args=args,
                               kwargs=kwargs,
                               result=result))
+            self.echo(result)
             return result
 
         return wrapper
+
+def echo_format(obj):
+    return '\nLog result:\n{}\n\n'.format(str(obj))

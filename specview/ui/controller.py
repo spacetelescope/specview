@@ -263,6 +263,9 @@ class Controller(object):
         self.viewer.measurement_dock.show()
 
     def get_equivalent_widths(self, sub_window):
+        active_item = sub_window.graph.active_item
+        active_data = active_item.item
+
         # Get ROI stats
         stat_list = []
         x_rois = []
@@ -271,8 +274,6 @@ class Controller(object):
                 continue
 
             x_range, y_range = sub_window.graph._get_roi_coords(roi)
-            active_item = sub_window.graph.active_item
-            active_data = active_item.item
 
             region = extract(active_data, x_range)
             stat_list.append(stats(region))
@@ -285,7 +286,17 @@ class Controller(object):
             feature_roi = (x_rois[1][1], x_rois[0][0])
 
         # Get the equivalent width
-        self.ops.eq_width(stat_list[0], stat_list[1], extract(active_data, feature_roi))
+        result = self.ops.eq_width(stat_list[0],
+                                   stat_list[1],
+                                   extract(active_data, feature_roi))
+
+        # Report
+        self.viewer.equiv_width_dock.set_labels(result,
+                                                stat_list[0],
+                                                stat_list[1],
+                                                data_name=active_item.parent.text(),
+                                                layer_name=active_item.text())
+        self.viewer.equiv_width_dock.show()
 
     def open_file(self, path):
         if not path:

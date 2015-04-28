@@ -48,7 +48,8 @@ class Plugins(object):
         modules = import_submodules(package=package,
                                     namespace=namespace,
                                     submodule=submodule)
-        funcs = [(name, Register(func_name=name)(func)) for module in modules.itervalues()
+        funcs = [(name, Register(namespace['controller'], func_name=name)(func))
+                 for module in modules.itervalues()
                  for (name, func) in getmembers(module, isfunction)
                  if not name.startswith('_')]
 

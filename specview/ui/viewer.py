@@ -50,14 +50,14 @@ class MainWindow(QtGui.QMainWindow):
         self.model_editor_dock = ModelDockWidget(self)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea,
                            self.model_editor_dock)
-        self.model_editor_dock.setFloating(True)
+        #self.model_editor_dock.setFloating(True)
         self.model_editor_dock.hide()
 
         # Setup equivalent width dock
         self.equiv_width_dock = EquivalentWidthDockWidget(self)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea,
-                           self.model_editor_dock)
-        self.equiv_width_dock.setFloating(True)
+                           self.equiv_width_dock)
+        #self.equiv_width_dock.setFloating(True)
         self.equiv_width_dock.hide()
 
         # Setup console dock

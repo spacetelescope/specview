@@ -54,7 +54,7 @@ class BaseDataTree(QtGui.QTreeView):
         for index in self.selectedIndexes():
             self._selected_items.append(index.model().itemFromIndex(index))
 
-        self.sig_selected_changed.emit(self.selected_items)
+        self.sig_selected_changed.emit(self._selected_items)
 
 
 class SpectrumDataTree(BaseDataTree):

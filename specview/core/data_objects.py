@@ -142,7 +142,10 @@ class SpectrumData(object):
         return SpectrumData(self._x, new_y)
 
     def _fit_shape(self, a, b, fill=0):
-        if a.x.shape[0] > b.x.shape[0]:
+        if a.x.shape[0] == b.x.shape[0]:
+            fin_x = a
+            fin_y = b
+        elif a.x.shape[0] > b.x.shape[0]:
             # Make y the same shape
             x_start = a.x.data[a.x.data < b.x.data[0]]
             x_end = a.x.data[a.x.data > b.x.data[-1]]
@@ -176,9 +179,9 @@ class SpectrumData(object):
 
             yp = np.interp(b.x.data, new_x, new_y)
 
-            fin_x = a
-            fin_y = SpectrumData(SpectrumArray(new_x, unit=a.x.unit, wcs=a.x.wcs),
+            fin_x = SpectrumData(SpectrumArray(new_x, unit=a.x.unit, wcs=a.x.wcs),
                                  SpectrumArray(yp, unit=a.y.unit, wcs=a.y.wcs))
+            fin_y = b
 
         return fin_x, fin_y
 

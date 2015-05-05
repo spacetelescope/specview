@@ -1,9 +1,22 @@
+import re
 import inspect
 
 from ...external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.core.data_objects import SpectrumData
+
+
+# RE pattern to decode scientific and floating point notation.
+_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+def float_check(value):
+    """ Checks for a valid float in either scientific or floating point notation"""
+    substring = _pattern.findall(str(value))
+    if substring:
+        number = substring[0]
+        return float(number)
+    else:
+        return False
 
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
@@ -119,8 +132,10 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             self.appendRow([para_name, para_value])
 
     def update_parameter(self, name, value):
-        setattr(self._model, name, float(str(value)))
-        self._parent.sig_update()
+        value = float_check(value)
+        if value:
+            setattr(self._model, name, value)
+            self._parent.sig_update()
 
     def refresh_parameters(self):
         print("Model refreshed")

@@ -7,7 +7,7 @@ import numpy as np
 
 from specview.analysis import model_fitting
 from specview.ui.qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
-                     LayerDataTreeItem, ParameterDataTreeItem, float_check)
+                                       LayerDataTreeItem, ParameterDataTreeItem, float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -115,14 +115,17 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
 
     # --- overridden functions
     def setData(self, index, value, role=QtCore.Qt.EditRole):
-        value = float_check(value)
-        if value and role == QtCore.Qt.EditRole:
+        if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
-            item.setData(value)
-            item.setText(str(value))
-
             if isinstance(item, ParameterDataTreeItem):
+                value = float_check(value)
+                if value:
+                    item.setData(value)
+                    item.setText(str(value))
+            else:
+                item.setData(value)
                 item.setText(str(value))
+
 
             self.dataChanged.emit(index, index)
 

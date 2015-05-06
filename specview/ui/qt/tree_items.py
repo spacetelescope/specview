@@ -70,6 +70,7 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
     def __init__(self, parent, mask, rois, name="Layer"):
         super(LayerDataTreeItem, self).__init__()
+        self.setEditable(True)
         self.setColumnCount(2)
         self._parent = parent
         self._mask = mask
@@ -108,6 +109,7 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 class ModelDataTreeItem(QtGui.QStandardItem):
     def __init__(self, parent, model, name="Model"):
         super(ModelDataTreeItem, self).__init__()
+        self.setEditable(True)
         self.setColumnCount(2)
         self._parent = parent
         self._model = model
@@ -162,4 +164,3 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
     @property
     def parent(self):
         return self._parent
-

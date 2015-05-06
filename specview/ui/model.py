@@ -115,8 +115,8 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
 
     # --- overridden functions
     def setData(self, index, value, role=QtCore.Qt.EditRole):
+        item = self.itemFromIndex(index)
         if role == QtCore.Qt.EditRole:
-            item = self.itemFromIndex(index)
             if isinstance(item, ParameterDataTreeItem):
                 value = float_check(value)
                 if value:
@@ -126,10 +126,15 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
                 item.setData(value)
                 item.setText(str(value))
 
+            self.dataChanged.emit(index, index)
+            return True
+
+        elif role == QtCore.Qt.CheckStateRole:
+            item.setData(value, role=QtCore.Qt.CheckStateRole)
 
             self.dataChanged.emit(index, index)
-
             return True
+
         return False
 
     def hasChildren(self, parent_index=None, *args, **kwargs):

@@ -131,6 +131,12 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             self._parameters.append((para_name, para_value))
             self.appendRow([para_name, para_value])
 
+            # parameter attributes.
+            attr_fixed = self._model.fixed[key]
+            attr_name = ParameterDataTreeItem(self, 'fixed', attr_fixed)
+            attr_value = BooleanParameterDataTreeItem(self, 'fixed', attr_fixed)
+            para_name.appendRow([attr_name, attr_value])
+
     def update_parameter(self, name, value):
         value = float_check(value)
         if value:
@@ -141,7 +147,6 @@ class ModelDataTreeItem(QtGui.QStandardItem):
         print("Model refreshed")
         for i in range(len(self.rowCount())):
             self.removeRow(i)
-
         self._setup_children()
 
 
@@ -153,6 +158,9 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         self._name = name
         self._value = value
 
+        self.setDataValue(name, value, is_editable)
+
+    def setDataValue(self, name, value, is_editable):
         if not is_editable:
             self.setData(str(name), role=QtCore.Qt.DisplayRole)
         else:
@@ -162,3 +170,14 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
     @property
     def parent(self):
         return self._parent
+
+
+class BooleanParameterDataTreeItem(ParameterDataTreeItem):
+    ''' Handles boolean attribute value via a checkbox '''
+    def __init__(self, parent, name, value):
+        super(BooleanParameterDataTreeItem, self).__init__(parent, name, value, is_editable=True)
+        self.setCheckable(True)
+
+    def setDataValue(self, name, value, is_editable):
+        self.setData(value, role=QtCore.Qt.CheckStateRole)
+

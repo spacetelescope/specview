@@ -136,8 +136,8 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             attr_value = ParameterDataTreeItem(para_name, 'min', parameter.min, True)
             para_name.appendRow([attr_name, attr_value])
 
-            attr_name = ParameterDataTreeItem(para_name, 'min', parameter.max)
-            attr_value = ParameterDataTreeItem(para_name, 'min', parameter.max, True)
+            attr_name = ParameterDataTreeItem(para_name, 'max', parameter.max)
+            attr_value = ParameterDataTreeItem(para_name, 'max', parameter.max, True)
             para_name.appendRow([attr_name, attr_value])
 
     def update_parameter(self, name, value):

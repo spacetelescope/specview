@@ -125,9 +125,19 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             # end result is the same, as far as the GUI goes. It remains to be seen
             # if this will affect the three structure in any undesirable way.
 
+            parameter = getattr(self._model, key)
             attr_fixed = self._model.fixed[key]
+
             attr_name = ParameterDataTreeItem(para_name, 'fixed', attr_fixed)
             attr_value = BooleanAttributeDataTreeItem(para_name, 'fixed', attr_fixed)
+            para_name.appendRow([attr_name, attr_value])
+
+            attr_name = ParameterDataTreeItem(para_name, 'min', parameter.min)
+            attr_value = ParameterDataTreeItem(para_name, 'min', parameter.min, True)
+            para_name.appendRow([attr_name, attr_value])
+
+            attr_name = ParameterDataTreeItem(para_name, 'min', parameter.max)
+            attr_value = ParameterDataTreeItem(para_name, 'min', parameter.max, True)
             para_name.appendRow([attr_name, attr_value])
 
     def update_parameter(self, name, value):
@@ -157,6 +167,12 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         else:
             self.setData(value)
             self.setText(str(value))
+
+    def update_parameter(self, name, value):
+        self._value = value
+        parameter = getattr(self._parent._model, self._name)
+        setattr(parameter, name, value)
+        self._parent._parent.sig_update()
 
     @property
     def parent(self):

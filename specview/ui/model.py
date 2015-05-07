@@ -1,15 +1,32 @@
+import math
+import re
 from os import path, sys
-from collections import ItemsView
-
-from ..external.qt import QtGui, QtCore
 
 import numpy as np
 
+from ..external.qt import QtGui, QtCore
+
 from specview.analysis import model_fitting
 from specview.ui.qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
-                                       LayerDataTreeItem, ParameterDataTreeItem, float_check)
+                                       LayerDataTreeItem, ParameterDataTreeItem,
+                                       BooleanAttributeDataTreeItem)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
+
+
+# RE pattern to decode scientific and floating point notation.
+_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+
+def float_check(value):
+    """ Checks for a valid float in either scientific or floating point notation"""
+    substring = _pattern.findall(str(value))
+    if substring:
+        number = float(substring[0])
+        if len(substring) > 1:
+            number *= math.pow(10., int(substring[1]))
+        return number
+    else:
+        return False
 
 
 class SpectrumDataTreeModel(QtGui.QStandardItemModel):
@@ -39,10 +56,11 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
     def data_items(self):
         return [x.item for x in self._items]
 
-
     # --- protected functions
     def _item_changed(self, item):
-        if isinstance(item, ParameterDataTreeItem):
+        if isinstance(item, BooleanAttributeDataTreeItem):
+            item.set_attribute()
+        elif isinstance(item, ParameterDataTreeItem):
             value = float_check(item.data())
             if value:
                 item.parent.update_parameter(item._name, value)

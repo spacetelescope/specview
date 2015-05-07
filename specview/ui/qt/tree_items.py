@@ -1,22 +1,9 @@
-import re
 import inspect
 
 from ...external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.core.data_objects import SpectrumData
-
-
-# RE pattern to decode scientific and floating point notation.
-_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
-def float_check(value):
-    """ Checks for a valid float in either scientific or floating point notation"""
-    substring = _pattern.findall(str(value))
-    if substring:
-        number = substring[0]
-        return float(number)
-    else:
-        return False
 
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
@@ -131,17 +118,21 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             self._parameters.append((para_name, para_value))
             self.appendRow([para_name, para_value])
 
-            # parameter attributes.
+            # Parameter attributes are attached to the parameter name/value tree node.
+            # One could argue that in fact we need a sort of parent node to hold the
+            # parameter, and sub-nodes to hold its attributes AND value. But since
+            # that parent node would be rendered with the name and value anyway, the
+            # end result is the same, as far as the GUI goes. It remains to be seen
+            # if this will affect the three structure in any undesirable way.
+
             attr_fixed = self._model.fixed[key]
-            attr_name = ParameterDataTreeItem(self, 'fixed', attr_fixed)
-            attr_value = BooleanParameterDataTreeItem(self, 'fixed', attr_fixed)
+            attr_name = ParameterDataTreeItem(para_name, 'fixed', attr_fixed)
+            attr_value = BooleanAttributeDataTreeItem(para_name, 'fixed', attr_fixed)
             para_name.appendRow([attr_name, attr_value])
 
     def update_parameter(self, name, value):
-        value = float_check(value)
-        if value:
-            setattr(self._model, name, value)
-            self._parent.sig_update()
+        setattr(self._model, name, value)
+        self._parent.sig_update()
 
     def refresh_parameters(self):
         print("Model refreshed")
@@ -164,7 +155,7 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         if not is_editable:
             self.setData(str(name), role=QtCore.Qt.DisplayRole)
         else:
-            self.setData(str(value))
+            self.setData(value)
             self.setText(str(value))
 
     @property
@@ -172,12 +163,27 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         return self._parent
 
 
-class BooleanParameterDataTreeItem(ParameterDataTreeItem):
+class BooleanAttributeDataTreeItem(ParameterDataTreeItem):
     ''' Handles boolean attribute value via a checkbox '''
+    #TODO this class could be perhaps augmented/subclassed to handle float attributes as well.
     def __init__(self, parent, name, value):
-        super(BooleanParameterDataTreeItem, self).__init__(parent, name, value, is_editable=True)
+        super(BooleanAttributeDataTreeItem, self).__init__(parent, name, value, is_editable=True)
         self.setCheckable(True)
 
     def setDataValue(self, name, value, is_editable):
+        # this method is necessary here to ensure that the proper role is
+        # assigned to the tree node. Otherwise we may see a 'True' or 'False'
+        # string displayed beside the checkbox (the default way Qt displays
+        # checkable nodes with other role types).
         self.setData(value, role=QtCore.Qt.CheckStateRole)
 
+    def set_attribute(self):
+        # an attribute is a child of a parameter. A parameter in
+        # turn is a child of a model.
+        parameter = getattr(self._parent._parent._model, self._parent._name)
+        if self.checkState() == QtCore.Qt.Checked:
+            setattr(parameter, self._name, True)
+        else:
+            setattr(parameter, self._name, False)
+        # the layer that has to be signaled is 3 levels above the attribute.
+        self._parent._parent._parent.sig_update()

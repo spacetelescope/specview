@@ -302,19 +302,53 @@ class Controller(object):
         if not path:
             return
 
+        if len(path.split('[')) > 1:
+            spec_data = self._open_from_fully_specified(path)
+            path = path.split('[')[0]
+        else:
+            spec_data = self._open_with_dialog(path)
+
+        if not spec_data:
+            return
+
+        name = path.split('/')[-1].split('.')[-2]
+        self.add_data_set(spec_data, name)
+
+    def _open_with_dialog(self, path):
         dialog = FileEditDialog(path)
         dialog.exec_()
 
         if not dialog.result():
-            return
+            return None
 
         spec_data = read_data(path, ext=dialog.ext, flux=dialog.flux,
                               dispersion=dialog.dispersion,
                               flux_unit=dialog.flux_unit,
                               dispersion_unit=dialog.disp_unit)
+        return spec_data
 
-        name = path.split('/')[-1].split('.')[-2]
-        self.add_data_set(spec_data, name)
+    # Opens a multi-extension FITS table file with a fully specified spectrum,
+    # in the notation used by the TABLES package. Ex.:
+    #
+    #  ...../o4st09020_sx1.fits[1,WAVELENGTH,FLUX]
+    #
+    # will retrieve the spectrum specified by columns WAVELENGTH and FLUX from
+    # the first extension table.
+    #
+    # This is useful when repetitively entering the same spectrum via command line.
+    def _open_from_fully_specified(self, path):
+        tokens = path.split('[')
+        clean_path = tokens[0]
+        elements = tokens[1].split(',')
+        ext = int(elements[0])
+        dispersion = elements[1]
+        flux = elements[2][:-1]
+
+        spec_data = read_data(clean_path, ext=ext, flux=flux,
+                              dispersion=dispersion,
+                              flux_unit=" ",
+                              dispersion_unit=" ")
+        return spec_data
 
     # -- slot functions
     def _set_toolbar(self):

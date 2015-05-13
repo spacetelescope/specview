@@ -9,24 +9,9 @@ from ..external.qt import QtGui, QtCore
 from specview.analysis import model_fitting
 from specview.ui.qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
                                        LayerDataTreeItem, ParameterDataTreeItem,
-                                       BooleanAttributeDataTreeItem)
+                                       BooleanAttributeDataTreeItem, float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
-
-
-# RE pattern to decode scientific and floating point notation.
-_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
-
-def float_check(value):
-    """ Checks for a valid float in either scientific or floating point notation"""
-    substring = _pattern.findall(str(value))
-    if substring:
-        number = float(substring[0])
-        if len(substring) > 1:
-            number *= math.pow(10., int(substring[1]))
-        return number
-    else:
-        return False
 
 
 class SpectrumDataTreeModel(QtGui.QStandardItemModel):
@@ -58,12 +43,11 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
 
     # --- protected functions
     def _item_changed(self, item):
-        if isinstance(item, BooleanAttributeDataTreeItem):
-            item.set_attribute()
-        elif isinstance(item, ParameterDataTreeItem):
-            value = float_check(item.data())
-            if value:
-                item.parent.update_parameter(item._name, value)
+        # this is used to propagate changes in the Qt view/model objects
+        # to the corresponding astropy objects such as function parameter
+        # values and attributes, when their corresponding views on the tree
+        # are edited by the user.
+        item.update_value(item._name, item.data())
 
     # --- public functions
     def remove_data_item(self, index, parent_index):

@@ -1,9 +1,25 @@
 import inspect
+import re
+import math
 
 from ...external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.core.data_objects import SpectrumData
+
+# RE pattern to decode scientific and floating point notation.
+_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+
+def float_check(value):
+    """ Checks for a valid float in either scientific or floating point notation"""
+    substring = _pattern.findall(str(value))
+    if substring:
+        number = float(substring[0])
+        if len(substring) > 1:
+            number *= math.pow(10., int(substring[1]))
+        return number
+    else:
+        return False
 
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
@@ -110,11 +126,11 @@ class ModelDataTreeItem(QtGui.QStandardItem):
     def _setup_children(self):
         args = inspect.getargspec(self._model.__init__)
         keywords = args[0]
-        defaults = self._model.parameters
+        values = self._model.parameters
 
         for i, key in enumerate(keywords[1:]):
-            para_name = ParameterDataTreeItem(self, key, defaults[i])
-            para_value = ParameterDataTreeItem(self, key, defaults[i], True)
+            para_name = ParameterDataTreeItem(self, key, values[i])
+            para_value = ParameterValueDataTreeItem(self, key, values[i])
             self._parameters.append((para_name, para_value))
             self.appendRow([para_name, para_value])
 
@@ -133,14 +149,14 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             para_name.appendRow([attr_name, attr_value])
 
             attr_name = ParameterDataTreeItem(para_name, 'min', parameter.min)
-            attr_value = ParameterDataTreeItem(para_name, 'min', parameter.min, True)
+            attr_value = FloatAttributeDataTreeItem(para_name, 'min', parameter.min)
             para_name.appendRow([attr_name, attr_value])
 
             attr_name = ParameterDataTreeItem(para_name, 'max', parameter.max)
-            attr_value = ParameterDataTreeItem(para_name, 'max', parameter.max, True)
+            attr_value = FloatAttributeDataTreeItem(para_name, 'max', parameter.max)
             para_name.appendRow([attr_name, attr_value])
 
-    def update_parameter(self, name, value):
+    def update_value(self, name, value):
         setattr(self._model, name, value)
         self._parent.sig_update()
 
@@ -151,51 +167,84 @@ class ModelDataTreeItem(QtGui.QStandardItem):
         self._setup_children()
 
 
+#TODO the constructor calling sequences need to be simplified.
+
 class ParameterDataTreeItem(QtGui.QStandardItem):
-    def __init__(self, parent, name, value, is_editable=False):
+    ''' Class that holds parameter and attribute names on the tree.
+
+        A name is a non-editable string.
+     '''
+    def __init__(self, parent, name, value):
         super(ParameterDataTreeItem, self).__init__()
-        self.setEditable(is_editable)
+        self.setEditable(False)
         self._parent = parent
         self._name = name
         self._value = value
 
-        self.setDataValue(name, value, is_editable)
+        self.setDataValue(name, value)
 
-    def setDataValue(self, name, value, is_editable):
-        if not is_editable:
-            self.setData(str(name), role=QtCore.Qt.DisplayRole)
-        else:
-            self.setData(value)
-            self.setText(str(value))
+    def setDataValue(self, name, value):
+        self.setData(str(name), role=QtCore.Qt.DisplayRole)
 
-    def update_parameter(self, name, value):
-        self._value = value
-        parameter = getattr(self._parent._model, self._name)
-        setattr(parameter, name, value)
-        self._parent._parent.sig_update()
+    def update_value(self, name, value):
+        value = float_check(value)
+        if value:
+            self._parent.update_value(name, value)
 
     @property
     def parent(self):
         return self._parent
 
 
-class BooleanAttributeDataTreeItem(ParameterDataTreeItem):
-    ''' Handles boolean attribute value via a checkbox '''
-    #TODO this class could be perhaps augmented/subclassed to handle float attributes as well.
+class ParameterValueDataTreeItem(ParameterDataTreeItem):
+    ''' Subclasses the base class to add the ability to edit
+        the field and have it's value propagated to the
+        underlying astropy object.
+    '''
     def __init__(self, parent, name, value):
-        super(BooleanAttributeDataTreeItem, self).__init__(parent, name, value, is_editable=True)
+        super(ParameterValueDataTreeItem, self).__init__(parent, name, value)
+        self.setEditable(True)
+
+    def setDataValue(self, name, value):
+        self.setData(value)
+        self.setText(str(value))
+
+
+class FloatAttributeDataTreeItem(ParameterValueDataTreeItem):
+    ''' Subclasses the parameter value class to handle parameter
+        attribute values instead of the parameter value.
+    '''
+    # An attribute is a child of a parameter. A parameter in turn is a child of a model.
+    def update_value(self, name, value):
+        self._value = value
+        parameter = getattr(self._parent._parent._model, self._parent._name)
+        setattr(parameter, name, value)
+        # the layer that has to be signaled is 3 levels above the attribute.
+        self._parent._parent._parent.sig_update()
+
+    def setDataValue(self, name, value):
+        self.setData(value)
+        self.setText(str(value))
+
+class BooleanAttributeDataTreeItem(ParameterValueDataTreeItem):
+    ''' Handles boolean attribute value via a checkbox
+    '''
+    # An attribute is a child of a parameter. A parameter in turn is a child of a model.
+    def __init__(self, parent, name, value):
+        super(BooleanAttributeDataTreeItem, self).__init__(parent, name, value)
         self.setCheckable(True)
 
-    def setDataValue(self, name, value, is_editable):
+    def setDataValue(self, name, value):
         # this method is necessary here to ensure that the proper role is
         # assigned to the tree node. Otherwise we may see a 'True' or 'False'
         # string displayed beside the checkbox (the default way Qt displays
         # checkable nodes with other role types).
         self.setData(value, role=QtCore.Qt.CheckStateRole)
 
-    def set_attribute(self):
-        # an attribute is a child of a parameter. A parameter in
-        # turn is a child of a model.
+    def update_value(self, name, value):
+        # Both the passed name and value are ignored. We use the internally
+        # stored name, and the value is irrelevant because the result of
+        # updating a boolean is simply toggling it.
         parameter = getattr(self._parent._parent._model, self._parent._name)
         if self.checkState() == QtCore.Qt.Checked:
             setattr(parameter, self._name, True)

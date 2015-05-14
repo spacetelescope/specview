@@ -167,8 +167,6 @@ class ModelDataTreeItem(QtGui.QStandardItem):
         self._setup_children()
 
 
-#TODO the constructor calling sequences need to be simplified.
-
 class ParameterDataTreeItem(QtGui.QStandardItem):
     ''' Class that holds parameter and attribute names on the tree.
 
@@ -187,11 +185,6 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
 
     def setDataValue(self, name, value):
         self.setData(str(name), role=QtCore.Qt.DisplayRole)
-
-    def update_value(self, name, value):
-        value = float_check(value)
-        if value:
-            self._parent.update_value(name, value)
 
     @property
     def parent(self):
@@ -215,12 +208,18 @@ class ParameterValueDataTreeItem(ParameterDataTreeItem):
         self.setData(value)
         self.setText(str(value))
 
+    def update_value(self, name, value):
+        value = float_check(value)
+        if value:
+            self._parent.update_value(name, value)
+
 
 class AttributeValueDataTreeItem(ParameterValueDataTreeItem):
     ''' Subclasses the parameter value class to handle parameter
-        attribute values instead of the parameter value.
+        attribute values instead of parameter values.
     '''
-    # An attribute is a child of a parameter. A parameter in turn is a child of a model.
+    # An attribute is a child of a parameter. A parameter in turn
+    # is a child of a model.
     def update_value(self, name, value):
         self._value = value
         parameter = getattr(self._parent._parent._model, self._parent._name)
@@ -237,7 +236,8 @@ class BooleanAttributeValueDataTreeItem(ParameterValueDataTreeItem):
     ''' Subclasses the parameter value class to handle parameter
         boolean attribute values. These are represented by checkboxes.
     '''
-    # An attribute is a child of a parameter. A parameter in turn is a child of a model.
+    # An attribute is a child of a parameter. A parameter in turn
+    # is a child of a model.
     def __init__(self, parent, name, value):
         super(BooleanAttributeValueDataTreeItem, self).__init__(parent, name, value)
         self.setCheckable(True)

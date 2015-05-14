@@ -68,6 +68,9 @@ class Controller(object):
         self.viewer.model_editor_dock.btn_perform_fit.clicked.connect(
             self._perform_fit)
 
+        self.viewer.model_editor_dock.btn_replot_model.clicked.connect(
+            self._replot_model)
+
     def __connect_trees(self):
         self.viewer.data_dock.wgt_data_tree.sig_current_changed.connect(
             self.viewer.model_editor_dock.wgt_model_tree.set_root_index)
@@ -142,6 +145,21 @@ class Controller(object):
         fit_model = fitter(init_model, x, y)
         new_y = fit_model(x)
 
+        self._update_parameter_values(fit_model, layer_data_item)
+
+        self._update_model_plot(layer_data_item, new_y)
+
+    def _replot_model(self):
+        layer_data_item = self.viewer.data_dock.wgt_data_tree.current_item
+
+        if not isinstance(layer_data_item, LayerDataTreeItem):
+            return
+
+        new_y = layer_data_item.model(layer_data_item.item.x.data)
+
+        self._update_model_plot(layer_data_item, new_y)
+
+    def _update_parameter_values(self, fit_model, layer_data_item):
         # Update using model approach
         for model_idx in range(layer_data_item.rowCount()):
             model_data_item = layer_data_item.child(model_idx)
@@ -156,15 +174,14 @@ class Controller(object):
                 parameter_data_item.setData(value)
                 parameter_data_item.setText(str(value))
 
+    def _update_model_plot(self, layer_data_item, new_y):
         fit_spec_data = SpectrumData(x=layer_data_item.item.x)
         fit_spec_data.set_y(new_y, wcs=layer_data_item.item.y.wcs,
                             unit=layer_data_item.item.y.unit)
-
         spec_data_item = self.add_data_set(fit_spec_data,
                                            name="Model Fit ({}: {})".format(
                                                layer_data_item.parent.text(),
                                                layer_data_item.text()))
-
         self.display_graph(spec_data_item)
 
     def _open_file_dialog(self):

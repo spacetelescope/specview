@@ -9,7 +9,7 @@ from ..external.qt import QtGui, QtCore
 from specview.analysis import model_fitting
 from specview.ui.qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
                                        LayerDataTreeItem, ParameterDataTreeItem,
-                                       BooleanAttributeDataTreeItem, float_check)
+                                       BooleanAttributeValueDataTreeItem, float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 

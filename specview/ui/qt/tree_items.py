@@ -145,15 +145,15 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             attr_fixed = self._model.fixed[key]
 
             attr_name = ParameterDataTreeItem(para_name, 'fixed', attr_fixed)
-            attr_value = BooleanAttributeDataTreeItem(para_name, 'fixed', attr_fixed)
+            attr_value = BooleanAttributeValueDataTreeItem(para_name, 'fixed', attr_fixed)
             para_name.appendRow([attr_name, attr_value])
 
             attr_name = ParameterDataTreeItem(para_name, 'min', parameter.min)
-            attr_value = FloatAttributeDataTreeItem(para_name, 'min', parameter.min)
+            attr_value = AttributeValueDataTreeItem(para_name, 'min', parameter.min)
             para_name.appendRow([attr_name, attr_value])
 
             attr_name = ParameterDataTreeItem(para_name, 'max', parameter.max)
-            attr_value = FloatAttributeDataTreeItem(para_name, 'max', parameter.max)
+            attr_value = AttributeValueDataTreeItem(para_name, 'max', parameter.max)
             para_name.appendRow([attr_name, attr_value])
 
     def update_value(self, name, value):
@@ -172,7 +172,9 @@ class ModelDataTreeItem(QtGui.QStandardItem):
 class ParameterDataTreeItem(QtGui.QStandardItem):
     ''' Class that holds parameter and attribute names on the tree.
 
-        A name is a non-editable string.
+        A name is a non-editable string. It is used to build the
+        name field in a tree row that displays either a parameter
+        name/value pair, or a parameter attribute name/value pair.
      '''
     def __init__(self, parent, name, value):
         super(ParameterDataTreeItem, self).__init__()
@@ -200,6 +202,10 @@ class ParameterValueDataTreeItem(ParameterDataTreeItem):
     ''' Subclasses the base class to add the ability to edit
         the field and have it's value propagated to the
         underlying astropy object.
+
+        This class is used to build the 'value' field in a tree
+        row that displays either a parameter name/value pair, or
+        a parameter attribute name/value pair.
     '''
     def __init__(self, parent, name, value):
         super(ParameterValueDataTreeItem, self).__init__(parent, name, value)
@@ -210,7 +216,7 @@ class ParameterValueDataTreeItem(ParameterDataTreeItem):
         self.setText(str(value))
 
 
-class FloatAttributeDataTreeItem(ParameterValueDataTreeItem):
+class AttributeValueDataTreeItem(ParameterValueDataTreeItem):
     ''' Subclasses the parameter value class to handle parameter
         attribute values instead of the parameter value.
     '''
@@ -226,12 +232,14 @@ class FloatAttributeDataTreeItem(ParameterValueDataTreeItem):
         self.setData(value)
         self.setText(str(value))
 
-class BooleanAttributeDataTreeItem(ParameterValueDataTreeItem):
-    ''' Handles boolean attribute value via a checkbox
+
+class BooleanAttributeValueDataTreeItem(ParameterValueDataTreeItem):
+    ''' Subclasses the parameter value class to handle parameter
+        boolean attribute values. These are represented by checkboxes.
     '''
     # An attribute is a child of a parameter. A parameter in turn is a child of a model.
     def __init__(self, parent, name, value):
-        super(BooleanAttributeDataTreeItem, self).__init__(parent, name, value)
+        super(BooleanAttributeValueDataTreeItem, self).__init__(parent, name, value)
         self.setCheckable(True)
 
     def setDataValue(self, name, value):

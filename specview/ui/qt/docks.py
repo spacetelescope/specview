@@ -220,7 +220,7 @@ class ModelDockWidget(BaseDockWidget):
         #
         # TODO for testing only. Must be replaced by appropriate signal/slot
         #
-        # self.btn_replot_model = QtGui.QPushButton("&Re-plot Model")
+        self.btn_replot_model = QtGui.QPushButton("&Re-plot Model")
         #
 
         # self.add_layout(hb_layout)
@@ -229,6 +229,6 @@ class ModelDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)
         #
-        # self.add_widget(self.btn_replot_model)
+        self.add_widget(self.btn_replot_model)
         #
         self.setMinimumSize(self.sizeHint())

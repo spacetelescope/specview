@@ -2,6 +2,7 @@ from ...external.qt import QtGui, QtCore
 
 from specview.ui.model import LayerDataTreeItem
 from specview.ui.qt.menus import SpectrumDataContextMenu
+from specview.ui.qt.tree_items import ParameterDataTreeItem
 
 
 class BaseDataTree(QtGui.QTreeView):
@@ -9,9 +10,11 @@ class BaseDataTree(QtGui.QTreeView):
     try:
         sig_current_changed = QtCore.pyqtSignal(QtCore.QModelIndex)
         sig_selected_changed = QtCore.pyqtSignal(list)
+        sig_updated = QtCore.pyqtSignal(ParameterDataTreeItem)
     except AttributeError:
         sig_current_changed = QtCore.Signal(QtCore.QModelIndex)
         sig_selected_changed = QtCore.Signal(list)
+        sig_updated = QtCore.Signal(ParameterDataTreeItem)
 
     def __init__(self, parent=None):
         super(BaseDataTree, self).__init__(parent)
@@ -121,6 +124,16 @@ class ModelTree(BaseDataTree):
             self.hideColumn(1)
             # self.setEnabled(False)
             self.parentWidget().setEnabled(False)
+
+    # def currentChanged(self, selected, deselected):
+    #     model = selected.model()
+    #
+    #     if model is not None:
+    #         self._current_item = model.itemFromIndex(selected)
+    #         self.sig_updated.emit(self._current_item)
+    #     else:
+    #         self._current_item = None
+    #         self.sig_updated.emit(None)
 
     @property
     def current_item(self):

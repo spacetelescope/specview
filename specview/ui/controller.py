@@ -3,7 +3,7 @@ import numpy as np
 from specview.core.log import log
 from specview.ui.viewer import MainWindow
 from specview.ui.model import SpectrumDataTreeModel
-from specview.ui.qt.tree_items import LayerDataTreeItem
+from specview.ui.qt.tree_items import LayerDataTreeItem, ParameterDataTreeItem, ModelDataTreeItem
 from specview.ui.qt.subwindows import SpectraMdiSubWindow
 from specview.analysis.model_fitting import get_fitter
 from specview.core.data_objects import SpectrumData
@@ -70,6 +70,9 @@ class Controller(object):
 
         self.viewer.model_editor_dock.btn_replot_model.clicked.connect(
             self._replot_model)
+
+        # self.viewer.model_editor_dock.wgt_model_tree.sig_updated.connect(
+        #     self._replot_model)
 
     def __connect_trees(self):
         self.viewer.data_dock.wgt_data_tree.sig_current_changed.connect(
@@ -149,15 +152,16 @@ class Controller(object):
 
         self._update_model_plot(layer_data_item, new_y)
 
-    def _replot_model(self):
-        layer_data_item = self.viewer.data_dock.wgt_data_tree.current_item
+    def _replot_model(self, selected):
+        # only replot when a parameter value got changed by the user.
+        # selected = self.viewer.model_editor_dock.wgt_model_tree.current_item
+        if isinstance(selected, ParameterDataTreeItem) and isinstance(selected._parent, ModelDataTreeItem):
 
-        if not isinstance(layer_data_item, LayerDataTreeItem):
-            return
-
-        new_y = layer_data_item.model(layer_data_item.item.x.data)
-
-        self._update_model_plot(layer_data_item, new_y)
+            layer_data_item = self.viewer.data_dock.wgt_data_tree.current_item
+            if not isinstance(layer_data_item, LayerDataTreeItem):
+                return
+            new_y = layer_data_item.model(layer_data_item.item.x.data)
+            self._update_model_plot(layer_data_item, new_y)
 
     def _update_parameter_values(self, fit_model, layer_data_item):
         # Update using model approach

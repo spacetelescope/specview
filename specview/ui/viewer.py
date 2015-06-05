@@ -1,22 +1,28 @@
-from ..external.qt import QtGui, QtCore
+from __future__ import print_function
+from qtpy import QtGui, QtCore
 
-from specview.ui.qt.menubars import MainMainBar
+from specview.ui.qt.menubars import MainMenuBar
+from specview.ui.qt.toolbars import BaseToolBar
 from specview.ui.qt.docks import (DataDockWidget, MeasurementDockWidget,
-                                  ConsoleDockWidget, ModelDockWidget,
-                                  EquivalentWidthDockWidget)
+                                   ConsoleDockWidget, ModelDockWidget,
+                                   EquivalentWidthDockWidget)
+from specview.ui.qt.subwindows import SpectraMdiSubWindow
+from specview.ui.items import LayerDataTreeItem
 
 
 class MainWindow(QtGui.QMainWindow):
+    sig_view_current_changed = QtCore.Signal()
+    sig_view_selected_changed = QtCore.Signal()
+
     def __init__(self, show_console=True):
         super(MainWindow, self).__init__()
         # Basic app info
         self.show_console = show_console
-        self.menu_bar = MainMainBar()
+        self.menu_bar = MainMenuBar()
         self.setMenuBar(self.menu_bar)
         self.setWindowTitle('SpecPy')
-        tb = QtGui.QToolBar()
-        self.addToolBar(tb)
-        tb.hide()
+        self.tool_bar = BaseToolBar()
+        self.addToolBar(self.tool_bar)
 
         # File open dialog
         self.file_dialog = QtGui.QFileDialog(self)
@@ -50,46 +56,79 @@ class MainWindow(QtGui.QMainWindow):
         self.model_editor_dock = ModelDockWidget(self)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea,
                            self.model_editor_dock)
-        #self.model_editor_dock.setFloating(True)
-        self.model_editor_dock.hide()
+        # self.model_editor_dock.hide()
 
         # Setup equivalent width dock
         self.equiv_width_dock = EquivalentWidthDockWidget(self)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea,
                            self.equiv_width_dock)
-        #self.equiv_width_dock.setFloating(True)
         self.equiv_width_dock.hide()
 
-        # Setup console dock
-        self.console_dock = ConsoleDockWidget(self)
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.console_dock)
+        # setup
+        self.setup_signal_relay()
+        self.connect_signals()
 
-        self._setup_menu_bar()
+    def setup_signal_relay(self):
+        # When a layer item is selected, send a signal that the current
+        # layer item has changed
+        self.data_dock.wgt_layer_tree.sig_current_changed.connect(
+            self.sig_view_selected_changed.emit)
 
-    def _setup_menu_bar(self):
-        self.menu_bar.window_menu.addAction(
-            self.data_dock.toggleViewAction())
-        self.menu_bar.window_menu.addAction(
-            self.measurement_dock.toggleViewAction())
-        # self.menu_bar.docks_menu.addAction(
-        #     self.equiv_width_dock.toggleViewAction())
-        if self.show_console:
-            self.menu_bar.window_menu.addAction(
-                self.console_dock.toggleViewAction())
+        # When a data item is selected, send a signal that the current data
+        # item has changed
+        self.data_dock.wgt_data_tree.sig_current_changed.connect(
+            self.sig_view_current_changed.emit)
 
-    def set_toolbar(self, toolbar=None, hide_all=False):
-        if toolbar is not None:
-            self.addToolBar(toolbar)
+    def connect_signals(self):
+        # Enable/disable toolbar actions depending on what is selected in
+        # the views
+        self.sig_view_current_changed.connect(lambda:
+            self.tool_bar.toggle_actions(self.current_data_item is not None,
+                                         self.current_layer_item is not None))
 
-        for child in self.children():
-            if isinstance(child, QtGui.QToolBar):
-                if child == toolbar:
-                    child.show()
-                elif child.isVisible():
-                    child.hide()
+        # When a data item is selected, update the layer item view to
+        # reflect all layers under the data item
+        self.data_dock.wgt_data_tree.sig_current_changed.connect(
+            self.data_dock.wgt_layer_tree.set_root_index)
 
-                if hide_all:
-                    child.hide()
+        self.data_dock.wgt_layer_tree.sig_current_changed.connect(
+            self.model_editor_dock.wgt_model_tree.set_root_index)
 
-    def close(self):
-        QtCore.QCoreApplication.instance().quit()
+    def set_view_models(self, default, data, layers):
+        self.model_editor_dock.wgt_model_tree.setModel(default)
+        self.data_dock.wgt_data_tree.setModel(data)
+        self.data_dock.wgt_layer_tree.setModel(layers)
+
+    @property
+    def current_layer_item(self):
+        return self.data_dock.wgt_layer_tree.current_item
+
+    @property
+    def current_data_item(self):
+        return self.data_dock.wgt_data_tree.current_item
+
+    @property
+    def selected_model(self):
+        return str(self.model_editor_dock.wgt_model_selector.currentText())
+
+    @property
+    def selected_fitter(self):
+        return str(self.model_editor_dock.wgt_fit_selector.currentText())
+
+    def new_sub_window(self, layer_data_item, set_active=True,
+                       style='histogram'):
+        sub_window = self.mdiarea.addSubWindow(SpectraMdiSubWindow())
+        sub_window.plot_toolbar.atn_model_editor.triggered.connect(lambda:
+            self.model_editor_dock.setVisible(self.model_editor_dock.isHidden()))
+        sub_window.show()
+
+        sub_window.graph.add_item(layer_data_item)
+
+    def remove_graph(self, layer_data_item, sub_window=None):
+        if not isinstance(layer_data_item, LayerDataTreeItem):
+            return
+
+        if sub_window is None:
+            sub_window = self.viewer.mdiarea.activeSubWindow()
+
+        sub_window.graph.remove_item(layer_data_item)

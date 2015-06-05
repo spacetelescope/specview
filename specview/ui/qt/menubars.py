@@ -1,9 +1,9 @@
-from ...external.qt import QtGui
+from qtpy import QtGui
 
 
-class MainMainBar(QtGui.QMenuBar):
+class MainMenuBar(QtGui.QMenuBar):
     def __init__(self):
-        super(MainMainBar, self).__init__()
+        super(MainMenuBar, self).__init__()
         # File
         self.atn_exit = QtGui.QAction('&Exit', self)
         self.atn_exit.setShortcut('Ctrl+Q')

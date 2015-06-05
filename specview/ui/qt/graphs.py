@@ -1,18 +1,14 @@
-from itertools import cycle, tee
+from itertools import cycle
 
-from ...external.qt import QtGui, QtCore
+from qtpy import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 
-from specview.ui.qt.tree_items import SpectrumDataTreeItem, LayerDataTreeItem
+from specview.ui.items import SpectrumDataTreeItem, LayerDataTreeItem
 
 
 class BaseGraph(QtGui.QWidget):
-    # TODO: get rid of nasty try/excepts
-    try:
-        sig_units_changed = QtCore.pyqtSignal()
-    except AttributeError:
-        sig_units_changed = QtCore.Signal()
+    sig_units_changed = QtCore.Signal()
 
     def __init__(self):
         super(BaseGraph, self).__init__()
@@ -23,7 +19,7 @@ class BaseGraph(QtGui.QWidget):
         self.setLayout(self.vb_layout)
         # Create main graphics layout widget
         self.view_box = None
-        self.w = pg.GraphicsLayoutWidget()
+        self.w = pg.PlotWidget()
         self.vb_layout.addWidget(self.w)
         # Create roi container
         self._rois = []
@@ -72,8 +68,13 @@ class BaseGraph(QtGui.QWidget):
         # Let everyone know, ROI is ready for use.
         roi.sigRegionChangeFinished.emit(self)
 
+    def get_roi_mask(self, layer_data_item):
+        spec_data = layer_data_item.item
+        spec_x_array = spec_data.x.convert_unit_to(self._units[0])
+        spec_y_array = spec_data.y.convert_unit_to(self._units[1])
 
-    def get_roi_mask(self, x_data, y_data):
+        x_data, y_data = spec_x_array.data, spec_y_array.data
+
         mask_holder = []
 
         for roi in self._rois:
@@ -85,6 +86,29 @@ class BaseGraph(QtGui.QWidget):
 
         mask = np.logical_not(reduce(np.logical_or, mask_holder))
         return mask
+
+    def get_roi_data(self, layer_data_item):
+        spec_data = layer_data_item.item
+        spec_x_array = spec_data.x.convert_unit_to(self._units[0])
+        spec_y_array = spec_data.y.convert_unit_to(self._units[1])
+
+        x_data, y_data = spec_x_array.data, spec_y_array.data
+
+        if len(self._rois) == 0:
+            return x_data, y_data, spec_x_array.unit, spec_y_array.unit
+
+        mask_holder = []
+
+        for roi in self._rois:
+            roi_shape = roi.parentBounds()
+            x1, y1, x2, y2 = roi_shape.getCoords()
+
+            mask_holder.append((x_data >= x1) & (x_data <= x2) &
+                               (y_data >= y1) & (y_data <= y2))
+
+        mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        return x_data[~mask], y_data[~mask], spec_x_array.unit, \
+               spec_y_array.unit
 
     def get_active_roi_mask(self, x_data, y_data):
         roi_shape = self._active_roi.parentBounds()
@@ -104,11 +128,10 @@ class SpectraGraph(BaseGraph):
         self._active_plot = None
         self._active_item = None
 
-
         self.__colors = ['g', 'r', 'c', 'm', 'y', 'w']
         self._icolors = cycle(self.__colors)
 
-        self.plot_window = self.w.addPlot(row=1, col=0)
+        self.plot_window = self.w.getPlotItem()
         self.plot_window.showGrid(x=True, y=True)
         self.view_box = self.plot_window.getViewBox()
 
@@ -137,40 +160,70 @@ class SpectraGraph(BaseGraph):
         x1, y1, x2, y2 = roi_shape.getCoords()
         return [x1, x2], [y1, y2]
 
-    def update_all(self, use_step=True):
-        layer_data_items = self._plot_dict.keys()
+    def update_all(self):
+        for layer_data_item in self._plot_dict.keys():
+            self.update_item(layer_data_item)
 
-        for layer_data_item in layer_data_items:
-            self.remove_item(layer_data_item)
-
-        self._icolors = cycle(self.__colors)
-
-        for layer_data_item in layer_data_items:
-            self.add_item(layer_data_item, use_step)
-
-    def update_item(self, layer_data_item=None, style='histogram'):
+    def update_item(self, layer_data_item=None, style=None):
         if layer_data_item is None:
             layer_data_item = self._active_item
 
             if layer_data_item is None:
                 return
 
-        plot = self._plot_dict[layer_data_item][-1]
-        color = plot.opts['pen'].color()
-        self.remove_item(layer_data_item)
-        self.add_item(layer_data_item, style=style, color=color)
+        for plot in self._plot_dict[layer_data_item]:
+            color = plot.opts['pen']
+
+            if style is None:
+                if plot.opts['stepMode'] is True:
+                    style = 'histogram'
+                elif plot.opts['symbol'] is not None:
+                    style = 'scatter'
+                else:
+                    style = 'line'
+
+            spec_data = layer_data_item.item
+            spec_x_array = spec_data.x.convert_unit_to(self._units[0])
+            spec_y_array = spec_data.y.convert_unit_to(self._units[1])
+
+            x_data = spec_x_array.data if style != 'histogram' else np.append(
+                spec_x_array.data, spec_x_array.data[-1])
+
+            # This is a work around. If you don't turn off downsampling,
+            # then the drastic change in units may cause *all* data points
+            # to be deleted, and the autoscale will not be able to function.
+            #  So first, turn off downsampling, plot data, autoscale,
+            # then enable downsampling.
+            self.plot_window.setDownsampling(ds=False, auto=False, mode='peak')
+
+            self.plot_window.autoRange()
+
+            plot.setData(x_data,
+                         spec_y_array.data,
+                         pen=color,
+                         stepMode=style == 'histogram',
+                         symbol='o' if style == 'scatter' else None)
+
+            self.plot_window.autoRange()
+
+            self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
+
+            self.plot_window.setLabel('bottom', text='Dispersion [{}]'.format(
+                                      spec_x_array.unit))
+            self.plot_window.setLabel('left', text='Flux [{}]'.format(
+                                      spec_y_array.unit))
 
     def add_item(self, layer_data_item, set_active=True, style='histogram',
                  color=None):
         color = next(self._icolors) if not color else color
+
         if layer_data_item in self._plot_dict.keys():
             self._plot_dict[layer_data_item].append(layer_data_item)
         else:
             self._plot_dict[layer_data_item] = []
 
-        layer_data = layer_data_item.item
-
         if self._units is None:
+            layer_data = layer_data_item.item
             self._units = [layer_data.x.unit, layer_data.y.unit, None]
 
         self._graph_data(layer_data_item, set_active, style, color)
@@ -194,39 +247,35 @@ class SpectraGraph(BaseGraph):
         for layer_data_item in layer_data_items:
             del self._plot_dict[layer_data_item]
 
-    def _graph_data(self, layer_data_item, set_active=True,
-                    style='histogram', color=None):
-        color = next(self._icolors) if not color else color
+    def _graph_data(self, layer_data_item, set_active=True, style='histogram',
+                    color=None):
+        color = next(self._icolors) if color is None else color
+
         spec_data = layer_data_item.item
         spec_x_array = spec_data.x.convert_unit_to(self._units[0])
         spec_y_array = spec_data.y.convert_unit_to(self._units[1])
 
-        if style is not 'scatter':
-            if style is 'histogram':
-                fin_pnt = spec_x_array.data[-1] - spec_x_array.data[-2] +\
-                          spec_x_array.data[-1]
-                x_data = np.append(spec_x_array.data, fin_pnt)
-            else:
-                x_data = spec_x_array.data
+        x_data = spec_x_array.data if style != 'histogram' else np.append(
+            spec_x_array.data, spec_x_array.data[-1])
 
-            plot = pg.PlotDataItem(x_data,
-                                   spec_y_array.data,
-                                   pen=pg.mkPen(color),
-                                   stepMode=style == 'histogram')
-        else:
-            plot = pg.ScatterPlotItem(spec_x_array.data,
-                                      spec_y_array.data,
-                                      pen=pg.mkPen(color))
+        plot = self.plot_window.plot(x_data,
+                                     spec_y_array.data,
+                                     pen=color,
+                                     stepMode=style == 'histogram',
+                                     symbol='o' if style == 'scatter' else
+                                     None)
 
         self.plot_window.setLabel('bottom',
                                   text='Dispersion [{}]'.format(
                                       spec_x_array.unit))
         self.plot_window.setLabel('left',
-                                  text='Flux [{}]'.format(
-                                      spec_y_array.unit))
+                                  text='Flux [{}]'.format(spec_y_array.unit))
 
-        self._plot_dict[layer_data_item].append(plot)
-        self.plot_window.addItem(plot)
+        self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
+        self.plot_window.setClipToView(True)
+
+        if plot not in self._plot_dict[layer_data_item]:
+            self._plot_dict[layer_data_item].append(plot)
 
         if set_active:
             self.select_active(layer_data_item)
@@ -234,8 +283,6 @@ class SpectraGraph(BaseGraph):
     def set_active(self, layer_data_item):
         self._active_plot = self._plot_dict[layer_data_item][-1]
         self._active_item = layer_data_item
-
-        spectrum_data = layer_data_item.item
 
     def select_active(self, layer_data_item):
         if layer_data_item not in self._plot_dict.keys():
@@ -245,14 +292,14 @@ class SpectraGraph(BaseGraph):
 
         if plot == self._active_plot:
             return
-        elif self._active_plot is not None:
-            color = self._active_plot.opts['pen'].color()
-            color.setAlpha(100)
-            self._active_plot.setPen(color, width=1)
+        # elif self._active_plot is not None:
+            # color = self._active_plot.opts['pen'].color()
+            # color.setAlpha(100)
+            # self._active_plot.setPen(color)#, width=1)
 
-        color = plot.opts['pen'].color()
-        color.setAlpha(255)
-        plot.setPen(color, width=2)
+        # color = plot.opts['pen'].color()
+        # color.setAlpha(255)
+        # plot.setPen(color)#, width=2)
         self.set_active(layer_data_item)
 
 

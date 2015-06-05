@@ -1,4 +1,4 @@
-from ...external.qt import QtGui, QtCore
+from qtpy import QtGui, QtCore
 from astropy.io import fits
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
 
@@ -12,11 +12,7 @@ class FileEditDialog(QtGui.QDialog):
         self.flux_unit = None
         self.dispersion_unit = None
 
-        # TODO: get rid of nasty try/excepts
-        try:
-            self.hdulist = fits.open(str(file_path))
-        except IOError:
-            self.hdulist = fits.open(str(file_path[0]))
+        self.hdulist = fits.open(str(file_path))
 
         self.vb_layout_main = QtGui.QVBoxLayout()
         self.setLayout(self.vb_layout_main)

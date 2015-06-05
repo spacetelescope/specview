@@ -1,6 +1,7 @@
-from ...external.qt import QtGui, QtCore
+from qtpy import QtGui, QtCore
 from os import sys, path
 from specview.ui.qt.dialogs import PlotUnitsDialog
+import specview.ui.qt.resources
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
 
@@ -12,35 +13,62 @@ class BaseToolBar(QtGui.QToolBar):
         self.setMovable(False)
         # self.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
 
-        self.atn_insert_roi = QtGui.QAction("&Insert \nROI", self)
-        self.atn_insert_roi.setIcon(QtGui.QIcon(path.join(PATH,
-                                                          "rect_select.png")))
-        self.atn_insert_roi.setToolTip('Add rectangular region-of-interest')
+        self.atn_open_data = QtGui.QAction("&Insert \nROI", self)
+        self.atn_open_data.setIcon(QtGui.QIcon(":/icons/open131.png"))
+        self.atn_open_data.setToolTip('Add rectangular region-of-interest')
 
-        self.atn_create_layer = QtGui.QAction("&Create Layer", self)
-        self.atn_create_layer.setIcon(QtGui.QIcon(path.join(PATH,
-                                                            "create_layer.png")))
-        self.atn_create_layer.setToolTip("Create new layer from ROIs")
+        self.atn_new_plot = QtGui.QAction("&New Plot", self)
+        self.atn_new_plot.setIcon(QtGui.QIcon(":/icons/basic.png"))
+        self.atn_new_plot.setToolTip('Create a new plot window')
+        self.atn_new_plot.setDisabled(True)
+
+        self.atn_add_plot = QtGui.QAction("&Add Plot", self)
+        self.atn_add_plot.setIcon(QtGui.QIcon(":/icons/round62.png"))
+        self.atn_add_plot.setToolTip('Add data to current plot window')
+        self.atn_add_plot.setDisabled(True)
+
+        self.atn_remove_plot = QtGui.QAction("&Remove Plot", self)
+        self.atn_remove_plot.setIcon(QtGui.QIcon(":/icons/round60.png"))
+        self.atn_remove_plot.setToolTip('Remove data from current plot window')
+        self.atn_remove_plot.setDisabled(True)
 
         # Setup buttons
-        self.addAction(self.atn_insert_roi)
-        self.addAction(self.atn_create_layer)
+        self.addAction(self.atn_open_data)
         self.addSeparator()
+        self.addAction(self.atn_new_plot)
+        self.addAction(self.atn_add_plot)
+        self.addAction(self.atn_remove_plot)
+
+    @QtCore.Slot(bool, bool)
+    def toggle_actions(self, data_selected, layer_selected):
+        print("AND HERE")
+        print(data_selected, layer_selected)
+        self.atn_new_plot.setDisabled(not (data_selected or not
+        layer_selected))
+        self.atn_add_plot.setDisabled(not layer_selected)
+        self.atn_remove_plot.setDisabled(not layer_selected)
 
 
 class SpectraToolBar(BaseToolBar):
     def __init__(self, parent=None):
         super(SpectraToolBar, self).__init__(parent)
 
+        self.atn_insert_roi = QtGui.QAction("&Insert \nROI", self)
+        self.atn_insert_roi.setIcon(QtGui.QIcon(":/icons/selection7.png"))
+        self.atn_insert_roi.setToolTip('Add rectangular region-of-interest')
+
+        self.atn_create_layer = QtGui.QAction("&Create Layer", self)
+        self.atn_create_layer.setIcon(QtGui.QIcon(":/icons/add73.png"))
+        self.atn_create_layer.setToolTip("Create new layer from ROIs")
+
         self.atn_measure = QtGui.QAction("&Measurements", self)
-        self.atn_measure.setIcon(QtGui.QIcon(path.join(PATH, "info_rect.png")))
+        self.atn_measure.setIcon(QtGui.QIcon(":/icons/add73.png"))
         self.atn_measure.setToolTip('Get measurements from current region')
 
         self.addAction(self.atn_measure)
 
         self.atn_equiv_width = QtGui.QAction("&Equivalent Width", self)
-        self.atn_equiv_width.setIcon(QtGui.QIcon(path.join(PATH,
-                                                           "equiv_width.png")))
+        self.atn_equiv_width.setIcon(QtGui.QIcon(":/icons/add73.png"))
         self.atn_equiv_width.setToolTip("Calculates equivalent width of the "
                                         "last two ROI regions")
 
@@ -59,6 +87,32 @@ class SpectraToolBar(BaseToolBar):
 class SpectraPlotToolBar(QtGui.QToolBar):
     def __init__(self, parent=None):
         super(SpectraPlotToolBar, self).__init__(parent)
+        self.setContentsMargins(0, 0, 0, 0)
+
+        self.atn_insert_roi = QtGui.QAction("&Insert \nROI", self)
+        self.atn_insert_roi.setIcon(QtGui.QIcon(":/icons/selection7.png"))
+        self.atn_insert_roi.setToolTip('Add rectangular region-of-interest')
+
+        self.atn_create_layer = QtGui.QAction("&Create Layer", self)
+        self.atn_create_layer.setIcon(QtGui.QIcon(":/icons/windows23.png"))
+        self.atn_create_layer.setToolTip("Create new layer from ROIs")
+
+        self.atn_measure = QtGui.QAction("&Measurements", self)
+        self.atn_measure.setIcon(QtGui.QIcon(":/icons/info22.png"))
+        self.atn_measure.setToolTip('Get measurements from current region')
+
+
+        self.atn_equiv_width = QtGui.QAction("&Equivalent Width", self)
+        self.atn_equiv_width.setIcon(QtGui.QIcon(":/icons/four37.png"))
+        self.atn_equiv_width.setToolTip("Calculates equivalent width of the "
+                                        "last two ROI regions")
+
+        self.atn_model_editor = QtGui.QAction("&Model Editor", self)
+        self.atn_model_editor.setIcon(QtGui.QIcon(":/icons/map29.png"))
+        self.atn_model_editor.setToolTip('Opens the model editor')
+
+        # ------
+
         self.unit_dialog = PlotUnitsDialog()
 
         plot_opt_menu = QtGui.QMenu()
@@ -88,14 +142,22 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         # Tool bar menu
         plot_opt_button = QtGui.QToolButton()
         plot_opt_button.setText("&Plot Options")
+        plot_opt_button.setIcon(QtGui.QIcon(":/icons/open134.png"))
         plot_opt_button.setPopupMode(QtGui.QToolButton.InstantPopup)
         plot_opt_button.setMenu(plot_opt_menu)
 
         layer_opt_button = QtGui.QToolButton()
         layer_opt_button.setText("&Layer Options")
+        layer_opt_button.setIcon(QtGui.QIcon(":/icons/document76.png"))
         layer_opt_button.setPopupMode(QtGui.QToolButton.InstantPopup)
         layer_opt_button.setMenu(layer_opt_menu)
 
+        self.addAction(self.atn_insert_roi)
+        self.addSeparator()
+        self.addAction(self.atn_measure)
+        self.addAction(self.atn_equiv_width)
+        self.addAction(self.atn_model_editor)
+        self.addSeparator()
         self.addWidget(plot_opt_button)
         self.addWidget(layer_opt_button)
 

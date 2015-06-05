@@ -1,14 +1,13 @@
 from os import sys, path
 
-from ...external.qt import QtGui, QtCore
+from qtpy import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
 from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
 
 from specview.ui.qt.boxes import StatisticsGroupBox
-from specview.ui.qt.tree_views import SpectrumDataTree, ModelTree
+from specview.ui.qt.views import SpectrumDataTree, ModelTree, LayerDataTree
 from specview.analysis import model_fitting
 
-PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
 QPUSHBUTTON_CSS = """QPushButton {
                          border: 0px solid #8f8f91;
                          border-radius: 4px;
@@ -24,8 +23,7 @@ QPUSHBUTTON_CSS = """QPushButton {
                      QPushButton:hover {
                          border: 1px solid #999;
                          border-radius: 4px;
-                     }
-                  """
+                     }"""
 
 
 class BaseDockWidget(QtGui.QDockWidget):
@@ -51,54 +49,53 @@ class BaseDockWidget(QtGui.QDockWidget):
 class DataDockWidget(BaseDockWidget):
     def __init__(self, parent=None):
         super(DataDockWidget, self).__init__(parent)
-        self.setWindowTitle("Data")
 
         # Set allowed areas and behavior
         self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
                              QtCore.Qt.RightDockWidgetArea)
 
-        # Add TreeView widget
+        # Create data sets TreeView widget
         self.wgt_data_tree = SpectrumDataTree()
         self.wgt_data_tree.setSelectionMode(
             QtGui.QAbstractItemView.ExtendedSelection)
 
-        # Set Plotting buttons
-        self.btn_create_plot = QtGui.QPushButton()
-        self.btn_create_plot.setFlat(True)
-        self.btn_create_plot.setToolTip("Create a new plot window from data")
-        self.btn_create_plot.setIcon(QtGui.QIcon(
-            path.join(PATH, "new_plot.png")))
-        self.btn_create_plot.setIconSize(QtCore.QSize(32, 32))
-        self.btn_create_plot.setStyleSheet(QPUSHBUTTON_CSS)
+        # Create data layers TreeView widget
+        self.wgt_layer_tree = LayerDataTree()
+        self.wgt_layer_tree.setSelectionMode(
+            QtGui.QAbstractItemView.ExtendedSelection)
 
-        self.btn_add_plot = QtGui.QPushButton()
-        self.btn_add_plot.setFlat(True)
-        self.btn_add_plot.setToolTip("Add layer to current plot window")
-        self.btn_add_plot.setIcon(QtGui.QIcon(path.join(PATH,
-                                                        "insert_plot.png")))
-        self.btn_add_plot.setIconSize(QtCore.QSize(32, 32))
-        self.btn_add_plot.setStyleSheet(QPUSHBUTTON_CSS)
+        # Create Label widget
+        self.lbl_data_sets = QtGui.QLabel("Data Sets")
+        self.lbl_data_layers = QtGui.QLabel("Data Layers")
 
-        self.btn_remove_plot = QtGui.QPushButton()
-        self.btn_remove_plot.setFlat(True)
-        self.btn_remove_plot.setToolTip("Remove layer from current plot")
-        self.btn_remove_plot.setIcon(QtGui.QIcon(path.join(PATH,
-                                                        "remove_item.png")))
-        self.btn_remove_plot.setIconSize(QtCore.QSize(32, 32))
-        self.btn_remove_plot.setStyleSheet(QPUSHBUTTON_CSS)
+        # Circituitous means
+        lyt_data_tree = QtGui.QVBoxLayout()
+        lyt_data_tree.setContentsMargins(0,0,0,10)
+        wgt_data_tree_main = QtGui.QWidget()
+        wgt_data_tree_main.setLayout(lyt_data_tree)
+        lyt_data_tree.addWidget(self.lbl_data_sets)
+        lyt_data_tree.addWidget(self.wgt_data_tree)
+
+        lyt_layer_tree = QtGui.QVBoxLayout()
+        lyt_layer_tree.setContentsMargins(0,10,0,0)
+        wgt_layer_tree_main = QtGui.QWidget()
+        wgt_layer_tree_main.setLayout(lyt_layer_tree)
+        lyt_layer_tree.addWidget(self.lbl_data_layers)
+        lyt_layer_tree.addWidget(self.wgt_layer_tree)
+
+        # Splitter object
+        self.spl_data = QtGui.QSplitter()
+        self.spl_data.setOrientation(QtCore.Qt.Vertical)
+        self.spl_data.addWidget(wgt_data_tree_main)
+        self.spl_data.addWidget(wgt_layer_tree_main)
+
+        self.add_widget(self.spl_data)
 
         # Add to main layout
-        self.add_widget(self.wgt_data_tree)
-
-        # Setup buttons
-        hb_layout = QtGui.QHBoxLayout()
-        hb_layout.setSpacing(2)
-        hb_layout.addWidget(self.btn_create_plot)
-        hb_layout.addWidget(self.btn_add_plot)
-        hb_layout.addStretch()
-        hb_layout.addWidget(self.btn_remove_plot)
-
-        self.add_layout(hb_layout)
+        # self.add_widget(self.lbl_data_sets)
+        # self.add_widget(self.wgt_data_tree)
+        # self.add_widget(self.lbl_data_layers)
+        # self.add_widget(self.wgt_layer_tree)
 
 
 class MeasurementDockWidget(BaseDockWidget):
@@ -217,18 +214,10 @@ class ModelDockWidget(BaseDockWidget):
 
         # Create button for performing fit
         self.btn_perform_fit = QtGui.QPushButton("&Fit Model")
-        #
-        # TODO for testing only. Must be replaced by appropriate signal/slot
-        #
-        self.btn_replot_model = QtGui.QPushButton("&Re-plot Model")
-        #
 
         # self.add_layout(hb_layout)
         self.add_widget(self.wgt_model_selector)
         self.add_widget(self.wgt_model_tree)
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)
-        #
-        self.add_widget(self.btn_replot_model)
-        #
         self.setMinimumSize(self.sizeHint())

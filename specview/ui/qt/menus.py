@@ -1,4 +1,4 @@
-from ...external.qt import QtGui
+from qtpy import QtGui
 
 
 class SpectrumDataContextMenu(QtGui.QMenu):

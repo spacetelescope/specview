@@ -1,4 +1,4 @@
-from ...external.qt import QtGui
+from qtpy import QtGui
 from astropy.units import Unit
 
 from specview.ui.qt.graphs import ImageGraph, SpectraGraph
@@ -45,8 +45,8 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
         self._connect_tools()
 
     def _connect_toolbar(self):
-        self.toolbar.atn_insert_roi.triggered.connect(self.graph.add_roi)
-        # self.toolbar.atn_equiv_width.triggered.connect()
+        self.plot_toolbar.atn_insert_roi.triggered.connect(self.graph.add_roi)
+        # self.plot_toolbar.atn_equiv_width.triggered.connect()
 
     def _connect_tools(self):
         self.plot_toolbar.unit_dialog.accepted.connect(

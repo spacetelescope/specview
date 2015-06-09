@@ -1,5 +1,3 @@
-import math
-import re
 from os import path, sys
 
 import numpy as np
@@ -9,7 +7,7 @@ from ..external.qt import QtGui, QtCore
 from specview.analysis import model_fitting
 from specview.ui.qt.tree_items import (SpectrumDataTreeItem, ModelDataTreeItem,
                                        LayerDataTreeItem, ParameterDataTreeItem,
-                                       BooleanAttributeValueDataTreeItem, float_check)
+                                       float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -47,7 +45,8 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         # to the corresponding astropy objects such as function parameter
         # values and attributes, when their corresponding views on the tree
         # are edited by the user.
-        item.update_value(item._name, item.data())
+        if hasattr(item, 'update_value'):
+            item.update_value(item._name, item.data())
 
     # --- public functions
     def remove_data_item(self, index, parent_index):

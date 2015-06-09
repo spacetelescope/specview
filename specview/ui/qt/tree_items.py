@@ -64,15 +64,26 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
         self._layers.remove(layer)
 
 
-class LayerDataTreeItem(QtGui.QStandardItem):
+class SignalUpdated(QtCore.QObject):
+    # You can only have pyqtSignal() or Signal() in classes that are derived from QObject.
+    # (http://comments.gmane.org/gmane.comp.python.pyqt-pykde/28223)
+
     # TODO: get rid of nasty try/excepts
     try:
         sig_updated = QtCore.pyqtSignal()
     except AttributeError:
         sig_updated = QtCore.Signal()
 
+    def emit(self):
+        self.sig_updated.emit()
+
+
+class LayerDataTreeItem(QtGui.QStandardItem):
     def __init__(self, parent, mask, rois, name="Layer"):
         super(LayerDataTreeItem, self).__init__()
+
+        self.signal_updated = SignalUpdated()
+
         self.setColumnCount(2)
         self._parent = parent
         self._mask = mask
@@ -89,7 +100,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     @property
     def model(self):
         """This returns a class object."""
-        return np.sum(self._models)
+
+        #TODO here is the place to add support for a compound model expression handler.
+
+        compound_model = np.sum(self._models)
+        return compound_model
 
     @property
     def item(self):
@@ -104,8 +119,7 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
     # --- signals
     def sig_update(self):
-        pass
-        # self.sig_updated.emit()
+        self.signal_updated.emit()
 
 
 class ModelDataTreeItem(QtGui.QStandardItem):
@@ -259,4 +273,6 @@ class BooleanAttributeValueDataTreeItem(ParameterValueDataTreeItem):
         else:
             setattr(parameter, self._name, False)
         # the layer that has to be signaled is 3 levels above the attribute.
-        self._parent._parent._parent.sig_update()
+        # But, avoid signaling for now. Otherwise, a new model and its layer
+        # get created every time an attribute gets changed by the user.
+        # self._parent._parent._parent.sig_update()

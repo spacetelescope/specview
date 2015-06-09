@@ -227,8 +227,14 @@ class ModelDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_model_selector)
         self.add_widget(self.wgt_model_tree)
         self.add_widget(self.wgt_fit_selector)
+
         self.add_widget(self.btn_perform_fit)
+
+        # TODO removing button from GUI. This is also provisional, until we
+        # figure out a way to update plots without creating layers each time.
+        # For now, model is updated every time a model parameter value is
+        # modified.
         #
-        self.add_widget(self.btn_replot_model)
-        #
+        # self.add_widget(self.btn_replot_model)
+
         self.setMinimumSize(self.sizeHint())

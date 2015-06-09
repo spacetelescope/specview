@@ -97,6 +97,8 @@ class ModelTree(BaseDataTree):
         self.active_layer = None
         self.header().hide()
 
+        self.signal_updated = None
+
     # def selectionChanged(self, selected, deselected):
     #     index = self.selectedIndexes()[0]
     #     self.current_item = index.model().itemFromIndex(index).item
@@ -110,6 +112,9 @@ class ModelTree(BaseDataTree):
         item = selected.model().itemFromIndex(selected)
 
         if isinstance(item, LayerDataTreeItem):
+
+            self.signal_updated = item.signal_updated
+
             self.showColumn(0)
             self.showColumn(1)
             # self.setEnabled(True)

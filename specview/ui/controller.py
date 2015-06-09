@@ -153,9 +153,6 @@ class Controller(object):
            not type(cmodel.__class__) == core._CompoundModelMeta:
             return
 
-        if not hasattr(layer_data_item.model, '__call__'):
-            return
-
         fitter_name = self.viewer.model_editor_dock.wgt_fit_selector.currentText()
         fitter = get_fitter(str(fitter_name))
         init_model = layer_data_item.model

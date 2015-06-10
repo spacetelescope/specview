@@ -64,7 +64,8 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
         return spec_data_item
 
-    def create_layer_item(self, parent, mask=None, rois=None):
+    def create_layer_item(self, parent, mask=None, raw_data=None, rois=None,
+                          name=None):
         if not isinstance(parent, SpectrumDataTreeItem):
             return
 
@@ -75,9 +76,11 @@ class DataTreeModel(QtGui.QStandardItemModel):
             spec_data = parent.item
             mask = np.zeros(spec_data.x.shape, dtype=bool)
 
-        layer_data_item = LayerDataTreeItem(parent, mask, rois,
-                                            "Layer {}".format(
-                                                parent.rowCount()+1))
+        if name is None:
+            name = "Layer {}".format(parent.rowCount()+1)
+
+        layer_data_item = LayerDataTreeItem(parent, mask, rois=rois,
+                                            raw_data=raw_data, name=name)
         layer_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'layer.png')))
 
         parent.add_layer_item(layer_data_item)

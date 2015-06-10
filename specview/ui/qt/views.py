@@ -101,7 +101,10 @@ class LayerDataTree(BaseDataTree):
 
     def setModel(self, model):
         super(LayerDataTree, self).setModel(model)
-        model.sourceModel().sig_added_item.connect(self.set_selected_item)
+        try:
+            model.sourceModel().sig_added_item.connect(self.set_selected_item)
+        except AttributeError:
+            model.sig_added_item.connect(self.set_selected_item)
 
     @property
     def current_item(self):
@@ -122,9 +125,17 @@ class LayerDataTree(BaseDataTree):
     @QtCore.Slot(QtCore.QModelIndex)
     def set_root_index(self, selected):
         item = self.model().itemFromIndex(selected)
+        self.set_root_item(item, selected)
+
+    def set_root_item(self, item, selected=None):
+        if selected is None:
+            selected = self.model().indexFromItem(item)
 
         if isinstance(item, SpectrumDataTreeItem):
-            self.setRootIndex(self.model().mapFromSource(selected))
+            try:
+                self.setRootIndex(self.model().mapFromSource(selected))
+            except AttributeError:
+                self.setRootIndex(selected)
 
 
 class ModelTree(BaseDataTree):

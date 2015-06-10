@@ -3,7 +3,7 @@ import inspect
 from qtpy import QtGui, QtCore
 import numpy as np
 
-from specview.core.data_objects import SpectrumData
+from specview.core.data_objects import SpectrumData, SpectrumArray
 
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
@@ -52,21 +52,39 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 class LayerDataTreeItem(QtGui.QStandardItem):
     sig_updated = QtCore.Signal()
 
-    def __init__(self, parent, mask, rois, name="Layer"):
+    def __init__(self, parent, mask, raw_data=None, rois=None, name="Layer"):
         super(LayerDataTreeItem, self).__init__()
         self.setColumnCount(2)
         self._parent = parent
         self._mask = mask
+        self._raw_data = raw_data
         self._rois = rois
+        self._name = name
         self._model_items = []
+        self._data = None
 
-        x = parent.item.x
-        y = parent.item.y
+        self.set_data()
 
-        self._data = SpectrumData(x[~mask], y[~mask])
+    def set_data(self):
+        if self._raw_data is None:
+            x = self._parent.item.x[~self._mask]
+            y = self._parent.item.y[~self._mask]
+        else:
+            print("... Using raw data")
+            y = SpectrumArray(self._raw_data, unit=self._parent.item.y.unit)
+            x = self._parent.item.x[~self._mask]
 
-        self.setText(name)
+        self._data = SpectrumData(x, y)
+
+        self.setText(self._name)
         self.setData(self._data)
+
+    def update_data(self, raw_data, mask=None):
+        if mask is not None:
+            self._mask = mask
+
+        self._raw_data = raw_data
+        self.set_data()
 
     @property
     def model(self):

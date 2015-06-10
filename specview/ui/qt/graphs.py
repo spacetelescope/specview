@@ -172,6 +172,7 @@ class SpectraGraph(BaseGraph):
                 return
 
         for plot in self._plot_dict[layer_data_item]:
+            print("[SpecView] Updating plot")
             color = plot.opts['pen']
 
             if style is None:
@@ -272,13 +273,13 @@ class SpectraGraph(BaseGraph):
                                   text='Flux [{}]'.format(spec_y_array.unit))
 
         self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
-        self.plot_window.setClipToView(True)
+        # self.plot_window.setClipToView(True)
 
         if plot not in self._plot_dict[layer_data_item]:
             self._plot_dict[layer_data_item].append(plot)
 
-        if set_active:
-            self.select_active(layer_data_item)
+        # if set_active:
+        #     self.select_active(layer_data_item)
 
     def set_active(self, layer_data_item):
         self._active_plot = self._plot_dict[layer_data_item][-1]
@@ -289,18 +290,18 @@ class SpectraGraph(BaseGraph):
             return
 
         plot = self._plot_dict[layer_data_item][-1]
-
-        if plot == self._active_plot:
-            return
+        #
+        # if plot == self._active_plot:
+        #     return
         # elif self._active_plot is not None:
-            # color = self._active_plot.opts['pen'].color()
-            # color.setAlpha(100)
-            # self._active_plot.setPen(color)#, width=1)
-
-        # color = plot.opts['pen'].color()
-        # color.setAlpha(255)
-        # plot.setPen(color)#, width=2)
-        self.set_active(layer_data_item)
+        #     color = self._active_plot.opts['pen']
+        #     # color.setAlpha(100)
+        #     self._active_plot.setPen(color, width=2)
+        #
+        # color = plot.opts['pen']
+        # # color.setAlpha(255)
+        # plot.setPen(color, width=1)
+        # self.set_active(layer_data_item)
 
 
 class ImageGraph(BaseGraph):

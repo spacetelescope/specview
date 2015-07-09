@@ -1,5 +1,5 @@
 from __future__ import print_function
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 
 from specview.ui.qt.menubars import MainMenuBar
 from specview.ui.qt.toolbars import BaseToolBar

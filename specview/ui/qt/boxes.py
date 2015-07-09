@@ -1,4 +1,4 @@
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 
 
 class StatisticsGroupBox(QtGui.QGroupBox):

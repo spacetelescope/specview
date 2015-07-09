@@ -1,6 +1,6 @@
 from itertools import cycle
 
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 

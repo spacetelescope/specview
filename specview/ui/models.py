@@ -1,6 +1,6 @@
 from os import path, sys
 
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.analysis import model_fitting

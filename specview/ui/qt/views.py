@@ -1,4 +1,4 @@
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 
 from specview.ui.models import LayerDataTreeItem, SpectrumDataTreeItem
 from specview.ui.qt.menus import SpectrumDataContextMenu
@@ -183,5 +183,3 @@ class ModelTree(BaseDataTree):
             selected_list.append(index.model().itemFromIndex(index).item)
 
         return selected_list
-
-

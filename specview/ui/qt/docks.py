@@ -1,6 +1,6 @@
 from os import sys, path
 
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
 from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
 

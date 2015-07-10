@@ -1,4 +1,4 @@
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 from specview.ui.items import SpectrumDataTreeItem, LayerDataTreeItem
 from specview.ui.models import DataTreeModel
 

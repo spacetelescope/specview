@@ -1,6 +1,6 @@
 import inspect
 
-from qtpy import QtGui, QtCore
+from specview.external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.core.data_objects import SpectrumData, SpectrumArray
@@ -173,4 +173,3 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
     @property
     def parent(self):
         return self._parent
-

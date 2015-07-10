@@ -15,11 +15,13 @@ class DataTreeModel(QtGui.QStandardItemModel):
     sig_added_item = QtCore.Signal(QtCore.QModelIndex)
     sig_added_fit_model = QtCore.Signal(ModelDataTreeItem)
     sig_removed_item = QtCore.Signal(object)
+    sig_set_visibility = QtCore.Signal(LayerDataTreeItem, bool)
 
     def __init__(self):
         super(DataTreeModel, self).__init__()
         self._items = []
         self.itemChanged.connect(self._item_changed)
+        self.check_col = 1
 
     @property
     def items(self):
@@ -122,7 +124,33 @@ class DataTreeModel(QtGui.QStandardItemModel):
             self.dataChanged.emit(index, index)
 
             return True
+        elif role == QtCore.Qt.CheckStateRole:
+            item = self.itemFromIndex(index)
+
+            if not isinstance(item, LayerDataTreeItem):
+                return False
+
+            item.setCheckState(~item.checkState())
+            self.sig_set_visibility.emit(item, item.checkState() ==
+                                            QtCore.Qt.Checked)
+
         return False
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if not index.isValid():
+            return None
+
+        item = self.itemFromIndex(index)
+
+        if role == QtCore.Qt.CheckStateRole and isinstance(item, LayerDataTreeItem):
+            return int(QtCore.Qt.Checked if item.checkState() ==
+                                            QtCore.Qt.Checked else
+                       QtCore.Qt.Unchecked)
+
+        return super(DataTreeModel, self).data(index, role)
+
+    # def flags(self, index):
+    #     return super(DataTreeModel, self).flags(index)|QtCore.Qt.ItemIsUserCheckable
 
     def hasChildren(self, parent_index=QtCore.QModelIndex(), *args, **kwargs):
         # if parent_index is not None and self.itemFromIndex(parent_index):

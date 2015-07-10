@@ -43,6 +43,10 @@ class Application(object):
         self.viewer.tool_bar.atn_new_plot.triggered.connect(
             self.create_plot_window)
 
+        # When the checkbox next to a layer item is clicked, set the
+        # visibility of that plot item
+        self.model.sig_set_visibility.connect(self.viewer.set_layer_visibity)
+
     def load_file(self):
         fname = self.viewer.file_dialog.getOpenFileName(self.viewer, 'Open file')
 

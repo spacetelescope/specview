@@ -26,6 +26,12 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
         self.setText(name)
         self.setData(item)
 
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEnabled |
+                      QtCore.Qt.ItemIsEditable |
+                      QtCore.Qt.ItemIsUserCheckable)
+
+        self.setCheckState(QtCore.Qt.Checked)
+
     @property
     def parent(self):
         return None
@@ -62,6 +68,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         self._name = name
         self._model_items = []
         self._data = None
+
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEnabled |
+                      QtCore.Qt.ItemIsEditable |
+                   QtCore.Qt.ItemIsUserCheckable)
+        self.setCheckState(QtCore.Qt.Checked)
 
         self.set_data()
 
@@ -123,6 +134,8 @@ class ModelDataTreeItem(QtGui.QStandardItem):
         self._parameters = []
         self.setText(name)
 
+        self.setFlags(self.flags() & ~QtCore.Qt.ItemIsUserCheckable)
+
         self._setup_children()
 
     @property
@@ -163,6 +176,8 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         self._parent = parent
         self._name = name
         self._value = value
+
+        self.setFlags(self.flags() & ~QtCore.Qt.ItemIsUserCheckable)
 
         if not is_editable:
             self.setData(str(name), role=QtCore.Qt.DisplayRole)

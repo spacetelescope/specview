@@ -98,6 +98,8 @@ class LayerDataTree(BaseDataTree):
         self.setDragEnabled(True)
         self.header().hide()
         self.active_data_item = None
+        self.showColumn(0)
+        self.showColumn(1)
 
     def setModel(self, model):
         super(LayerDataTree, self).setModel(model)

@@ -100,6 +100,10 @@ class MainWindow(QtGui.QMainWindow):
         self.data_dock.wgt_layer_tree.setModel(layers)
 
     @property
+    def all_graphs(self):
+        return [sw.graph for sw in self.mdiarea.subWindowList()]
+
+    @property
     def current_layer_item(self):
         return self.data_dock.wgt_layer_tree.current_item
 
@@ -114,6 +118,10 @@ class MainWindow(QtGui.QMainWindow):
     @property
     def selected_fitter(self):
         return str(self.model_editor_dock.wgt_fit_selector.currentText())
+
+    def set_layer_visibity(self, layer_data_item, show):
+        for graph in self.all_graphs:
+            graph.set_visibility(layer_data_item, show)
 
     def new_sub_window(self, layer_data_item, set_active=True,
                        style='histogram'):

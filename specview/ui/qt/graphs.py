@@ -128,7 +128,8 @@ class SpectraGraph(BaseGraph):
         self._active_plot = None
         self._active_item = None
 
-        self.__colors = ['g', 'r', 'c', 'm', 'y', 'w']
+        self.__colors = ['white', 'red', 'green', 'blue', 'yellow',
+                         'cyan', 'magenta']
         self._icolors = cycle(self.__colors)
 
         self.plot_window = self.w.getPlotItem()
@@ -218,9 +219,7 @@ class SpectraGraph(BaseGraph):
                  color=None):
         color = next(self._icolors) if not color else color
 
-        if layer_data_item in self._plot_dict.keys():
-            self._plot_dict[layer_data_item].append(layer_data_item)
-        else:
+        if layer_data_item not in self._plot_dict.keys():
             self._plot_dict[layer_data_item] = []
 
         if self._units is None:
@@ -251,6 +250,7 @@ class SpectraGraph(BaseGraph):
     def _graph_data(self, layer_data_item, set_active=True, style='histogram',
                     color=None):
         color = next(self._icolors) if color is None else color
+        pen = QtGui.QPen(QtGui.QColor(color))
 
         spec_data = layer_data_item.item
         spec_x_array = spec_data.x.convert_unit_to(self._units[0])
@@ -261,7 +261,7 @@ class SpectraGraph(BaseGraph):
 
         plot = self.plot_window.plot(x_data,
                                      spec_y_array.data,
-                                     pen=color,
+                                     pen=pen,
                                      stepMode=style == 'histogram',
                                      symbol='o' if style == 'scatter' else
                                      None)
@@ -274,7 +274,7 @@ class SpectraGraph(BaseGraph):
 
         self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
         # self.plot_window.setClipToView(True)
-
+        print("PRE", type(plot))
         if plot not in self._plot_dict[layer_data_item]:
             self._plot_dict[layer_data_item].append(plot)
 
@@ -302,6 +302,20 @@ class SpectraGraph(BaseGraph):
         # # color.setAlpha(255)
         # plot.setPen(color, width=1)
         # self.set_active(layer_data_item)
+
+    def set_visibility(self, layer_data_item, show):
+        plot = self._plot_dict[layer_data_item][-1]
+        print("setting visible", show)
+        print("PRE", plot.opts['pen'].color())
+
+        color = plot.opts['pen'].color()
+
+        if not show:
+            color.setAlpha(0)
+            plot.setPen(color)
+        else:
+            color.setAlpha(255)
+            plot.setPen(color)
 
 
 class ImageGraph(BaseGraph):

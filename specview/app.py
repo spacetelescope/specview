@@ -3,7 +3,9 @@ import sys
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 
-from specview.core import SpectrumData
+from cube_tools.core import SpectrumData
+
+# from specview.core import SpectrumData
 from specview.analysis import model_fitting
 from specview.ui.items import LayerDataTreeItem
 from specview.ui.viewer import MainWindow
@@ -63,6 +65,8 @@ class Application(object):
                               dispersion=dialog.dispersion,
                               flux_unit=dialog.flux_unit,
                               dispersion_unit=dialog.disp_unit)
+
+        spec_data = SpectrumData.read(fname)
 
         name = fname.split('/')[-1].split('.')[-2]
         self.add_data(spec_data, name)

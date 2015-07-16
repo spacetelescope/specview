@@ -57,3 +57,8 @@ def _gaussian_parameter_estimates(x, y, dy=0):
     stddev = np.sqrt((y * (x - mean) ** 2).sum())
     return amplitude, mean, stddev
 
+
+def fit_model(x, y, err, mask, model, fit_method):
+    fitter = get_fitter(fit_method)
+    fit_model = fitter(model, x, y, weights=1.0 / err ** 2)
+    new_y = fit_model(x)

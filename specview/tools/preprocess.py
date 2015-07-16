@@ -3,7 +3,8 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from astropy.io.fits.hdu.image import _ImageBaseHDU as FITS_image
 from astropy.io.fits.hdu.table import _TableLikeHDU as FITS_table
-from specview.core import SpectrumData
+# from specview.core import SpectrumData
+from cube_tools.core import SpectrumData
 
 DEFAULT_FLUX_UNIT = 'count'
 DEFAULT_DISPERSION_UNIT = 'pixel'

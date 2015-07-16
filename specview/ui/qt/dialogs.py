@@ -41,14 +41,20 @@ class FileEditDialog(QtGui.QDialog):
         hdu_count = QtGui.QLabel("Detected {} extensions in this FITS "
                                  "file.".format(len(self.hdulist)))
 
+        ext_layout = QtGui.QHBoxLayout()
+        ext_layout.addWidget(QtGui.QLabel("Extension"))
+        ext_layout.addWidget(self.ext_selector)
+        ext_layout.addWidget(self.flux_col_selector)
+        ext_layout.addWidget(self.man_flux_unit)
+
         # Form layout
-        self.form_layout = QtGui.QFormLayout()
-        self.form_layout.addRow(self.tr("Extension"), self.ext_selector)
-        self.form_layout.addRow(self.tr("Flux Column"), self.flux_col_selector)
-        self.form_layout.addRow(self.tr("Dispersion Column"),
-                                self.disp_col_selector)
-        self.form_layout.addRow(self.tr("Flux Unit"), self.man_flux_unit)
-        self.form_layout.addRow(self.tr("Dispersion Unit"), self.man_disp_unit)
+        self.form_layout = QtGui.QVBoxLayout()
+        self.form_layout.addLayout(ext_layout)
+        # self.form_layout.addRow(self.tr("Flux Column"), self.flux_col_selector)
+        # self.form_layout.addRow(self.tr("Dispersion Column"),
+        #                         self.disp_col_selector)
+        # self.form_layout.addRow(self.tr("Flux Unit"), self.man_flux_unit)
+        # self.form_layout.addRow(self.tr("Dispersion Unit"), self.man_disp_unit)
 
         # Add widgets to form layout
         vb_layout.addWidget(hdu_count)

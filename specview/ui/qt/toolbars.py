@@ -123,6 +123,12 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         self.atn_edit_units.setToolTip("Convert the plot units")
         self.atn_edit_units.triggered.connect(self._show_edit_units)
 
+        self.atn_toggle_errs = QtGui.QAction("Show Errors", self,
+                                             checkable=True)
+        self.atn_toggle_errs.setChecked(True)
+        self.atn_toggle_errs.setToolTip("Toggle display of data uncertainty")
+
+        plot_opt_menu.addAction(self.atn_toggle_errs)
         plot_opt_menu.addAction(self.atn_edit_units)
 
         # Layer options menu

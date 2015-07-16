@@ -3,8 +3,7 @@ import inspect
 from specview.external.qt import QtGui, QtCore
 import numpy as np
 
-from specview.core.data_objects import SpectrumData, SpectrumArray
-
+from cube_tools.core.data_objects import SpectrumData
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
     """Subclasses QStandarditem; provides the base class for all items listed
@@ -58,16 +57,14 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 class LayerDataTreeItem(QtGui.QStandardItem):
     sig_updated = QtCore.Signal()
 
-    def __init__(self, parent, mask, raw_data=None, rois=None, name="Layer"):
+    def __init__(self, parent, mask, rois=None, name="Layer"):
         super(LayerDataTreeItem, self).__init__()
         self.setColumnCount(2)
         self._parent = parent
         self._mask = mask
-        self._raw_data = raw_data
         self._rois = rois
         self._name = name
         self._model_items = []
-        self._data = None
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsEnabled |
                       QtCore.Qt.ItemIsEditable |
@@ -77,24 +74,13 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         self.set_data()
 
     def set_data(self):
-        if self._raw_data is None:
-            x = self._parent.item.x[~self._mask]
-            y = self._parent.item.y[~self._mask]
-        else:
-            print("... Using raw data")
-            y = SpectrumArray(self._raw_data, unit=self._parent.item.y.unit)
-            x = self._parent.item.x[~self._mask]
-
-        self._data = SpectrumData(x, y)
-
         self.setText(self._name)
-        self.setData(self._data)
+        self.setData(self._parent.item[~self._mask])
 
     def update_data(self, raw_data, mask=None):
         if mask is not None:
             self._mask = mask
 
-        self._raw_data = raw_data
         self.set_data()
 
     @property
@@ -104,7 +90,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
     @property
     def item(self):
-        return self._data
+        return self._parent.item
+
+    @property
+    def mask(self):
+        return self._mask
 
     @property
     def parent(self):
@@ -113,7 +103,6 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     def add_model_item(self, model_data_item):
         self._model_items.append(model_data_item)
 
-    # --- signals
     def sig_update(self):
         pass
         # self.sig_updated.emit()

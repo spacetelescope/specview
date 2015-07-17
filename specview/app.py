@@ -1,7 +1,7 @@
 import sys
 
-from qtpy.QtGui import *
-from qtpy.QtCore import *
+from specview.external.qt import QtGui
+from specview.external.qt import QtCore
 
 from cube_tools.core import SpectrumData
 
@@ -55,16 +55,16 @@ class Application(object):
         if not fname:
             return
 
-        dialog = FileEditDialog(fname)
-        dialog.exec_()
-
-        if not dialog.result():
-            return
-
-        spec_data = read_data(fname, ext=dialog.ext, flux=dialog.flux,
-                              dispersion=dialog.dispersion,
-                              flux_unit=dialog.flux_unit,
-                              dispersion_unit=dialog.disp_unit)
+        # dialog = FileEditDialog(fname)
+        # dialog.exec_()
+        #
+        # if not dialog.result():
+        #     return
+        #
+        # spec_data = read_data(fname, ext=dialog.ext, flux=dialog.flux,
+        #                       dispersion=dialog.dispersion,
+        #                       flux_unit=dialog.flux_unit,
+        #                       dispersion_unit=dialog.disp_unit)
 
         spec_data = SpectrumData.read(fname)
 
@@ -72,7 +72,7 @@ class Application(object):
         self.add_data(spec_data, name)
 
     def add_data(self, nddata, name="Data", parent=None):
-        return self.model.create_data_item(nddata, name)
+        return self.model.create_spec_data_item(nddata, name)
 
     def create_plot_window(self):
         if self.viewer.current_data_item is not None:
@@ -133,20 +133,20 @@ class Application(object):
         self.display_graph(spec_data_item)
 
     def display_graph(self, layer_data_item, sub_window=None, set_active=True,
-                      style='histogram'):
+                      style='line'):
         if not isinstance(layer_data_item, LayerDataTreeItem):
             layer_data_item = self.model.create_layer_item(layer_data_item)
 
         if sub_window is None:
             sub_window = self.viewer.mdiarea.activeSubWindow()
 
-        sub_window.graph.add_item(layer_data_item, set_active, style)
+        sub_window.graph.add_item(layer_data_item, set_active, style='line')
 
 def run():
-    app = QApplication(sys.argv)
+    app = QtGui.QApplication(sys.argv)
     win = Application()
-    app.connect(app, SIGNAL("lastWindowClosed()"),
-                app, SLOT("quit()"))
+    app.connect(app, QtCore.SIGNAL("lastWindowClosed()"),
+                app, QtCore.SLOT("quit()"))
     app.exec_()
 
 

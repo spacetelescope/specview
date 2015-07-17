@@ -1,15 +1,13 @@
-import pyqtgraph as pg
+from pyqtgraph import FillBetweenItem
 
 
-class ExtendedFillBetweenItem(pg.FillBetweenItem):
+class ExtendedFillBetweenItem(FillBetweenItem):
     """
     GraphicsItem filling the space between two PlotDataItems.
     """
-    def __init__(self, window=None, *args, **kwargs):
-        super(ExtendedFillBetweenItem, self).__init__(*args, **kwargs)
+    def __init__(self, window=None, **kwargs):
+        super(ExtendedFillBetweenItem, self).__init__(**kwargs)
         self.window = window
-
-        print(self.window)
 
         if self.window is not None:
             self.window.sigRangeChanged.connect(self.updatePath)

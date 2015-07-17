@@ -133,11 +133,10 @@ class LayerDataTree(BaseDataTree):
         if selected is None:
             selected = self.model().indexFromItem(item)
 
-        if isinstance(item, SpectrumDataTreeItem):
-            try:
-                self.setRootIndex(self.model().mapFromSource(selected))
-            except AttributeError:
-                self.setRootIndex(selected)
+        try:
+            self.setRootIndex(self.model().mapFromSource(selected))
+        except AttributeError:
+            self.setRootIndex(selected)
 
 
 class ModelTree(BaseDataTree):

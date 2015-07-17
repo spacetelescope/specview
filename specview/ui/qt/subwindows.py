@@ -1,7 +1,7 @@
 from specview.external.qt import QtGui
 from astropy.units import Unit
 
-from specview.ui.qt.graphs import ImageGraph, SpectraGraph
+from specview.ui.qt.graphs import ImageGraph, SpectraGraph, BaseGraph
 from specview.ui.qt.toolbars import (ImageToolBar, SpectraToolBar,
                                      SpectraPlotToolBar)
 
@@ -27,7 +27,7 @@ class ImageMdiSubWindow(BaseMdiSubWindow):
         self.graph = ImageGraph()
         self.toolbar = ImageToolBar()
 
-        # self.vb_layout.addWidget(self.toolbar)
+        self.vb_layout.addWidget(self.toolbar)
         self.vb_layout.addWidget(self.graph)
 
 

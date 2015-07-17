@@ -3,30 +3,36 @@ from itertools import cycle
 from specview.external.qt import QtGui, QtCore
 from specview.tools.graph_items import ExtendedFillBetweenItem
 import pyqtgraph as pg
+
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
-QtGui.QApplication.setGraphicsSystem('raster')
+
 
 import numpy as np
+# ignore divisions by zero
+ignored_states = np.seterr(divide='ignore')
 
 from specview.ui.items import SpectrumDataTreeItem, LayerDataTreeItem
 
 
-class BaseGraph(QtGui.QWidget):
+class BaseGraph(pg.PlotWidget):
     sig_units_changed = QtCore.Signal()
 
     def __init__(self):
         super(BaseGraph, self).__init__()
+        self.plot_window = self.getPlotItem()
+        self.plot_window.setContentsMargins(5, 5, 5, 5)
+        self.plot_window.showGrid(x=True, y=True)
         # Accept drag events
         self.setAcceptDrops(True)
         # Define layout
-        self.vb_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.vb_layout)
+        # self.vb_layout = QtGui.QVBoxLayout()
+        # self.setLayout(self.vb_layout)
         # Create main graphics layout widget
-        self.view_box = None
-        self.w = pg.PlotWidget()
-        self.vb_layout.addWidget(self.w)
+        # self.view_box = None
+        # self.w = pg.PlotWidget()
+        # self.vb_layout.addWidget(self.w)
         # Create roi container
         self._rois = []
         self._active_roi = None
@@ -52,20 +58,20 @@ class BaseGraph(QtGui.QWidget):
         e.accept()
 
     def add_roi(self):
-        view_range = self.view_box.viewRange()
+        view_range = self.viewRange()
         x_len = (view_range[0][1] - view_range[0][0]) * 0.5
         y_len = (view_range[1][1] - view_range[1][0]) * 0.5
         x_pos = x_len + view_range[0][0]
         y_pos = y_len + view_range[1][0]
 
         def remove():
-            self.view_box.removeItem(roi)
+            self.removeItem(roi)
             self._rois.remove(roi)
 
         roi = pg.RectROI([x_pos, y_pos], [x_len * 0.5, y_len * 0.5],
                          sideScalers=True, removable=True, pen='k')
         self._rois.append(roi)
-        self.view_box.addItem(roi)
+        self.addItem(roi)
 
         # Connect the remove functionality
         roi.sigRemoveRequested.connect(remove)
@@ -137,9 +143,7 @@ class SpectraGraph(BaseGraph):
                          'cyan', 'magenta']
         self._icolors = cycle(self.__colors)
 
-        self.plot_window = self.w.getPlotItem()
-        self.plot_window.showGrid(x=True, y=True)
-        self.view_box = self.plot_window.getViewBox()
+        # self.view_box = self.plot_window.getViewBox()
 
         self.sig_units_changed.connect(self.update_all)
 
@@ -217,9 +221,23 @@ class SpectraGraph(BaseGraph):
                          symbol='o' if style == 'scatter' else None)
 
             errs.setData(x=x_data, y=spec_y_array.value,
-                         height=(1.0 / spec_y_err.value) ** 0.5,
-                         pen=QtGui.QColor(0, 0, 0, 120) if self.show_errors
-            else QtGui.QColor(0, 0, 0, 0))
+                         height=(1.0 / spec_y_err.value) ** 0.5,)
+            #              pen=QtGui.QColor(0, 0, 0, 120))
+
+            # errs.curves[0].setData(x_data,
+            #                        spec_y_array.value + np.divide(1.0,
+            #                                                spec_y_err.value)
+            #                        ** 0.5 * 0.5)
+            #
+            # errs.curves[1].setData(x_data,
+            #                 spec_y_array.value - np.divide(1.0,
+            #                                                spec_y_err.value)
+            #                        ** 0.5 * 0.5)
+
+            if self.show_errors:
+                errs.show()
+            else:
+                errs.hide()
 
             self.plot_window.autoRange()
 
@@ -267,11 +285,13 @@ class SpectraGraph(BaseGraph):
 
     def _graph_data(self, layer_data_item, set_active=True, style='histogram',
                     color=None):
+        style = 'line'
         color = next(self._icolors) if color is None else color
         pen = QtGui.QPen(QtGui.QColor(color))
 
         spec_data = layer_data_item.item
         mask = layer_data_item.mask
+
         spec_x_array = spec_data.get_dispersion(self._units[0])[~mask]
         spec_y_array = spec_data.get_flux(self._units[1])[~mask]
         spec_y_err = spec_data.get_error(self._units[1])[~mask]
@@ -281,30 +301,30 @@ class SpectraGraph(BaseGraph):
 
         # plt_err_top = self.plot_window.plot(
         #     x_data,
-        #     spec_y_array.value + (1.0 / spec_y_err.value) ** 0.5 * 0.5,
-        #     pen=QtGui.QPen(QtGui.QColor(255, 255, 255, 120)))
+        #     spec_y_array.value + np.divide(1.0, spec_y_err.value) ** 0.5 * 0.5)
         #
         # plt_err_btm = self.plot_window.plot(
         #     x_data,
-        #     spec_y_array.value - (1.0 / spec_y_err.value) ** 0.5 * 0.5,
-        #     pen=QtGui.QPen(QtGui.QColor(255, 255, 255, 120)))
-        # plt_fill_btw = ExtendedFillBetweenItem(self.plot_window,
-        #                                        plt_err_top, plt_err_btm)
-        # plt_fill_btw.setBrush('b')
+        #     spec_y_array.value - np.divide(1.0, spec_y_err.value) ** 0.5 * 0.5)
+
+        # plt_errs = ExtendedFillBetweenItem(window=self.plot_window,
+        #                                    curve1=plt_err_top,
+        #                                    curve2=plt_err_btm,
+        #                                    brush=pg.mkColor(0, 0, 0, 60),
+        #                                    pen=pg.mkColor(0, 0, 0, 60))
 
         plt_errs = pg.ErrorBarItem(x=x_data, y=spec_y_array.value,
                                    height=(1.0 / spec_y_err.value) ** 0.5,
-                                   pen=QtGui.QColor(0, 0, 0, 120))
+                                   pen=pg.mkPen(0, 0, 0, 120),
+                                   beam=(x_data[5] - x_data[4])*0.5)
 
-        # self.plot_window.addItem(plt_fill_btw)
         self.plot_window.addItem(plt_errs)
 
         plot = self.plot_window.plot(x_data,
                                      spec_y_array.value,
                                      pen=pen,
                                      stepMode=style == 'histogram',
-                                     symbol='o' if style == 'scatter' else
-                                     None)
+                                     symbol='o' if style == 'scatter' else None)
 
         self.plot_window.setLabel('bottom',
                                   text='Dispersion [{}]'.format(
@@ -327,7 +347,7 @@ class SpectraGraph(BaseGraph):
             return
 
         plot = self._plot_dict[layer_data_item][-1]
-        #
+
         # if plot == self._active_plot:
         #     return
         # elif self._active_plot is not None:
@@ -340,16 +360,17 @@ class SpectraGraph(BaseGraph):
         # plot.setPen(color, width=1)
         # self.set_active(layer_data_item)
 
-    def set_visibility(self, layer_data_item, show):
-        plot = self._plot_dict[layer_data_item][-1][0]
-        color = plot.opts['pen'].color()
-
-        if not show:
-            color.setAlpha(0)
-            plot.setPen(color)
-        else:
-            color.setAlpha(255)
-            plot.setPen(color)
+    def set_visibility(self, layer_data_item, show, errors_only=False):
+        for layers in self._plot_dict.values():
+            for plot, errs in layers:
+                if not show:
+                    if not errors_only:
+                        plot.hide()
+                    errs.hide()
+                else:
+                    if not errors_only:
+                        plot.show()
+                    errs.show()
 
 
 class ImageGraph(BaseGraph):
@@ -366,8 +387,8 @@ class ImageGraph(BaseGraph):
 
         # Add to viewbox
         g = pg.GridItem()
-        self.view_box.addItem(g)
-        self.view_box.addItem(self.image_item)
+        self.addItem(g)
+        self.addItem(self.image_item)
 
     def set_image(self, data):
         self.image_item.setImage(data)

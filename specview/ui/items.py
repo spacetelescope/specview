@@ -3,7 +3,39 @@ import inspect
 from specview.external.qt import QtGui, QtCore
 import numpy as np
 
-from cube_tools.core.data_objects import SpectrumData
+
+class CubeDataTreeItem(QtGui.QStandardItem):
+    def __init__(self, item, name="Cube Data"):
+        super(CubeDataTreeItem, self).__init__()
+        self._item = item
+        self._layer_items = []
+        self.setText(name)
+        self.setData(item)
+
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEnabled |
+                      QtCore.Qt.ItemIsEditable |
+                      QtCore.Qt.ItemIsUserCheckable)
+
+        self.setCheckState(QtCore.Qt.Checked)
+
+    @property
+    def item(self):
+        return self._item
+
+    @property
+    def layers(self):
+        return self._layer_items
+
+    def add_layer_item(self, layer_data_item):
+        if not isinstance(layer_data_item, LayerDataTreeItem):
+            raise TypeError("Layer is not of type LayerDataTreeItem.")
+
+        self._layer_items.append(layer_data_item)
+
+    def remove_layer(self, layer):
+        if layer in self._layer_items:
+            self._layer_items.remove(layer)
+
 
 class SpectrumDataTreeItem(QtGui.QStandardItem):
     """Subclasses QStandarditem; provides the base class for all items listed
@@ -16,7 +48,7 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
     This currently treats `Models` as Qt-level discrete objects. This will
     change in the future.
     """
-    def __init__(self, item, name="Data"):
+    def __init__(self, item, name="Spectrum Data"):
         super(SpectrumDataTreeItem, self).__init__()
         self.setEditable(True)
 
@@ -57,14 +89,21 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 class LayerDataTreeItem(QtGui.QStandardItem):
     sig_updated = QtCore.Signal()
 
-    def __init__(self, parent, mask, rois=None, name="Layer"):
+    def __init__(self, parent, mask, rois=None, collapse='mean', name="Layer"):
         super(LayerDataTreeItem, self).__init__()
         self.setColumnCount(2)
         self._parent = parent
         self._mask = mask
         self._rois = rois
+        self._collapse = collapse
         self._name = name
         self._model_items = []
+
+        if isinstance(self.parent, CubeDataTreeItem):
+            self._item = self._parent.item.collapse_to_spectrum(self._collapse)
+            self._mask = self._mask.mean(axis=1).mean(axis=1).astype(bool)
+        else:
+            self._item = self._parent.item
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsEnabled |
                       QtCore.Qt.ItemIsEditable |
@@ -77,9 +116,13 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         self.setText(self._name)
         self.setData(self._parent.item[~self._mask])
 
-    def update_data(self, raw_data, mask=None):
+    def update_data(self, mask=None, collapse=None):
         if mask is not None:
             self._mask = mask
+
+        if collapse is not None:
+            self._item = self._parent.item[~mask].collapse_to_spectrum(
+                collapse)
 
         self.set_data()
 
@@ -90,7 +133,7 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
     @property
     def item(self):
-        return self._parent.item
+        return self._item
 
     @property
     def mask(self):

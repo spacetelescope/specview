@@ -4,8 +4,9 @@ from specview.external.qt import QtGui, QtCore
 import numpy as np
 
 from specview.analysis import model_fitting
-from specview.ui.items import (SpectrumDataTreeItem, ModelDataTreeItem,
-                                LayerDataTreeItem, ParameterDataTreeItem)
+from specview.ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
+                               ModelDataTreeItem, LayerDataTreeItem,
+                               ParameterDataTreeItem)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -31,7 +32,8 @@ class DataTreeModel(QtGui.QStandardItemModel):
     def data_items(self):
         return [x.item for x in self._items]
 
-    def _item_changed(self, item):
+    @staticmethod
+    def _item_changed(item):
         if isinstance(item, ParameterDataTreeItem):
             item.parent.update_parameter(item._name,
                                          item.data())
@@ -56,7 +58,7 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
         self.sig_removed_item.emit(item)
 
-    def create_data_item(self, nddata, name="New"):
+    def create_spec_data_item(self, nddata, name="Spectrum Data"):
         spec_data_item = SpectrumDataTreeItem(nddata, name)
         spec_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'data_set.png')))
 
@@ -66,26 +68,37 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
         return spec_data_item
 
-    def create_layer_item(self, parent, mask=None, rois=None,
+    def create_cube_data_item(self, nddata, name="Cube Data"):
+        cube_data_item = CubeDataTreeItem(nddata, name)
+        cube_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'data_set.png')))
+
+        self._items.append(cube_data_item)
+        self.appendRow(cube_data_item)
+        self.sig_added_item.emit(cube_data_item.index())
+
+        return cube_data_item
+
+    def create_layer_item(self, parent, node_parent=None, mask=None,
+                          rois=None, collapse=None,
                           name=None):
-        if not isinstance(parent, SpectrumDataTreeItem):
-            return
-
-        if mask is not None and np.all([x for x in mask]):
-            return
-
         if mask is None:
-            spec_data = parent.item
-            mask = np.zeros(spec_data.dispersion.shape, dtype=bool)
+            parent_item = parent.item
+            mask = np.zeros(parent_item.shape, dtype=bool)
 
         if name is None:
             name = "Layer {}".format(parent.rowCount()+1)
 
-        layer_data_item = LayerDataTreeItem(parent, mask, rois=rois,name=name)
+        print("Parent type", type(parent))
+        layer_data_item = LayerDataTreeItem(parent, mask, rois=rois,
+                                            collapse=collapse, name=name)
         layer_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'layer.png')))
 
-        parent.add_layer_item(layer_data_item)
-        parent.appendRow(layer_data_item)
+        if node_parent is not None:
+            node_parent.add_layer_item(layer_data_item)
+            node_parent.appendRow(layer_data_item)
+        else:
+            parent.add_layer_item(layer_data_item)
+            parent.appendRow(layer_data_item)
 
         self.sig_added_item.emit(layer_data_item.index())
 
@@ -155,7 +168,7 @@ class DataTreeModel(QtGui.QStandardItemModel):
         # if parent_index is not None and self.itemFromIndex(parent_index):
         #     item = self.itemFromIndex(parent_index)
         #
-        #     if isinstance(item, SpectrumDataTreeItem):
+        #     if isinstance(item, LayerDataTreeItem):
         #         return False
 
         return super(DataTreeModel, self).hasChildren(parent_index, *args,

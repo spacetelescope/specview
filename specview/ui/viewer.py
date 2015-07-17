@@ -124,7 +124,7 @@ class MainWindow(QtGui.QMainWindow):
             graph.set_visibility(layer_data_item, show)
 
     def new_sub_window(self, layer_data_item, set_active=True,
-                       style='histogram'):
+                       style='line'):
         sub_window = self.mdiarea.addSubWindow(SpectraMdiSubWindow())
         sub_window.plot_toolbar.atn_model_editor.triggered.connect(lambda:
             self.model_editor_dock.setVisible(self.model_editor_dock.isHidden()))

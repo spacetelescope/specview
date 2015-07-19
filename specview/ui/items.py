@@ -89,20 +89,24 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
 class LayerDataTreeItem(QtGui.QStandardItem):
     sig_updated = QtCore.Signal()
 
-    def __init__(self, parent, mask, rois=None, collapse='mean', name="Layer"):
+    def __init__(self, parent, filter_mask, rois=None, collapse='mean',
+                 name="Layer"):
         super(LayerDataTreeItem, self).__init__()
         self.setColumnCount(2)
         self._parent = parent
-        self._mask = mask
         self._rois = rois
         self._collapse = collapse
         self._name = name
         self._model_items = []
 
         if isinstance(self.parent, CubeDataTreeItem):
-            self._item = self._parent.item.collapse_to_spectrum(self._collapse)
-            self._mask = self._mask.mean(axis=1).mean(axis=1).astype(bool)
+            self._filter_mask_cube = filter_mask
+            self._filter_mask = None
+            self._item, self._filter_mask = self._parent.item.collapse_to_spectrum(
+                self._collapse, filter_mask=self._filter_mask_cube)
         else:
+            self._filter_mask_cube = None
+            self._filter_mask = filter_mask
             self._item = self._parent.item
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsEnabled |
@@ -114,15 +118,18 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
     def set_data(self):
         self.setText(self._name)
-        self.setData(self._parent.item[~self._mask])
+        self.setData(self._parent.item[self._filter_mask])
 
-    def update_data(self, mask=None, collapse=None):
-        if mask is not None:
-            self._mask = mask
+    def update_data(self, filter_mask=None, collapse=None):
+        if filter_mask is not None:
+            self._filter_mask_cube = filter_mask
 
         if collapse is not None:
-            self._item = self._parent.item[~mask].collapse_to_spectrum(
-                collapse)
+            self._collapse = collapse
+
+        if isinstance(self.parent, CubeDataTreeItem):
+            self._item, self._filter_mask = self._parent.item.collapse_to_spectrum(
+                self._collapse, filter_mask=self._filter_mask_cube)
 
         self.set_data()
 
@@ -136,8 +143,8 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         return self._item
 
     @property
-    def mask(self):
-        return self._mask
+    def filter_mask(self):
+        return self._filter_mask
 
     @property
     def parent(self):

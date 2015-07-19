@@ -78,18 +78,16 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
         return cube_data_item
 
-    def create_layer_item(self, parent, node_parent=None, mask=None,
-                          rois=None, collapse=None,
-                          name=None):
-        if mask is None:
+    def create_layer_item(self, parent, node_parent=None, filter_mask=None,
+                          rois=None, collapse=None, name=None):
+        if filter_mask is None:
             parent_item = parent.item
-            mask = np.zeros(parent_item.shape, dtype=bool)
+            filter_mask = np.ones(parent_item.shape, dtype=bool)
 
         if name is None:
             name = "Layer {}".format(parent.rowCount()+1)
 
-        print("Parent type", type(parent))
-        layer_data_item = LayerDataTreeItem(parent, mask, rois=rois,
+        layer_data_item = LayerDataTreeItem(parent, filter_mask, rois=rois,
                                             collapse=collapse, name=name)
         layer_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'layer.png')))
 

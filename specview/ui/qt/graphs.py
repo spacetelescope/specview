@@ -95,7 +95,8 @@ class BaseGraph(pg.PlotWidget):
             mask_holder.append((x_data.value >= x1) & (x_data.value <= x2) &
                                (y_data.value >= y1) & (y_data.value <= y2))
 
-        mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        # mask = np.logical_not(reduce(np.logical_or, mask_holder))
+        mask = reduce(np.logical_or, mask_holder)
         return mask
 
     def get_roi_data(self, layer_data_item):
@@ -197,10 +198,11 @@ class SpectraGraph(BaseGraph):
                     style = 'line'
 
             spec_data = layer_data_item.item
-            mask = layer_data_item.mask
-            spec_x_array = spec_data.get_dispersion(self._units[0])[~mask]
-            spec_y_array = spec_data.get_flux(self._units[1])[~mask]
-            spec_y_err = spec_data.get_error(self._units[1])[~mask]
+            filter_mask = layer_data_item.filter_mask
+            spec_x_array = spec_data.get_dispersion(self._units[0])[filter_mask]
+            spec_y_array = spec_data.get_flux(self._units[1])[filter_mask]
+            spec_y_err = spec_data.get_error(self._units[1])[filter_mask] \
+                if spec_data.error is not None else None
 
             x_data = spec_x_array.value if style != 'histogram' else np.append(
                 spec_x_array.value, spec_x_array.value[-1])
@@ -220,9 +222,10 @@ class SpectraGraph(BaseGraph):
                          stepMode=style == 'histogram',
                          symbol='o' if style == 'scatter' else None)
 
-            errs.setData(x=x_data, y=spec_y_array.value,
-                         height=(1.0 / spec_y_err.value) ** 0.5,)
-            #              pen=QtGui.QColor(0, 0, 0, 120))
+            if spec_y_err is not None:
+                errs.setData(x=x_data, y=spec_y_array.value,
+                             height=(1.0 / spec_y_err.value) ** 0.5,)
+                #              pen=QtGui.QColor(0, 0, 0, 120))
 
             # errs.curves[0].setData(x_data,
             #                        spec_y_array.value + np.divide(1.0,
@@ -290,11 +293,21 @@ class SpectraGraph(BaseGraph):
         pen = QtGui.QPen(QtGui.QColor(color))
 
         spec_data = layer_data_item.item
-        mask = layer_data_item.mask
+        filter_mask = layer_data_item.filter_mask
+        print("graph info", type(spec_data), type(filter_mask))
+        print(filter_mask.shape, filter_mask[filter_mask==True].size,
+              filter_mask[filter_mask==False].size)
+        print(spec_data.shape, filter_mask.shape)
+        print(filter_mask)
 
-        spec_x_array = spec_data.get_dispersion(self._units[0])[~mask]
-        spec_y_array = spec_data.get_flux(self._units[1])[~mask]
-        spec_y_err = spec_data.get_error(self._units[1])[~mask]
+        spec_x_array = spec_data.get_dispersion(self._units[0])[filter_mask]
+        spec_y_array = spec_data.get_flux(self._units[1])[filter_mask]
+        spec_y_err = spec_data.get_error(self._units[1])[filter_mask] if \
+            spec_data.error is not None else None
+
+        print("some data", spec_x_array[0])
+        print(spec_data.get_dispersion(self._units[0]).shape, spec_x_array.shape,
+              spec_data.get_dispersion(self._units[0])[filter_mask].shape)
 
         x_data = spec_x_array.value if style != 'histogram' else np.append(
             spec_x_array.value, spec_x_array.value[-1])
@@ -313,10 +326,15 @@ class SpectraGraph(BaseGraph):
         #                                    brush=pg.mkColor(0, 0, 0, 60),
         #                                    pen=pg.mkColor(0, 0, 0, 60))
 
-        plt_errs = pg.ErrorBarItem(x=x_data, y=spec_y_array.value,
-                                   height=(1.0 / spec_y_err.value) ** 0.5,
-                                   pen=pg.mkPen(0, 0, 0, 120),
-                                   beam=(x_data[5] - x_data[4])*0.5)
+        if spec_y_err is not None:
+            plt_errs = pg.ErrorBarItem(x=x_data, y=spec_y_array.value,
+                                       height=(1.0 / spec_y_err.value) ** 0.5,
+                                       pen=pg.mkPen(0, 0, 0, 120),
+                                       beam=(x_data[5] - x_data[4])*0.5)
+        else:
+            plt_errs = pg.ErrorBarItem(x=0, y=0,
+                                       beam=(x_data[5] - x_data[4])*0.5)
+            plt_errs.hide()
 
         self.plot_window.addItem(plt_errs)
 
@@ -361,7 +379,11 @@ class SpectraGraph(BaseGraph):
         # self.set_active(layer_data_item)
 
     def set_visibility(self, layer_data_item, show, errors_only=False):
-        for layers in self._plot_dict.values():
+        for item, layers in self._plot_dict.items():
+            if not errors_only:
+                if item != layer_data_item:
+                    continue
+
             for plot, errs in layers:
                 if not show:
                     if not errors_only:

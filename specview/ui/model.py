@@ -45,7 +45,8 @@ class SpectrumDataTreeModel(QtGui.QStandardItemModel):
         # to the corresponding astropy objects such as function parameter
         # values and attributes, when their corresponding views on the tree
         # are edited by the user. We have to test against the existence of
-        # attributes because sometimes a bogus Qt signal can trip this.
+        # attributes because sometimes a bogus Qt signal can trip this with
+        # an invalid item.
         if hasattr(item, 'update_value') and hasattr(item, "_name"):
             item.update_value(item._name, item.data())
 

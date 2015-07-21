@@ -1,18 +1,16 @@
 import sys
-
-from specview.external.qt import QtGui
-from specview.external.qt import QtCore
-
 from cube_tools.core import SpectrumData
 
-# from specview.core import SpectrumData
-from specview.analysis import model_fitting
-from specview.ui.items import LayerDataTreeItem
-from specview.ui.viewer import MainWindow
-from specview.ui.qt.dialogs import FileEditDialog
-from specview.tools.preprocess import read_data
-from specview.ui.models import DataTreeModel
-from specview.ui.qt.proxies import DataProxyModel, LayerProxyModel
+from .external.qt import QtGui
+from .external.qt import QtCore
+
+from .analysis import model_fitting
+from .ui.items import LayerDataTreeItem
+from .ui.viewer import MainWindow
+from .ui.qt.dialogs import FileEditDialog
+from .tools.preprocess import read_data
+from .ui.models import DataTreeModel
+from .ui.qt.proxies import DataProxyModel, LayerProxyModel
 
 
 class Application(object):

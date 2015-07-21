@@ -1,13 +1,13 @@
 from __future__ import print_function
-from specview.external.qt import QtGui, QtCore
 
-from specview.ui.qt.menubars import MainMenuBar
-from specview.ui.qt.toolbars import BaseToolBar
-from specview.ui.qt.docks import (DataDockWidget, MeasurementDockWidget,
-                                   ConsoleDockWidget, ModelDockWidget,
-                                   EquivalentWidthDockWidget)
-from specview.ui.qt.subwindows import SpectraMdiSubWindow
-from specview.ui.items import LayerDataTreeItem
+from ..external.qt import QtGui, QtCore
+from .qt.menubars import MainMenuBar
+from .qt.toolbars import BaseToolBar
+from .qt.docks import (DataDockWidget, MeasurementDockWidget,
+                       ConsoleDockWidget, ModelDockWidget,
+                       EquivalentWidthDockWidget)
+from .qt.subwindows import SpectraMdiSubWindow
+from .items import LayerDataTreeItem
 
 
 class MainWindow(QtGui.QMainWindow):

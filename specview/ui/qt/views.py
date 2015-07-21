@@ -1,7 +1,7 @@
 from specview.external.qt import QtGui, QtCore
 
-from specview.ui.models import LayerDataTreeItem, SpectrumDataTreeItem
-from specview.ui.qt.menus import SpectrumDataContextMenu
+from ..models import LayerDataTreeItem, SpectrumDataTreeItem
+from .menus import SpectrumDataContextMenu
 
 
 class BaseDataTree(QtGui.QTreeView):

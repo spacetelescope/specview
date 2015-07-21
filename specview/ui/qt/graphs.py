@@ -1,8 +1,8 @@
 from itertools import cycle
-
-from specview.external.qt import QtGui, QtCore
-from specview.tools.graph_items import ExtendedFillBetweenItem
 import pyqtgraph as pg
+
+from ...external.qt import QtGui, QtCore
+from ...tools.graph_items import ExtendedFillBetweenItem
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -237,19 +237,14 @@ class SpectraGraph(BaseGraph):
             #                                                spec_y_err.value)
             #                        ** 0.5 * 0.5)
 
-            if self.show_errors:
-                errs.show()
-            else:
-                errs.hide()
-
             self.plot_window.autoRange()
 
-            self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
-
-            self.plot_window.setLabel('bottom', text='Dispersion [{}]'.format(
-                                      spec_x_array.unit))
-            self.plot_window.setLabel('left', text='Flux [{}]'.format(
-                                      spec_y_array.unit))
+            # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
+            #
+            # self.plot_window.setLabel('bottom', text='Dispersion [{}]'.format(
+            #                           spec_x_array.unit))
+            # self.plot_window.setLabel('left', text='Flux [{}]'.format(
+            #                           spec_y_array.unit))
 
     def add_item(self, layer_data_item, set_active=True, style='histogram',
                  color=None):
@@ -294,20 +289,11 @@ class SpectraGraph(BaseGraph):
 
         spec_data = layer_data_item.item
         filter_mask = layer_data_item.filter_mask
-        print("graph info", type(spec_data), type(filter_mask))
-        print(filter_mask.shape, filter_mask[filter_mask==True].size,
-              filter_mask[filter_mask==False].size)
-        print(spec_data.shape, filter_mask.shape)
-        print(filter_mask)
 
         spec_x_array = spec_data.get_dispersion(self._units[0])[filter_mask]
         spec_y_array = spec_data.get_flux(self._units[1])[filter_mask]
         spec_y_err = spec_data.get_error(self._units[1])[filter_mask] if \
             spec_data.error is not None else None
-
-        print("some data", spec_x_array[0])
-        print(spec_data.get_dispersion(self._units[0]).shape, spec_x_array.shape,
-              spec_data.get_dispersion(self._units[0])[filter_mask].shape)
 
         x_data = spec_x_array.value if style != 'histogram' else np.append(
             spec_x_array.value, spec_x_array.value[-1])

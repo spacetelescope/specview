@@ -1,7 +1,7 @@
 import inspect
-
-from specview.external.qt import QtGui, QtCore
 import numpy as np
+
+from ..external.qt import QtGui, QtCore
 
 
 class CubeDataTreeItem(QtGui.QStandardItem):

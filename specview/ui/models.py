@@ -1,12 +1,12 @@
 from os import path, sys
-
-from specview.external.qt import QtGui, QtCore
 import numpy as np
 
-from specview.analysis import model_fitting
-from specview.ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
-                               ModelDataTreeItem, LayerDataTreeItem,
-                               ParameterDataTreeItem)
+from ..external.qt import QtGui, QtCore
+
+from ..analysis import model_fitting
+from ..ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
+                        ModelDataTreeItem, LayerDataTreeItem,
+                        ParameterDataTreeItem)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -120,7 +120,6 @@ class DataTreeModel(QtGui.QStandardItemModel):
         self.sig_added_item.emit(model_data_item.index())
         self.sig_added_fit_model.emit(model_data_item)
 
-    # --- overridden functions
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
@@ -159,9 +158,6 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
         return super(DataTreeModel, self).data(index, role)
 
-    # def flags(self, index):
-    #     return super(DataTreeModel, self).flags(index)|QtCore.Qt.ItemIsUserCheckable
-
     def hasChildren(self, parent_index=QtCore.QModelIndex(), *args, **kwargs):
         # if parent_index is not None and self.itemFromIndex(parent_index):
         #     item = self.itemFromIndex(parent_index)
@@ -179,5 +175,5 @@ class DataTreeModel(QtGui.QStandardItemModel):
         #     if isinstance(item, LayerDataTreeItem):
         #         return 0
 
-        return super(DataTreeModel, self).rowCount(parent_index,
-                                                           *args, **kwargs)
+        return super(DataTreeModel, self).rowCount(parent_index, *args,
+                                                   **kwargs)

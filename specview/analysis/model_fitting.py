@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.modeling import models, fitting
+from cube_tools.core.data_objects import SpectrumData
 
 all_models = {
     'Gaussian1D': models.Gaussian1D,
@@ -58,7 +59,47 @@ def _gaussian_parameter_estimates(x, y, dy=0):
     return amplitude, mean, stddev
 
 
-def fit_model(x, y, err, mask, model, fit_method):
-    fitter = get_fitter(fit_method)
-    fit_model = fitter(model, x, y, weights=1.0 / err ** 2)
-    new_y = fit_model(x)
+def fit_model(layer_data_item, fitter_name, roi_mask):
+    if len(layer_data_item._model_items) == 0:
+            return
+
+    fitter = get_fitter(fitter_name)
+
+    init_model = layer_data_item.model
+
+    x, y = layer_data_item.item.dispersion, layer_data_item.item.flux
+
+    fit_model = fitter(init_model, x.value[roi_mask], y.value[roi_mask])
+    new_y = fit_model(x.value[roi_mask])
+
+    # It was decided not to carry around dispersion data, instead
+    # letting it be calculated. This means we have to maintain the same
+    # array shape because we don't always know at what dispersion value
+    # a flux array starts
+    tran_y = np.empty(shape=x.value.shape)
+    tran_y[roi_mask] = new_y
+    tran_y[~roi_mask] = 0.0
+    new_y = tran_y
+
+    # Create new data object
+    fit_spec_data = SpectrumData(new_y, unit=layer_data_item.item.unit,
+                                 mask=layer_data_item.item.mask,
+                                 wcs=layer_data_item.item.wcs,
+                                 meta=layer_data_item.item.meta,
+                                 uncertainty=None)
+
+    # Update using model approach
+    for model_idx in range(layer_data_item.rowCount()):
+        model_data_item = layer_data_item.child(model_idx)
+
+        for param_idx in range(model_data_item.rowCount()):
+            parameter_data_item = model_data_item.child(param_idx, 1)
+
+            if layer_data_item.rowCount() > 1:
+                value = fit_model[model_idx].parameters[param_idx]
+            else:
+                value = fit_model.parameters[param_idx]
+            parameter_data_item.setData(value)
+            parameter_data_item.setText(str(value))
+
+    return fit_spec_data

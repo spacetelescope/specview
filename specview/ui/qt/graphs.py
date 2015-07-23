@@ -1,5 +1,9 @@
 from itertools import cycle
 import pyqtgraph as pg
+import numpy as np
+# ignore divisions by zero
+ignored_states = np.seterr(divide='ignore')
+import astropy.constants as const
 
 from ...external.qt import QtGui, QtCore
 from ...tools.graph_items import ExtendedFillBetweenItem
@@ -9,30 +13,16 @@ pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
 
 
-import numpy as np
-# ignore divisions by zero
-ignored_states = np.seterr(divide='ignore')
-
 from specview.ui.items import SpectrumDataTreeItem, LayerDataTreeItem
 
 
 class BaseGraph(pg.PlotWidget):
     sig_units_changed = QtCore.Signal()
 
-    def __init__(self):
-        super(BaseGraph, self).__init__()
-        self.plot_window = self.getPlotItem()
-        self.plot_window.setContentsMargins(5, 5, 5, 5)
-        self.plot_window.showGrid(x=True, y=True)
+    def __init__(self, *args, **kwargs):
+        super(BaseGraph, self).__init__(*args, **kwargs)
         # Accept drag events
         self.setAcceptDrops(True)
-        # Define layout
-        # self.vb_layout = QtGui.QVBoxLayout()
-        # self.setLayout(self.vb_layout)
-        # Create main graphics layout widget
-        # self.view_box = None
-        # self.w = pg.PlotWidget()
-        # self.vb_layout.addWidget(self.w)
         # Create roi container
         self._rois = []
         self._active_roi = None
@@ -135,7 +125,17 @@ class BaseGraph(pg.PlotWidget):
 
 class SpectraGraph(BaseGraph):
     def __init__(self):
-        super(SpectraGraph, self).__init__()
+        self._top_axis = DynamicAxisItem(self, orientation='top')
+        super(SpectraGraph, self).__init__(axisItems={'top':self._top_axis})
+        self.plot_window = self.getPlotItem()
+        self._top_axis.linkToView(self.plot_window.getViewBox())
+        self.plot_window.setContentsMargins(5, 5, 5, 5)
+        self.plot_window.showGrid(x=True, y=True)
+        self.plot_window.showAxis('top', True)
+
+        # Define the display of the top axis
+        self._top_axis = self.plot_window.getAxis('top')
+
         self._plot_dict = {}
         self._active_plot = None
         self._active_item = None
@@ -237,13 +237,7 @@ class SpectraGraph(BaseGraph):
             #                                                spec_y_err.value)
             #                        ** 0.5 * 0.5)
 
-
-            self.plot_window.setLabel('bottom',
-                                      text='Dispersion [{}]'.format(
-                                          self._units[0]))
-            self.plot_window.setLabel('left',
-                                      text='Flux [{}]'.format(self._units[1]))
-
+            self.set_labels()
             self.plot_window.autoRange()
 
             # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
@@ -252,6 +246,7 @@ class SpectraGraph(BaseGraph):
             #                           spec_x_array.unit))
             # self.plot_window.setLabel('left', text='Flux [{}]'.format(
             #                           spec_y_array.unit))
+
 
     def add_item(self, layer_data_item, set_active=True, style='histogram',
                  color=None):
@@ -337,11 +332,7 @@ class SpectraGraph(BaseGraph):
                                      stepMode=style == 'histogram',
                                      symbol='o' if style == 'scatter' else None)
 
-        self.plot_window.setLabel('bottom',
-                                  text='Dispersion [{}]'.format(
-                                      spec_x_array.unit))
-        self.plot_window.setLabel('left',
-                                  text='Flux [{}]'.format(spec_y_array.unit))
+        self.set_labels()
 
         self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
         # self.plot_window.setClipToView(True)
@@ -370,6 +361,24 @@ class SpectraGraph(BaseGraph):
         # # color.setAlpha(255)
         # plot.setPen(color, width=1)
         # self.set_active(layer_data_item)
+
+    def set_labels(self):
+        self.plot_window.setLabel('bottom',
+                                  text='Wavelength [{}]'.format(
+                                      self._units[0]))
+        self.plot_window.setLabel('left',
+                                  text='Flux [{}]'.format(self._units[1]))
+
+        if self._top_axis.mode == 'redshift':
+            self.plot_window.setLabel('top',
+                                      text='Redshifted Wavelength [{}]'.format(
+                                          self._units[0]))
+        elif self._top_axis.mode == 'velocity':
+            self.plot_window.setLabel('top',
+                                      text='Velocity [{}/s]'.format(
+                                          self._units[0]))
+        else:
+            self.plot_window.setLabel('top', text='Channel')
 
     def set_visibility(self, layer_data_item, show, errors_only=False):
         for item, layers in self._plot_dict.items():
@@ -407,3 +416,42 @@ class ImageGraph(BaseGraph):
 
     def set_image(self, data):
         self.image_item.setImage(data)
+
+
+class DynamicAxisItem(pg.AxisItem):
+    def __init__(self, graph, *args, **kwargs):
+        super(DynamicAxisItem, self).__init__(*args, **kwargs)
+        self._allowed_modes = ['redshift', 'velocity', 'channel']
+        self._graph = graph
+        self._redshift = 0.0
+        self._ref_wavelength = 0.0
+        self._mode = "redshift"
+
+    def set_mode(self, mode, ref_wavelength=None, redshift=None):
+        if mode in [0, 1, 2]:
+            self._mode = self._allowed_modes[mode]
+        elif mode in self._allowed_modes:
+            self._mode = mode
+        else:
+            return
+
+        if ref_wavelength is not None:
+            self._ref_wavelength = ref_wavelength
+
+        if redshift is not None:
+            self._redshift = redshift
+
+        self._graph.set_labels()
+
+    @property
+    def mode(self):
+        return self._mode
+
+    def tickStrings(self, values, scale, spacing):
+        if self._mode == 'redshift':
+            return [v/(1 + self._redshift) for v in values]
+        elif self._mode == 'velocity':
+            c = const.c.to('{}/s'.format(self._graph._units[0])).value
+            return [c / (v - self._ref_wavelength) for v in values]
+        else:
+            print("[ERROR] Not such mode {}".format(self._mode))

@@ -1,6 +1,6 @@
 from specview.external.qt import QtGui, QtCore
 from os import sys, path
-from specview.ui.qt.dialogs import PlotUnitsDialog
+from specview.ui.qt.dialogs import PlotUnitsDialog, TopAxisDialog
 import specview.ui.qt.resources
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
@@ -101,7 +101,6 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         self.atn_measure.setIcon(QtGui.QIcon(":/icons/info22.png"))
         self.atn_measure.setToolTip('Get measurements from current region')
 
-
         self.atn_equiv_width = QtGui.QAction("&Equivalent Width", self)
         self.atn_equiv_width.setIcon(QtGui.QIcon(":/icons/four37.png"))
         self.atn_equiv_width.setToolTip("Calculates equivalent width of the "
@@ -114,6 +113,7 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         # ------
 
         self.unit_dialog = PlotUnitsDialog()
+        self.top_axis_dialog = TopAxisDialog()
 
         plot_opt_menu = QtGui.QMenu()
         layer_opt_menu = QtGui.QMenu()
@@ -123,12 +123,18 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         self.atn_edit_units.setToolTip("Convert the plot units")
         self.atn_edit_units.triggered.connect(self._show_edit_units)
 
+        self.atn_edit_top_axis = QtGui.QAction("Change Top Axis", self)
+        self.atn_edit_top_axis.setToolTip("Display different top axis values")
+        self.atn_edit_top_axis.triggered.connect(self._show_edit_top_axis)
+
         self.atn_toggle_errs = QtGui.QAction("Show Errors", self,
                                              checkable=True)
         self.atn_toggle_errs.setChecked(True)
         self.atn_toggle_errs.setToolTip("Toggle display of data uncertainty")
 
         plot_opt_menu.addAction(self.atn_toggle_errs)
+        plot_opt_menu.addSeparator()
+        plot_opt_menu.addAction(self.atn_edit_top_axis)
         plot_opt_menu.addAction(self.atn_edit_units)
 
         # Layer options menu
@@ -167,9 +173,11 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         self.addWidget(plot_opt_button)
         self.addWidget(layer_opt_button)
 
-
     def _show_edit_units(self):
         self.unit_dialog.exec_()
+
+    def _show_edit_top_axis(self):
+        self.top_axis_dialog.exec_()
 
 
 class ImageToolBar(BaseToolBar):

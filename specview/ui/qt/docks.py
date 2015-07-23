@@ -1,4 +1,5 @@
 from os import sys, path
+import astropy
 
 from specview.external.qt import QtGui, QtCore
 from pyqtgraph.console import ConsoleWidget
@@ -221,3 +222,29 @@ class ModelDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)
         self.setMinimumSize(self.sizeHint())
+
+
+class SmoothingDockWidget(BaseDockWidget):
+    def __init__(self, parent=None):
+        super(SmoothingDockWidget, self).__init__(parent)
+        self.setWindowTitle("Smoothing Editor")
+
+        self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
+                             QtCore.Qt.RightDockWidgetArea)
+
+        self.wgt_method_select = QtGui.QComboBox()
+        self.wgt_method_select.addItems(['Gaussian', 'Boxcar'])
+
+        form_layout = QtGui.QFormLayout()
+        self.wgt_sigma = QtGui.QLineEdit()
+        form_layout.addRow("Method:", self.wgt_method_select)
+        form_layout.addRow("Standard deviation:", self.wgt_sigma)
+
+        hlayout = QtGui.QHBoxLayout()
+        self.btn_perform = QtGui.QPushButton("Perform")
+        self.btn_reset = QtGui.QPushButton("Reset")
+        hlayout.addWidget(self.btn_perform)
+        hlayout.addWidget(self.btn_reset)
+
+        self.add_layout(form_layout)
+        self.add_layout(hlayout)

@@ -120,7 +120,10 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         self.setText(self._name)
         self.setData(self._parent.item[self._filter_mask])
 
-    def update_data(self, filter_mask=None, collapse=None):
+    def update_data(self, item=None, filter_mask=None, collapse=None):
+        if item is not None:
+            self._item = item
+
         if filter_mask is not None:
             self._filter_mask_cube = filter_mask
 

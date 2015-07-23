@@ -237,6 +237,13 @@ class SpectraGraph(BaseGraph):
             #                                                spec_y_err.value)
             #                        ** 0.5 * 0.5)
 
+
+            self.plot_window.setLabel('bottom',
+                                      text='Dispersion [{}]'.format(
+                                          self._units[0]))
+            self.plot_window.setLabel('left',
+                                      text='Flux [{}]'.format(self._units[1]))
+
             self.plot_window.autoRange()
 
             # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')

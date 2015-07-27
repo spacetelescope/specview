@@ -441,7 +441,7 @@ class DynamicAxisItem(pg.AxisItem):
 
     def tickStrings(self, values, scale, spacing):
         spatial_unit = self._graph._units[0] if self._graph._units is not \
-                                                None else '--'
+                                                None else u.Unit()
         if self._mode == 'redshift':
             self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
             return [v/(1 + self._redshift)*scale for v in values]
@@ -455,15 +455,3 @@ class DynamicAxisItem(pg.AxisItem):
             return v.to('km/s').value
         else:
             print("[ERROR] Not such mode {}".format(self._mode))
-
-    # def tickSpacing(self, minVal, maxVal, size):
-    #     self._data = self._graph._plot_dict.keys()[0].item
-    #
-    #     print(self._data)
-    #
-    #     if self._mode == 'channel':
-    #         self._tickLevels = [[(v, str(i)) for i, v in enumerate(
-    #             self._data[::size/100])]]
-    #     else:
-    #         self._tickSpacing = None
-    #         super(DynamicAxisItem, self).tickSpacing(minVal, maxVal, size)

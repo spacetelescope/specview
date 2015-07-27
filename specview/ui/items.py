@@ -52,7 +52,7 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
     def __init__(self, item, name="Spectrum Data"):
         super(SpectrumDataTreeItem, self).__init__()
         self.setEditable(True)
-
+        self._name = name
         self._item = item
         self._layer_items = []
         self.setText(name)
@@ -75,6 +75,10 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
     @property
     def layers(self):
         return self._layer_items
+
+    @property
+    def name(self):
+        return self._name
 
     def add_layer_item(self, layer_data_item):
         if not isinstance(layer_data_item, LayerDataTreeItem):
@@ -154,6 +158,10 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     @property
     def parent(self):
         return self._parent
+
+    @property
+    def name(self):
+        return self._name
 
     def add_model_item(self, model_data_item):
         self._model_items.append(model_data_item)

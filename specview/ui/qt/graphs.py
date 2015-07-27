@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from itertools import cycle
 import pyqtgraph as pg
 import numpy as np
@@ -12,7 +14,6 @@ from ...tools.graph_items import ExtendedFillBetweenItem
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
-
 
 from specview.ui.items import SpectrumDataTreeItem, LayerDataTreeItem
 
@@ -188,7 +189,6 @@ class SpectraGraph(BaseGraph):
                 return
 
         for plot, errs in self._plot_dict[layer_data_item]:
-            print("[SpecView] Updating plot")
             color = plot.opts['pen']
 
             if style is None:
@@ -434,6 +434,7 @@ class DynamicAxisItem(pg.AxisItem):
             self._redshift = redshift
 
         self.update()
+        self.updateAutoSIPrefix()
 
     @property
     def mode(self):
@@ -441,12 +442,14 @@ class DynamicAxisItem(pg.AxisItem):
 
     def tickStrings(self, values, scale, spacing):
         spatial_unit = self._graph._units[0] if self._graph._units is not \
-                                                None else u.Unit()
+                                                None else u.Unit('')
         if self._mode == 'redshift':
             self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
             return [v/(1 + self._redshift)*scale for v in values]
         elif self._mode == 'velocity':
-            self.scale = 1.0
+            self.setScale(1.0)
+            print("Scale: ", self.scale, scale)
+            self.setLabel
             self.setLabel("Velocity [km/s]", None, None)
             c = const.c.to('{}/s'.format(spatial_unit))
             waves = u.Quantity(np.array(values), spatial_unit)

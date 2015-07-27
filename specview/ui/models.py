@@ -40,8 +40,9 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
     def remove_data_item(self, index, parent_index):
         item = index.model().itemFromIndex(index)
-        self.removeRow(index.row(), parent_index)
-        print("Removing item {}, {}, {}".format(index, parent_index, item))
+        success = self.removeRow(index.row(), parent_index)
+        print("Removing item {}, {}, {}, {}".format(success, index,
+                                                    parent_index, item))
         # if it's data
         if item in self._items:
             self._items.remove(item)

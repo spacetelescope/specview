@@ -25,11 +25,14 @@ class BaseDataTree(QtGui.QTreeView):
 
         item = model.itemFromIndex(index)
         parent_index = model.indexFromItem(item.parent)
+        node_parent_index = model.indexFromItem(item.node_parent)
 
         if isinstance(item, QtGui.QStandardItem):
             context_menu = SpectrumDataContextMenu(self)
             context_menu.atn_remove.triggered.connect(
                 lambda: model.remove_data_item(index, parent_index))
+            context_menu.atn_remove.triggered.connect(
+                lambda: model.remove_data_item(index, node_parent_index))
             context_menu.atn_export.triggered.connect(
                 lambda: export_fits(item))
             context_menu.exec_(menu_event.globalPos())

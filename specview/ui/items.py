@@ -160,6 +160,10 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         return self._parent
 
     @property
+    def node_parent(self):
+        return self._node_parent
+
+    @property
     def name(self):
         return self._name
 

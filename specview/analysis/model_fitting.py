@@ -61,7 +61,7 @@ def _gaussian_parameter_estimates(x, y, dy=0):
 
 def fit_model(layer_data_item, fitter_name, roi_mask):
     if len(layer_data_item._model_items) == 0:
-            return
+        return
 
     fitter = get_fitter(fitter_name)
 

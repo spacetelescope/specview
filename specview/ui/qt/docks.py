@@ -232,19 +232,55 @@ class SmoothingDockWidget(BaseDockWidget):
         self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
                              QtCore.Qt.RightDockWidgetArea)
 
+        self._container_list = []
+
         self.wgt_method_select = QtGui.QComboBox()
         self.wgt_method_select.addItems(['Gaussian', 'Boxcar'])
+        self.wgt_method_select.currentIndexChanged.connect(self._on_select)
 
-        form_layout = QtGui.QFormLayout()
-        self.wgt_sigma = QtGui.QLineEdit()
-        form_layout.addRow("Method:", self.wgt_method_select)
-        form_layout.addRow("Standard deviation:", self.wgt_sigma)
+        frm_method = QtGui.QFormLayout()
+        frm_method.addRow("Method:", self.wgt_method_select)
+
+        self.grp_gauss = QtGui.QGroupBox("Gaussian Parameters")
+        self.wgt_gauss_stddev = QtGui.QLineEdit()
+        self.wgt_gauss_stddev.setValidator(QtGui.QDoubleValidator())
+        frm_gauss = QtGui.QFormLayout()
+        self.grp_gauss.setLayout(frm_gauss)
+        frm_gauss.addRow("Standard deviation:", self.wgt_gauss_stddev)
+        self._container_list.append(self.grp_gauss)
+
+        self.grp_box = QtGui.QGroupBox("Boxcar Parameters")
+        self.wgt_box_width = QtGui.QLineEdit()
+        self.wgt_box_width.setValidator(QtGui.QDoubleValidator())
+        frm_box = QtGui.QFormLayout()
+        self.grp_box.setLayout(frm_box)
+        frm_box.addRow("Width:", self.wgt_box_width)
+        self._container_list.append(self.grp_box)
 
         hlayout = QtGui.QHBoxLayout()
-        self.btn_perform = QtGui.QPushButton("Perform")
-        self.btn_reset = QtGui.QPushButton("Reset")
+        self.btn_perform = QtGui.QPushButton("Perform Operation")
         hlayout.addWidget(self.btn_perform)
-        hlayout.addWidget(self.btn_reset)
 
-        self.add_layout(form_layout)
+        self.add_layout(frm_method)
+        self.add_widget(self.grp_gauss)
+        self.add_widget(self.grp_box)
         self.add_layout(hlayout)
+
+        self._on_select(0)
+
+    def _on_select(self, index):
+        for cntr in self._container_list:
+            cntr.hide()
+
+        self._container_list[index].show()
+
+    def get_kwargs(self):
+        kwargs = {
+            'Gaussian': {'stddev': float(str(self.wgt_gauss_stddev.text())) if
+            str(self.wgt_gauss_stddev.text()) else 0.0},
+            'Boxcar': {'width': float(str(self.wgt_box_width.text())) if
+            str(self.wgt_box_width.text()) else 0.0}
+        }
+
+        return self.wgt_method_select.currentText(), kwargs[
+            self.wgt_method_select.currentText()]

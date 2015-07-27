@@ -4,12 +4,12 @@ from astropy.convolution import Gaussian1DKernel, Box1DKernel
 from cube_tools.core.data_objects import SpectrumData
 
 
-def spectral_smoothing(spec_data, method='gaussian', **kwargs):
+def spectral_smoothing(spec_data, method='gaussian', kwargs=None):
 
     if method.lower() == 'gaussian':
         g = Gaussian1DKernel(stddev=kwargs['stddev'])
     elif method.lower() == 'boxcar':
-        g = Box1DKernel(kwargs['width'])
+        g = Box1DKernel(width=kwargs['width'])
 
     if spec_data.data.size > 10000:
         z = convolve_fft(spec_data.data, g)

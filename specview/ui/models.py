@@ -41,7 +41,7 @@ class DataTreeModel(QtGui.QStandardItemModel):
     def remove_data_item(self, index, parent_index):
         item = index.model().itemFromIndex(index)
         self.removeRow(index.row(), parent_index)
-        print("Removing item {}".format(item))
+        print("Removing item {}, {}, {}".format(index, parent_index, item))
         # if it's data
         if item in self._items:
             self._items.remove(item)
@@ -88,7 +88,8 @@ class DataTreeModel(QtGui.QStandardItemModel):
             name = "Layer {}".format(parent.rowCount()+1)
 
         layer_data_item = LayerDataTreeItem(parent, filter_mask, rois=rois,
-                                            collapse=collapse, name=name)
+                                            collapse=collapse, name=name,
+                                            node_parent=node_parent)
         layer_data_item.setIcon(QtGui.QIcon(path.join(PATH, 'layer.png')))
 
         if node_parent is not None:

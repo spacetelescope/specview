@@ -52,8 +52,7 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
             self._update_graph_units)
 
         self.plot_toolbar.top_axis_dialog.accepted.connect(
-            self._update_graph_top_axis
-        )
+            self._update_graph_top_axis)
 
         self.plot_toolbar.atn_line_style.triggered.connect(lambda:
             self.graph.update_item(style='line'))
@@ -75,7 +74,7 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
     def _update_graph_top_axis(self):
         top_axis_dialog = self.plot_toolbar.top_axis_dialog
         self.graph._top_axis.set_mode(top_axis_dialog.mode,
-                                      ref_wavelength=top_axis_dialog.ref_wavelength,
+                                      ref_wavelength=top_axis_dialog.ref_wave,
                                       redshift=top_axis_dialog.redshift)
 
     def _toggle_graph_step(self):

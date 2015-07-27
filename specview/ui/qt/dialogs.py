@@ -147,67 +147,70 @@ class PlotUnitsDialog(QtGui.QDialog):
 class TopAxisDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         super(TopAxisDialog, self).__init__(parent)
-        self.ref_wavelength = 0.0
+        self.ref_wave = 0.0
         self.redshift = 0.0
 
         self.vb_layout_main = QtGui.QVBoxLayout()
         self.setLayout(self.vb_layout_main)
 
-        self._setup()
+        self._container_list = []
 
-    def _setup(self):
         self.wgt_display_axis = QtGui.QComboBox()
         self.wgt_display_axis.addItems(["Redshifted Wavelength", "Velocity",
                                         "Channel"])
         self.wgt_display_axis.currentIndexChanged.connect(self._on_select)
-        self.form = QtGui.QFormLayout()
-        self.form.addRow(self.tr("Display axis:"),
-                           self.wgt_display_axis)
 
+        frm_select = QtGui.QFormLayout()
+        frm_select.addRow("Display axis:", self.wgt_display_axis)
+
+        # Redshift parameters
+        self.grp_redshift = QtGui.QGroupBox("Redshift Parameters")
         self.wgt_redshift = QtGui.QLineEdit()
         self.wgt_redshift.setValidator(QtGui.QDoubleValidator())
-        self.form.addRow(self.tr("Redshift amount:"),
-                         self.wgt_redshift)
+        frm_redshift = QtGui.QFormLayout()
+        self.grp_redshift.setLayout(frm_redshift)
+        frm_redshift.addRow("Amount:", self.wgt_redshift)
+        self._container_list.append(self.grp_redshift)
 
-        self.wgt_ref_wavelength = QtGui.QLineEdit()
-        self.wgt_ref_wavelength.setValidator(QtGui.QDoubleValidator())
-        self.form.addRow(self.tr("Reference wavelength:"),
-                         self.wgt_ref_wavelength)
+        # Velocity parameters
+        self.grp_vel = QtGui.QGroupBox("Velocity Parameters")
+        self.wgt_ref_wave_unit = QtGui.QLabel("")
+        self.wgt_ref_wave = QtGui.QLineEdit()
+        hb_ref_wave = QtGui.QHBoxLayout()
+        hb_ref_wave.addWidget(self.wgt_ref_wave)
+        hb_ref_wave.addWidget(self.wgt_ref_wave_unit)
+        self.wgt_ref_wave.setValidator(QtGui.QDoubleValidator())
+        frm_vel = QtGui.QFormLayout()
+        self.grp_vel.setLayout(frm_vel)
+        frm_vel.addRow("Reference Wavelength:", hb_ref_wave)
+        self._container_list.append(self.grp_vel)
 
         button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
                                             QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(self._on_accept)
         button_box.rejected.connect(self._on_reject)
 
-        self.vb_layout_main.addLayout(self.form)
+        self.vb_layout_main.addLayout(frm_select)
+        self.vb_layout_main.addWidget(self.grp_redshift)
+        self.vb_layout_main.addWidget(self.grp_vel)
         self.vb_layout_main.addWidget(button_box)
 
         self._on_select(0)
 
+    def set_current_unit(self, unit):
+        self.wgt_ref_wave_unit.setText(unit)
+
     def _on_select(self, index):
-        vel_label = self.form.labelForField(self.wgt_ref_wavelength)
-        red_label = self.form.labelForField(self.wgt_redshift)
-        if index == 0:
-            vel_label.hide()
-            self.wgt_ref_wavelength.hide()
-            red_label.show()
-            self.wgt_redshift.show()
-        elif index == 1:
-            red_label.hide()
-            self.wgt_redshift.hide()
-            vel_label.show()
-            self.wgt_ref_wavelength.show()
-        else:
-            red_label.hide()
-            self.wgt_redshift.hide()
-            vel_label.hide()
-            self.wgt_ref_wavelength.hide()
+        for cntr in self._container_list:
+            cntr.hide()
+
+        self._container_list[index].show()
 
     def _on_accept(self):
         self.mode = self.wgt_display_axis.currentIndex()
 
-        rw_val = str(self.wgt_ref_wavelength.text())
-        self.ref_wavelength = float(rw_val) if rw_val != '' else self.ref_wavelength
+        rw_val = str(self.wgt_ref_wave.text())
+        self.ref_wave = float(rw_val) if rw_val != '' else self.ref_wave
         rs = str(self.wgt_redshift.text())
         self.redshift = float(rs) if rs != '' else self.redshift
 

@@ -7,6 +7,7 @@ from ..external.qt import QtGui, QtCore
 class CubeDataTreeItem(QtGui.QStandardItem):
     def __init__(self, item, name="Cube Data"):
         super(CubeDataTreeItem, self).__init__()
+        self.is_visible = True
         self._item = item
         self._layer_items = []
         self.setText(name)
@@ -90,10 +91,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     sig_updated = QtCore.Signal()
 
     def __init__(self, parent, filter_mask, rois=None, collapse='mean',
-                 name="Layer"):
+                 name="Layer", node_parent=None):
         super(LayerDataTreeItem, self).__init__()
         self.setColumnCount(2)
         self._parent = parent
+        self._node_parent = node_parent
         self._rois = rois
         self._collapse = collapse
         self._name = name
@@ -159,6 +161,12 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     def sig_update(self):
         pass
         # self.sig_updated.emit()
+
+    def remove_self(self):
+        self.parent.remove_layer(self)
+
+        if self._node_parent is not None:
+            self._node_parent.remove_layer(self)
 
     def remove_model(self, model):
         print("Trying to remove {} for {}".format(model, self))

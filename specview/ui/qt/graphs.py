@@ -4,6 +4,7 @@ import numpy as np
 # ignore divisions by zero
 ignored_states = np.seterr(divide='ignore')
 import astropy.constants as const
+import astropy.units as u
 
 from ...external.qt import QtGui, QtCore
 from ...tools.graph_items import ExtendedFillBetweenItem
@@ -39,6 +40,7 @@ class BaseGraph(pg.PlotWidget):
     def set_units(self, x=None, y=None, z=None):
         self._units = [u if u is not None else self._units[i]
                        for i, u in enumerate([x, y, z])]
+        self.plot_window.autoRange()
         self.sig_units_changed.emit()
 
     def _set_active_roi(self):
@@ -214,8 +216,6 @@ class SpectraGraph(BaseGraph):
             # then enable downsampling.
             self.plot_window.setDownsampling(ds=False, auto=False, mode='peak')
 
-            self.plot_window.autoRange()
-
             plot.setData(x_data,
                          spec_y_array.value,
                          pen=color,
@@ -238,7 +238,7 @@ class SpectraGraph(BaseGraph):
             #                        ** 0.5 * 0.5)
 
             self.set_labels()
-            self.plot_window.autoRange()
+            # self.plot_window.autoRange()
 
             # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
             #
@@ -246,7 +246,6 @@ class SpectraGraph(BaseGraph):
             #                           spec_x_array.unit))
             # self.plot_window.setLabel('left', text='Flux [{}]'.format(
             #                           spec_y_array.unit))
-
 
     def add_item(self, layer_data_item, set_active=True, style='histogram',
                  color=None):
@@ -279,6 +278,8 @@ class SpectraGraph(BaseGraph):
             for plot, errs in self._plot_dict[layer_data_item]:
                 self.plot_window.removeItem(plot)
                 self.plot_window.removeItem(errs)
+
+            layer_data_item.parent.remove_layer(layer_data_item)
 
         for layer_data_item in layer_data_items:
             del self._plot_dict[layer_data_item]
@@ -369,18 +370,8 @@ class SpectraGraph(BaseGraph):
         self.plot_window.setLabel('left',
                                   text='Flux [{}]'.format(self._units[1]))
 
-        if self._top_axis.mode == 'redshift':
-            self.plot_window.setLabel('top',
-                                      text='Redshifted Wavelength [{}]'.format(
-                                          self._units[0]))
-        elif self._top_axis.mode == 'velocity':
-            self.plot_window.setLabel('top',
-                                      text='Velocity [{}/s]'.format(
-                                          self._units[0]))
-        else:
-            self.plot_window.setLabel('top', text='Channel')
-
     def set_visibility(self, layer_data_item, show, errors_only=False):
+
         for item, layers in self._plot_dict.items():
             if not errors_only:
                 if item != layer_data_item:
@@ -423,6 +414,7 @@ class DynamicAxisItem(pg.AxisItem):
         super(DynamicAxisItem, self).__init__(*args, **kwargs)
         self._allowed_modes = ['redshift', 'velocity', 'channel']
         self._graph = graph
+        self._data = None
         self._redshift = 0.0
         self._ref_wavelength = 0.0
         self._mode = "redshift"
@@ -441,17 +433,37 @@ class DynamicAxisItem(pg.AxisItem):
         if redshift is not None:
             self._redshift = redshift
 
-        self._graph.set_labels()
+        self.update()
 
     @property
     def mode(self):
         return self._mode
 
     def tickStrings(self, values, scale, spacing):
+        spatial_unit = self._graph._units[0] if self._graph._units is not \
+                                                None else '--'
         if self._mode == 'redshift':
-            return [v/(1 + self._redshift) for v in values]
+            self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
+            return [v/(1 + self._redshift)*scale for v in values]
         elif self._mode == 'velocity':
-            c = const.c.to('{}/s'.format(self._graph._units[0])).value
-            return [c / (v - self._ref_wavelength) for v in values]
+            self.scale = 1.0
+            self.setLabel("Velocity [km/s]", None, None)
+            c = const.c.to('{}/s'.format(spatial_unit))
+            waves = u.Quantity(np.array(values), spatial_unit)
+            ref_wave = u.Quantity(self._ref_wavelength, spatial_unit)
+            v = (waves - ref_wave)/waves*c
+            return v.to('km/s').value
         else:
             print("[ERROR] Not such mode {}".format(self._mode))
+
+    # def tickSpacing(self, minVal, maxVal, size):
+    #     self._data = self._graph._plot_dict.keys()[0].item
+    #
+    #     print(self._data)
+    #
+    #     if self._mode == 'channel':
+    #         self._tickLevels = [[(v, str(i)) for i, v in enumerate(
+    #             self._data[::size/100])]]
+    #     else:
+    #         self._tickSpacing = None
+    #         super(DynamicAxisItem, self).tickSpacing(minVal, maxVal, size)

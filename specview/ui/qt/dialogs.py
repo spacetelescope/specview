@@ -204,7 +204,8 @@ class TopAxisDialog(QtGui.QDialog):
         for cntr in self._container_list:
             cntr.hide()
 
-        self._container_list[index].show()
+        if index < len(self._container_list):
+            self._container_list[index].show()
 
     def _on_accept(self):
         self.mode = self.wgt_display_axis.currentIndex()

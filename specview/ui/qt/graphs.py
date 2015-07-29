@@ -425,6 +425,8 @@ class DynamicAxisItem(pg.AxisItem):
         self._redshift = 0.0
         self._ref_wavelength = 0.0
         self._mode = "redshift"
+        self._xdata = None
+        self.setGrid(False)
 
     def set_mode(self, mode, ref_wavelength=None, redshift=None):
         if mode in [0, 1, 2]:
@@ -440,12 +442,39 @@ class DynamicAxisItem(pg.AxisItem):
         if redshift is not None:
             self._redshift = redshift
 
+        if self._mode == 'channel':
+            self._xdata = self._graph._plot_dict.keys()[0].item.get_dispersion(
+                self._graph._units[0]).value
+            self.setTicks([
+                [(v, str(i)) for i, v in enumerate(self._xdata)][::len(self._xdata)/10]
+            ])
+        else:
+            self.setTicks(None)
+
+        if self._mode in ['channel', 'velocity']:
+            self.enableAutoSIPrefix(False)
+        else:
+            self.enableAutoSIPrefix(True)
+
         self.update()
         self.updateAutoSIPrefix()
 
     @property
     def mode(self):
         return self._mode
+
+    def generateDrawSpecs(self, p):
+        if self._mode == 'channel':
+            mn, mx = self.range[0], self.range[1]
+            self.enableAutoSIPrefix(False)
+            self.setLabel("Channel", None, None)
+            data = self._xdata[(self._xdata > mn) & (self._xdata <
+                                                              mx)]
+            self.setTicks([
+                [(v, str(i)) for i, v in enumerate(data)][::len(
+                    data)/10]
+            ])
+        return super(DynamicAxisItem, self).generateDrawSpecs(p)
 
     def tickStrings(self, values, scale, spacing):
         spatial_unit = self._graph._units[0] if self._graph._units is not \
@@ -454,14 +483,16 @@ class DynamicAxisItem(pg.AxisItem):
             self.setLabel('Redshifted Wavelength [{}]'.format(spatial_unit))
             return [v/(1 + self._redshift)*scale for v in values]
         elif self._mode == 'velocity':
-            self.setScale(1.0)
-            print("Scale: ", self.scale, scale)
-            self.setLabel
+            self.enableAutoSIPrefix(False)
+            # self.setScale(1.0)
             self.setLabel("Velocity [km/s]", None, None)
             c = const.c.to('{}/s'.format(spatial_unit))
             waves = u.Quantity(np.array(values), spatial_unit)
             ref_wave = u.Quantity(self._ref_wavelength, spatial_unit)
-            v = (waves - ref_wave)/waves*c
+            v = (waves - ref_wave) / waves * c
             return v.to('km/s').value
+        elif self._mode == 'channel':
+            return super(DynamicAxisItem, self).tickStrings(values, scale,
+                                                            spacing)
         else:
             print("[ERROR] Not such mode {}".format(self._mode))

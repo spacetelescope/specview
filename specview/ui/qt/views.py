@@ -2,7 +2,6 @@ from ...external.qt import QtGui, QtCore
 
 from ..models import LayerDataTreeItem, SpectrumDataTreeItem
 from .menus import SpectrumDataContextMenu
-from ...core.export import export_fits
 
 
 class BaseDataTree(QtGui.QTreeView):
@@ -34,7 +33,7 @@ class BaseDataTree(QtGui.QTreeView):
             context_menu.atn_remove.triggered.connect(
                 lambda: model.remove_data_item(index, node_parent_index))
             context_menu.atn_export.triggered.connect(
-                lambda: export_fits(item))
+                lambda: item.item.export_fits(item.name))
             context_menu.exec_(menu_event.globalPos())
 
     def currentChanged(self, selected, deselected):

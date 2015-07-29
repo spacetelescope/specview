@@ -1,4 +1,5 @@
 from __future__ import print_function
+from collections import namedtuple
 
 from itertools import cycle
 import pyqtgraph as pg
@@ -129,7 +130,7 @@ class BaseGraph(pg.PlotWidget):
 class SpectraGraph(BaseGraph):
     def __init__(self):
         self._top_axis = DynamicAxisItem(self, orientation='top')
-        super(SpectraGraph, self).__init__(axisItems={'top':self._top_axis})
+        super(SpectraGraph, self).__init__(axisItems={'top': self._top_axis})
         self.plot_window = self.getPlotItem()
         self._top_axis.linkToView(self.plot_window.getViewBox())
         self.plot_window.setContentsMargins(5, 5, 5, 5)
@@ -188,13 +189,13 @@ class SpectraGraph(BaseGraph):
             if layer_data_item is None:
                 return
 
-        for plot, errs in self._plot_dict[layer_data_item]:
-            color = plot.opts['pen']
+        for graph_item in self._plot_dict[layer_data_item]:
+            color = graph_item['data'].opts['pen']
 
             if style is None:
-                if plot.opts['stepMode'] is True:
+                if graph_item['data'].opts['stepMode'] is True:
                     style = 'histogram'
-                elif plot.opts['symbol'] is not None:
+                elif graph_item['data'].opts['symbol'] is not None:
                     style = 'scatter'
                 else:
                     style = 'line'
@@ -216,14 +217,14 @@ class SpectraGraph(BaseGraph):
             # then enable downsampling.
             self.plot_window.setDownsampling(ds=False, auto=False, mode='peak')
 
-            plot.setData(x_data,
+            graph_item['data'].setData(x_data,
                          spec_y_array.value,
                          pen=color,
                          stepMode=style == 'histogram',
                          symbol='o' if style == 'scatter' else None)
 
             if spec_y_err is not None:
-                errs.setData(x=x_data, y=spec_y_array.value,
+                graph_item['errors'].setData(x=x_data, y=spec_y_array.value,
                              height=(1.0 / spec_y_err.value) ** 0.5,)
                 #              pen=QtGui.QColor(0, 0, 0, 120))
 
@@ -241,11 +242,8 @@ class SpectraGraph(BaseGraph):
             # self.plot_window.autoRange()
 
             # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
-            #
-            # self.plot_window.setLabel('bottom', text='Dispersion [{}]'.format(
-            #                           spec_x_array.unit))
-            # self.plot_window.setLabel('left', text='Flux [{}]'.format(
-            #                           spec_y_array.unit))
+
+            self.update_visibility()
 
     def add_item(self, layer_data_item, set_active=True, style='histogram',
                  color=None):
@@ -275,7 +273,7 @@ class SpectraGraph(BaseGraph):
             return
 
         for layer_data_item in layer_data_items:
-            for plot, errs in self._plot_dict[layer_data_item]:
+            for plot, errs, show, show_errs in self._plot_dict[layer_data_item]:
                 self.plot_window.removeItem(plot)
                 self.plot_window.removeItem(errs)
 
@@ -321,8 +319,7 @@ class SpectraGraph(BaseGraph):
                                        pen=pg.mkPen(0, 0, 0, 120),
                                        beam=(x_data[5] - x_data[4])*0.5)
         else:
-            plt_errs = pg.ErrorBarItem(x=0, y=0,
-                                       beam=(x_data[5] - x_data[4])*0.5)
+            plt_errs = pg.ErrorBarItem()
             plt_errs.hide()
 
         self.plot_window.addItem(plt_errs)
@@ -339,7 +336,11 @@ class SpectraGraph(BaseGraph):
         # self.plot_window.setClipToView(True)
 
         if plot not in self._plot_dict[layer_data_item]:
-            self._plot_dict[layer_data_item].append([plot, plt_errs])
+            self._plot_dict[layer_data_item].append(
+                dict(data=plot, errors=plt_errs, show_data=True,
+                     show_errors=True))
+
+        self.update_visibility()
 
     def set_active(self, layer_data_item):
         self._active_plot = self._plot_dict[layer_data_item][-1]
@@ -351,18 +352,6 @@ class SpectraGraph(BaseGraph):
 
         plot = self._plot_dict[layer_data_item][-1]
 
-        # if plot == self._active_plot:
-        #     return
-        # elif self._active_plot is not None:
-        #     color = self._active_plot.opts['pen']
-        #     # color.setAlpha(100)
-        #     self._active_plot.setPen(color, width=2)
-        #
-        # color = plot.opts['pen']
-        # # color.setAlpha(255)
-        # plot.setPen(color, width=1)
-        # self.set_active(layer_data_item)
-
     def set_labels(self):
         self.plot_window.setLabel('bottom',
                                   text='Wavelength [{}]'.format(
@@ -370,22 +359,40 @@ class SpectraGraph(BaseGraph):
         self.plot_window.setLabel('left',
                                   text='Flux [{}]'.format(self._units[1]))
 
-    def set_visibility(self, layer_data_item, show, errors_only=False):
+    def update_visibility(self):
+        for layer_data_item in self._plot_dict.keys():
+            for graph_item in self._plot_dict[layer_data_item]:
+                self.set_visibility(layer_data_item, graph_item['show_data'])
+                self.set_errors_visibility(layer_data_item,
+                                           graph_item['show_errors'])
 
-        for item, layers in self._plot_dict.items():
-            if not errors_only:
-                if item != layer_data_item:
-                    continue
+    def set_visibility(self, layer_data_item, show):
+        for graph_item in self._plot_dict[layer_data_item]:
+            graph_item['show_data'] = graph_item['show_errors'] = show
+            graph_item['data'].show() if show else graph_item['data'].hide()
+            graph_item['errors'].show() \
+                if show else graph_item['errors'].hide()
+            self.set_errors_visibility(layer_data_item, graph_item[
+                'show_errors'])
 
-            for plot, errs in layers:
-                if not show:
-                    if not errors_only:
-                        plot.hide()
-                    errs.hide()
-                else:
-                    if not errors_only:
-                        plot.show()
-                    errs.show()
+    def set_all_visibility(self, show):
+        for graph_item in [x for y in self._plot_dict.values() for x in y]:
+            graph_item['show_data'] = graph_item['show_errors'] = show
+            graph_item['data'].show() if show else graph_item['data'].hide()
+            graph_item['errors'].show() \
+                if show else graph_item['errors'].hide()
+
+    def set_errors_visibility(self, layer_data_item, show):
+        for graph_item in self._plot_dict[layer_data_item]:
+            graph_item['show_errors'] = show
+            graph_item['errors'].show() \
+                if show else graph_item['errors'].hide()
+
+    def set_all_errors_visibility(self, show):
+        for graph_item in [x for y in self._plot_dict.values() for x in y]:
+            graph_item['show_errors'] = show
+            graph_item['errors'].show() \
+                if show else graph_item['errors'].hide()
 
 
 class ImageGraph(BaseGraph):

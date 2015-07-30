@@ -144,8 +144,8 @@ class SpectraGraph(BaseGraph):
         self._active_plot = None
         self._active_item = None
 
-        self.__colors = ['black', 'red', 'green', 'blue', 'yellow',
-                         'cyan', 'magenta']
+        self.__colors = ['black', 'red', 'green', 'blue', 'yellow', 'cyan',
+                         'magenta']
         self._icolors = cycle(self.__colors)
 
         # self.view_box = self.plot_window.getViewBox()
@@ -238,11 +238,11 @@ class SpectraGraph(BaseGraph):
             #                                                spec_y_err.value)
             #                        ** 0.5 * 0.5)
 
-            self.set_labels()
             # self.plot_window.autoRange()
 
             # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
 
+            self.set_labels()
             self.update_visibility()
 
     def add_item(self, layer_data_item, set_active=True, style='histogram',
@@ -273,9 +273,9 @@ class SpectraGraph(BaseGraph):
             return
 
         for layer_data_item in layer_data_items:
-            for plot, errs, show, show_errs in self._plot_dict[layer_data_item]:
-                self.plot_window.removeItem(plot)
-                self.plot_window.removeItem(errs)
+            for graph_item in self._plot_dict[layer_data_item]:
+                self.plot_window.removeItem(graph_item['data'])
+                self.plot_window.removeItem(graph_item['errors'])
 
             layer_data_item.parent.remove_layer(layer_data_item)
 

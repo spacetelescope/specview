@@ -188,6 +188,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
 
 class ModelDataTreeItem(QtGui.QStandardItem):
+
+
+    #TODO this is were to intervene when adding model parameter attributes to the GUI tree
+
+
     def __init__(self, parent, model, name="Model"):
         super(ModelDataTreeItem, self).__init__()
         self.setColumnCount(2)

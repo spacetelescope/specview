@@ -222,7 +222,25 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             para_name = ParameterDataTreeItem(self, key, defaults[i])
             para_value = ParameterDataTreeItem(self, key, defaults[i], True)
             self._parameters.append((para_name, para_value))
+
             self.appendRow([para_name, para_value])
+
+            # We might have to change the representation here. Right now, a
+            # parameter is represented by a name and a editable value, both
+            # displayed on the same tree row, as created by the line of code above.
+            # A new representation would display the parameter name and possibly
+            # a non-editable representation of the value, in a tree row. That row
+            # would be followed by the set of parameter attributes, set up as
+            # children of the parameter name row. The set of parameter attributes
+            # would include an editable version of the parameter value itself. That
+            # way we can achieve the uniform look-and-feel required in a multi-level
+            # tree depiction.
+            # We will also need attribute representation subtypes: right now, a double
+            # and a boolean (for the 'fixed' attribute) are required. In the future,
+            # we may also require a 'function' type, for the 'tied' attribute.
+            #
+            # The changes above already exist in the master branch. Use that code as
+            # a guide on how to implement it here.
 
     def update_parameter(self, name, value):
         setattr(self._model, name, float(str(value)))

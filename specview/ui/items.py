@@ -3,6 +3,19 @@ import numpy as np
 
 from ..external.qt import QtGui, QtCore
 
+# RE pattern to decode scientific and floating point notation.
+_pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+
+def float_check(value):
+    """ Checks for a valid float in either scientific or floating point notation"""
+    substring = _pattern.findall(str(value))
+    if substring:
+        number = float(substring[0])
+        if len(substring) > 1:
+            number *= math.pow(10., int(substring[1]))
+        return number
+    else:
+        return False
 
 class CubeDataTreeItem(QtGui.QStandardItem):
     def __init__(self, item, name="Cube Data"):
@@ -49,7 +62,7 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
     This currently treats `Models` as Qt-level discrete objects. This will
     change in the future.
     """
-    def __init__(self, item, name="Spectrum Data"):
+    def __init__(self, item, name="Data"):
         super(SpectrumDataTreeItem, self).__init__()
         self.setEditable(True)
         self._name = name
@@ -273,3 +286,76 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
     @property
     def parent(self):
         return self._parent
+
+
+class ParameterValueDataTreeItem(ParameterDataTreeItem):
+    ''' Subclasses the base class to add the ability to edit
+        the field and have it's value propagated to the
+        underlying astropy object.
+
+        This class is used to build the 'value' field in a tree
+        row that displays either a parameter name/value pair, or
+        a parameter attribute name/value pair.
+    '''
+    def __init__(self, parent, name, value):
+        super(ParameterValueDataTreeItem, self).__init__(parent, name, value)
+        self.setEditable(True)
+
+    def setDataValue(self, name, value):
+        self.setData(value)
+        self.setText(str(value))
+
+    def update_value(self, name, value):
+        value = float_check(value)
+        if value:
+            self._parent.update_value(name, value)
+
+
+class AttributeValueDataTreeItem(ParameterValueDataTreeItem):
+    ''' Subclasses the parameter value class to handle parameter
+        attribute values instead of parameter values.
+    '''
+    # An attribute is a child of a parameter. A parameter in turn
+    # is a child of a model.
+    def update_value(self, name, value):
+        self._value = value
+        parameter = getattr(self._parent._parent._model, self._parent._name)
+        setattr(parameter, name, value)
+        # the layer that has to be signaled is 3 levels above the attribute.
+        self._parent._parent._parent.sig_update()
+
+    def setDataValue(self, name, value):
+        self.setData(value)
+        self.setText(str(value))
+
+
+class BooleanAttributeValueDataTreeItem(ParameterValueDataTreeItem):
+    ''' Subclasses the parameter value class to handle parameter
+        boolean attribute values. These are represented by checkboxes.
+    '''
+    # An attribute is a child of a parameter. A parameter in turn
+    # is a child of a model.
+    def __init__(self, parent, name, value):
+        super(BooleanAttributeValueDataTreeItem, self).__init__(parent, name, value)
+        self.setCheckable(True)
+
+    def setDataValue(self, name, value):
+        # this method is necessary here to ensure that the proper role is
+        # assigned to the tree node. Otherwise we may see a 'True' or 'False'
+        # string displayed beside the checkbox (the default way Qt displays
+        # checkable nodes with other role types).
+        self.setData(value, role=QtCore.Qt.CheckStateRole)
+
+    def update_value(self, name, value):
+        # Both the passed name and value are ignored. We use the internally
+        # stored name, and the value is irrelevant because the result of
+        # updating a boolean is simply toggling it.
+        parameter = getattr(self._parent._parent._model, self._parent._name)
+        if self.checkState() == QtCore.Qt.Checked:
+            setattr(parameter, self._name, True)
+        else:
+            setattr(parameter, self._name, False)
+        # the layer that has to be signaled is 3 levels above the attribute.
+        # But, avoid signaling for now. Otherwise, a new model and its layer
+        # get created every time an attribute gets changed by the user.
+        # self._parent._parent._parent.sig_update()

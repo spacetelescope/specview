@@ -1,7 +1,10 @@
 import inspect
-import numpy as np
+import re
+import math
 
 from ..external.qt import QtGui, QtCore
+import numpy as np
+
 
 # RE pattern to decode scientific and floating point notation.
 _pattern = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
@@ -104,12 +107,27 @@ class SpectrumDataTreeItem(QtGui.QStandardItem):
             self._layer_items.remove(layer)
 
 
-class LayerDataTreeItem(QtGui.QStandardItem):
-    sig_updated = QtCore.Signal()
+class SignalUpdated(QtCore.QObject):
+    # You can only have pyqtSignal() or Signal() in classes that are derived from QObject.
+    # (http://comments.gmane.org/gmane.comp.python.pyqt-pykde/28223)
 
+    # TODO: get rid of nasty try/excepts
+    try:
+        sig_updated = QtCore.pyqtSignal()
+    except AttributeError:
+        sig_updated = QtCore.Signal()
+
+    def emit(self):
+        self.sig_updated.emit()
+
+
+class LayerDataTreeItem(QtGui.QStandardItem):
     def __init__(self, parent, filter_mask, rois=None, collapse='mean',
                  name="Layer", node_parent=None):
         super(LayerDataTreeItem, self).__init__()
+
+        self.signal_updated = SignalUpdated()
+
         self.setColumnCount(2)
         self._parent = parent
         self._node_parent = node_parent
@@ -158,7 +176,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     @property
     def model(self):
         """This returns a class object."""
-        return np.sum([m.model for m in self._model_items])
+
+        #TODO here is the place to add support for a compound model expression handler.
+
+        compound_model = np.sum(self._models)
+        return compound_model
 
     @property
     def item(self):
@@ -184,8 +206,8 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         self._model_items.append(model_data_item)
 
     def sig_update(self):
-        pass
-        # self.sig_updated.emit()
+        # pass
+        self.signal_updated.emit()
 
     def remove_self(self):
         self.parent.remove_layer(self)
@@ -201,11 +223,6 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
 
 class ModelDataTreeItem(QtGui.QStandardItem):
-
-
-    #TODO this is were to intervene when adding model parameter attributes to the GUI tree
-
-
     def __init__(self, parent, model, name="Model"):
         super(ModelDataTreeItem, self).__init__()
         self.setColumnCount(2)
@@ -238,36 +255,57 @@ class ModelDataTreeItem(QtGui.QStandardItem):
 
             self.appendRow([para_name, para_value])
 
-            # We might have to change the representation here. Right now, a
-            # parameter is represented by a name and a editable value, both
-            # displayed on the same tree row, as created by the line of code above.
-            # A new representation would display the parameter name and possibly
-            # a non-editable representation of the value, in a tree row. That row
-            # would be followed by the set of parameter attributes, set up as
-            # children of the parameter name row. The set of parameter attributes
-            # would include an editable version of the parameter value itself. That
-            # way we can achieve the uniform look-and-feel required in a multi-level
-            # tree depiction.
-            # We will also need attribute representation subtypes: right now, a double
-            # and a boolean (for the 'fixed' attribute) are required. In the future,
-            # we may also require a 'function' type, for the 'tied' attribute.
-            #
-            # The changes above already exist in the master branch. Use that code as
-            # a guide on how to implement it here.
+            # add parameter attributes to the three's next level
+
+            parameter = getattr(self._model, key)
+            attr_fixed = self._model.fixed[key]
+            attr_name = ParameterDataTreeItem(para_name, 'fixed', attr_fixed)
+            attr_value = BooleanAttributeValueDataTreeItem(para_name, 'fixed', attr_fixed)
+            para_name.appendRow([attr_name, attr_value])
+
+            attr_name = ParameterDataTreeItem(para_name, 'min', parameter.min)
+            attr_value = AttributeValueDataTreeItem(para_name, 'min', parameter.min)
+            para_name.appendRow([attr_name, attr_value])
+
+            attr_name = ParameterDataTreeItem(para_name, 'max', parameter.max)
+            attr_value = AttributeValueDataTreeItem(para_name, 'max', parameter.max)
+            para_name.appendRow([attr_name, attr_value])
 
     def update_parameter(self, name, value):
-        setattr(self._model, name, float(str(value)))
-        self._parent.sig_update()
+        old_value = getattr(self._model, name).value
+
+        # setting the parameter value itself is easy
+        validated_value = float_check(value)
+        if validated_value:
+            setattr(self._model, name, validated_value)
+
+        # not so with its tree representation
+
+
+
+            # print("@@@@@@  file items.py; line 281 - ")
+            #
+            # self.setData(str(value))
+            # self.setText(str(value))
+
+        print("@@@@@@  file items.py; line 296 - "), name, value
+
+        # self._parent.sig_update()
 
     def refresh_parameters(self):
         print("Model refreshed")
         for i in range(len(self.rowCount())):
             self.removeRow(i)
-
         self._setup_children()
 
 
 class ParameterDataTreeItem(QtGui.QStandardItem):
+    ''' Class that holds parameter and attribute names on the tree.
+
+        A name is a non-editable string. It is used to build the
+        name field in a tree row that displays either a parameter
+        name/value pair, or a parameter attribute name/value pair.
+     '''
     def __init__(self, parent, name, value, is_editable=False):
         super(ParameterDataTreeItem, self).__init__()
         self.setEditable(is_editable)

@@ -6,7 +6,7 @@ from ..external.qt import QtGui, QtCore
 from ..analysis import model_fitting
 from ..ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
                         ModelDataTreeItem, LayerDataTreeItem,
-                        ParameterDataTreeItem)
+                        ParameterDataTreeItem, float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -128,9 +128,11 @@ class DataTreeModel(QtGui.QStandardItemModel):
             item.setData(value)
             item.setText(str(value))
 
-            # TODO: insert check to make sure value actually is a float
             if isinstance(item, ParameterDataTreeItem):
-                item.setText(str(float(str(value))))
+
+                validated_value = float_check(value)
+                if validated_value:
+                    item.setText(str(value))
 
             self.dataChanged.emit(index, index)
 

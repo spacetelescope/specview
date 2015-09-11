@@ -136,23 +136,18 @@ class SpectraGraph(BaseGraph):
         self.plot_window.setContentsMargins(5, 5, 5, 5)
         self.plot_window.showGrid(x=True, y=True)
         self.plot_window.showAxis('top', True)
+        self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
 
         # Define the display of the top axis
         self._top_axis = self.plot_window.getAxis('top')
 
-        self._plot_dict = {}
-        self._active_plot = None
-        self._active_item = None
-
+        self._plot_containers = []
         self.__colors = ['black', 'red', 'green', 'blue', 'yellow', 'cyan',
                          'magenta']
         self._icolors = cycle(self.__colors)
+        self._global_visibility = {'plot': True, 'errors': True}
 
-        # self.view_box = self.plot_window.getViewBox()
-
-        self.sig_units_changed.connect(self.update_all)
-
-        self.show_errors = True
+        self.sig_units_changed.connect(self.update)
 
     @property
     def active_item(self):
@@ -178,79 +173,28 @@ class SpectraGraph(BaseGraph):
         x1, y1, x2, y2 = roi_shape.getCoords()
         return [x1, x2], [y1, y2]
 
-    def update_all(self):
-        for layer_data_item in self._plot_dict.keys():
-            self.update_item(layer_data_item)
+    def update(self, layer_data_item=None):
+        for container in self._plot_containers:
+            if container.layer_data_item == layer_data_item or \
+                    layer_data_item is None:
+                container.set_units(*self._units)
+                container.update()
 
-    def update_item(self, layer_data_item=None, style=None):
-        if layer_data_item is None:
-            layer_data_item = self._active_item
+        self.set_labels()
 
-            if layer_data_item is None:
-                return
+    def add_item(self, layer_data_item, style='line', pen=None):
+        pen = pg.mkPen(next(self._icolors)) if pen is None else pg.mkPen(**pen)
 
-        for graph_item in self._plot_dict[layer_data_item]:
-            color = graph_item['data'].opts['pen']
+        spec_plot_container = SpectrumPlotContainer(layer_data_item,
+                                                    plot_pen=pen,
+                                                    style=style)
+        spec_plot_container.set_visibility(self._global_visibility['plot'])
+        spec_plot_container.set_error_visibility(self._global_visibility[
+                                                  'errors'])
 
-            if style is None:
-                if graph_item['data'].opts['stepMode'] is True:
-                    style = 'histogram'
-                elif graph_item['data'].opts['symbol'] is not None:
-                    style = 'scatter'
-                else:
-                    style = 'line'
-
-            spec_data = layer_data_item.item
-            filter_mask = layer_data_item.filter_mask
-            spec_x_array = spec_data.get_dispersion(self._units[0])[filter_mask]
-            spec_y_array = spec_data.get_flux(self._units[1])[filter_mask]
-            spec_y_err = spec_data.get_error(self._units[1])[filter_mask] \
-                if spec_data.error is not None else None
-
-            x_data = spec_x_array.value if style != 'histogram' else np.append(
-                spec_x_array.value, spec_x_array.value[-1])
-
-            # This is a work around. If you don't turn off downsampling,
-            # then the drastic change in units may cause *all* data points
-            # to be deleted, and the autoscale will not be able to function.
-            #  So first, turn off downsampling, plot data, autoscale,
-            # then enable downsampling.
-            self.plot_window.setDownsampling(ds=False, auto=False, mode='peak')
-
-            graph_item['data'].setData(x_data,
-                         spec_y_array.value,
-                         pen=color,
-                         stepMode=style == 'histogram',
-                         symbol='o' if style == 'scatter' else None)
-
-            if spec_y_err is not None:
-                graph_item['errors'].setData(x=x_data, y=spec_y_array.value,
-                             height=(1.0 / spec_y_err.value) ** 0.5,)
-                #              pen=QtGui.QColor(0, 0, 0, 120))
-
-            # errs.curves[0].setData(x_data,
-            #                        spec_y_array.value + np.divide(1.0,
-            #                                                spec_y_err.value)
-            #                        ** 0.5 * 0.5)
-            #
-            # errs.curves[1].setData(x_data,
-            #                 spec_y_array.value - np.divide(1.0,
-            #                                                spec_y_err.value)
-            #                        ** 0.5 * 0.5)
-
-            # self.plot_window.autoRange()
-
-            # self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
-
-            self.set_labels()
-            self.update_visibility()
-
-    def add_item(self, layer_data_item, set_active=True, style='histogram',
-                 color=None):
-        color = next(self._icolors) if not color else color
-
-        if layer_data_item not in self._plot_dict.keys():
-            self._plot_dict[layer_data_item] = []
+        self._plot_containers.append(spec_plot_container)
+        self.plot_window.addItem(spec_plot_container.plot_item)
+        self.plot_window.addItem(spec_plot_container.error_plot_item)
 
         if self._units is None:
             spec_data = layer_data_item.item
@@ -258,99 +202,14 @@ class SpectraGraph(BaseGraph):
                            spec_data.get_flux().unit,
                            None]
 
-        self._graph_data(layer_data_item, set_active, style, color)
-
-    def remove_item(self, data_item):
-        layer_data_items = []
-
-        if isinstance(data_item, LayerDataTreeItem):
-            layer_data_items.append(data_item)
-        elif isinstance(data_item, SpectrumDataTreeItem):
-            for layer in data_item.layers:
-                if layer in self._plot_dict.keys():
-                    layer_data_items.append(layer)
-        else:
-            return
-
-        for layer_data_item in layer_data_items:
-            for graph_item in self._plot_dict[layer_data_item]:
-                self.plot_window.removeItem(graph_item['data'])
-                self.plot_window.removeItem(graph_item['errors'])
-
-            layer_data_item.parent.remove_layer(layer_data_item)
-
-        for layer_data_item in layer_data_items:
-            del self._plot_dict[layer_data_item]
-
-    def _graph_data(self, layer_data_item, set_active=True, style='histogram',
-                    color=None):
-        style = 'line'
-        color = next(self._icolors) if color is None else color
-        pen = QtGui.QPen(QtGui.QColor(color))
-
-        spec_data = layer_data_item.item
-        filter_mask = layer_data_item.filter_mask
-
-        spec_x_array = spec_data.get_dispersion(self._units[0])[filter_mask]
-        spec_y_array = spec_data.get_flux(self._units[1])[filter_mask]
-        spec_y_err = spec_data.get_error(self._units[1])[filter_mask] if \
-            spec_data.error is not None else None
-
-        x_data = spec_x_array.value if style != 'histogram' else np.append(
-            spec_x_array.value, spec_x_array.value[-1])
-
-        # plt_err_top = self.plot_window.plot(
-        #     x_data,
-        #     spec_y_array.value + np.divide(1.0, spec_y_err.value) ** 0.5 * 0.5)
-        #
-        # plt_err_btm = self.plot_window.plot(
-        #     x_data,
-        #     spec_y_array.value - np.divide(1.0, spec_y_err.value) ** 0.5 * 0.5)
-
-        # plt_errs = ExtendedFillBetweenItem(window=self.plot_window,
-        #                                    curve1=plt_err_top,
-        #                                    curve2=plt_err_btm,
-        #                                    brush=pg.mkColor(0, 0, 0, 60),
-        #                                    pen=pg.mkColor(0, 0, 0, 60))
-
-        if spec_y_err is not None:
-            plt_errs = pg.ErrorBarItem(x=x_data, y=spec_y_array.value,
-                                       height=(1.0 / spec_y_err.value) ** 0.5,
-                                       pen=pg.mkPen(0, 0, 0, 120),
-                                       beam=(x_data[5] - x_data[4])*0.5)
-        else:
-            plt_errs = pg.ErrorBarItem()
-            plt_errs.hide()
-
-        self.plot_window.addItem(plt_errs)
-
-        plot = self.plot_window.plot(x_data,
-                                     spec_y_array.value,
-                                     pen=pen,
-                                     stepMode=style == 'histogram',
-                                     symbol='o' if style == 'scatter' else None)
-
         self.set_labels()
 
-        self.plot_window.setDownsampling(ds=True, auto=True, mode='peak')
-        # self.plot_window.setClipToView(True)
-
-        if plot not in self._plot_dict[layer_data_item]:
-            self._plot_dict[layer_data_item].append(
-                dict(data=plot, errors=plt_errs, show_data=True,
-                     show_errors=True))
-
-        self.update_visibility()
-
-    def set_active(self, layer_data_item):
-        self._active_plot = self._plot_dict[layer_data_item][-1]
-        self._active_item = layer_data_item
-
-    def select_active(self, layer_data_item):
-        if layer_data_item not in self._plot_dict.keys():
-            return
-
-        plot = self._plot_dict[layer_data_item][-1]
+    def remove_item(self, layer_data_item):
+        for container in self._plot_containers:
+            if container.layer_data_item == layer_data_item:
+                self.plot_window.removeItem(container.plot_item)
+                self.plot_window.removeItem(container.error_plot_item)
+                self._plot_containers.remove(container)
 
     def set_labels(self):
         self.plot_window.setLabel('bottom',
@@ -359,40 +218,23 @@ class SpectraGraph(BaseGraph):
         self.plot_window.setLabel('left',
                                   text='Flux [{}]'.format(self._units[1]))
 
-    def update_visibility(self):
-        for layer_data_item in self._plot_dict.keys():
-            for graph_item in self._plot_dict[layer_data_item]:
-                self.set_visibility(layer_data_item, graph_item['show_data'])
-                self.set_errors_visibility(layer_data_item,
-                                           graph_item['show_errors'])
+    def set_visibility(self, layer_data_item=None, show=True):
+        if layer_data_item is None:
+            self._global_visibility['plot'] = show
 
-    def set_visibility(self, layer_data_item, show):
-        for graph_item in self._plot_dict[layer_data_item]:
-            graph_item['show_data'] = graph_item['show_errors'] = show
-            graph_item['data'].show() if show else graph_item['data'].hide()
-            graph_item['errors'].show() \
-                if show else graph_item['errors'].hide()
-            self.set_errors_visibility(layer_data_item, graph_item[
-                'show_errors'])
+        for container in self._plot_containers:
+            if container.layer_data_item == layer_data_item or \
+                    layer_data_item is None:
+                container.set_visibility(show)
 
-    def set_all_visibility(self, show):
-        for graph_item in [x for y in self._plot_dict.values() for x in y]:
-            graph_item['show_data'] = graph_item['show_errors'] = show
-            graph_item['data'].show() if show else graph_item['data'].hide()
-            graph_item['errors'].show() \
-                if show else graph_item['errors'].hide()
+    def set_error_visibility(self, layer_data_item=None, show=True):
+        if layer_data_item is None:
+            self._global_visibility['errors'] = show
 
-    def set_errors_visibility(self, layer_data_item, show):
-        for graph_item in self._plot_dict[layer_data_item]:
-            graph_item['show_errors'] = show
-            graph_item['errors'].show() \
-                if show else graph_item['errors'].hide()
-
-    def set_all_errors_visibility(self, show):
-        for graph_item in [x for y in self._plot_dict.values() for x in y]:
-            graph_item['show_errors'] = show
-            graph_item['errors'].show() \
-                if show else graph_item['errors'].hide()
+        for container in self._plot_containers:
+            if container.layer_data_item == layer_data_item or \
+                    layer_data_item is None:
+                container.set_error_visibility(show)
 
 
 class ImageGraph(BaseGraph):
@@ -496,3 +338,119 @@ class DynamicAxisItem(pg.AxisItem):
                                                             spacing)
         else:
             print("[ERROR] Not such mode {}".format(self._mode))
+
+
+class SpectrumPlotContainer(object):
+    def __init__(self, layer_data_item, units=None, style='line', visible=True,
+                 plot_pen=None, err_pen=None):
+        self._style = style
+        self._plot_pen = plot_pen if plot_pen is not None else pg.mkPen()
+        self._error_plot_pen = err_pen if err_pen is not None else pg.mkPen()
+
+        self._visible = True
+        self._error_visible = True
+        self._units = units
+
+        self.layer_data_item = layer_data_item
+
+        self.spec_data = layer_data_item.item
+        self.filter_mask = layer_data_item.filter_mask
+
+        if self._units is None:
+            self._units = [self.spec_data.get_dispersion().unit,
+                           self.spec_data.get_flux().unit,
+                           None]
+
+        self.error_plot_item = pg.ErrorBarItem()
+        self.plot_item = pg.PlotDataItem()
+        self.update()
+
+    @property
+    def _x(self):
+        data = self.spec_data.get_dispersion(self._units[0])[
+            self.filter_mask]
+
+        if self._style == 'histogram':
+            return np.append(data.value, data.value[-1])
+
+        return data.value
+
+    @property
+    def _y(self):
+        return self.spec_data.get_flux(self._units[1])[self.filter_mask].value
+
+    @property
+    def _err(self):
+        if self.spec_data.error is not None:
+            return self.spec_data.get_error(self._units[1])[
+                self.filter_mask].value
+
+        return None
+
+    def update(self):
+        # self.plot_window.autoRange()
+
+        self.plot_item.setData(x=self._x,
+                               y=self._y,
+                               pen=self._plot_pen,
+                               stepMode=self._style == 'histogram',
+                               symbol='o' if self._style == 'scatter' else
+                               None)
+
+        if self._err is not None:
+            self.error_plot_item.setData(
+                x=self._x,
+                y=self._y,
+                height=(1.0 / self._err) ** 0.5,
+                pen=pg.mkPen(0, 0, 0, 60),
+                beam=(self._x[5] - self._x[4])*0.5)
+
+        # plt_err_top = pg.PlotDataItem(x=self._x,
+        #                               y=self._y + np.divide(1.0, self._y) **
+        #                               0.5 * 0.5)
+        #
+        # plt_err_btm = pg.PlotDataItem(x=self._x,
+        #                               y=self._y - np.divide(1.0, self._y) **
+        #                               0.5 * 0.5)
+        #
+        # self.error_plot_item = pg.FillBetweenItem(curve1=plt_err_top,
+        #                                           curve2=plt_err_btm,)
+
+    def set_units(self, x=None, y=None, z=None):
+        self._units = [x, y, z]
+
+    def set_visibility(self, visible):
+        self._visible = visible
+
+        if self._visible:
+            self.plot_item.show()
+
+            if self._error_visible:
+                self.error_plot_item.show()
+        else:
+            self.plot_item.hide()
+            self.error_plot_item.hide()
+
+    def set_error_visibility(self, visible):
+        self._error_visible = visible
+
+        if not self._visible:
+            return
+
+        if self._error_visible:
+            self.error_plot_item.show()
+        else:
+            self.error_plot_item.hide()
+
+    def set_data_item(self, layer_data_item):
+        self.layer_data_item = layer_data_item
+
+    def set_plot_pen(self, *args, **kwargs):
+        self._plot_pen = pg.mkPen(*args, **kwargs)
+        self.update()
+
+    def set_error_pen(self, *args, **kwargs):
+        self._error_plot_pen = pg.mkPen(*args, **kwargs)
+        self.update()
+
+

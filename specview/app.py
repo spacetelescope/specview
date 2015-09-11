@@ -130,15 +130,15 @@ class Application(object):
 
         self.display_graph(spec_data_item)
 
-    def display_graph(self, layer_data_item, sub_window=None, set_active=True,
-                      style='line'):
+    def display_graph(self, layer_data_item, sub_window=None, style='line'):
         if not isinstance(layer_data_item, LayerDataTreeItem):
             layer_data_item = self.model.create_layer_item(layer_data_item)
 
         if sub_window is None:
             sub_window = self.viewer.mdiarea.activeSubWindow()
 
-        sub_window.graph.add_item(layer_data_item, set_active, style='line')
+        sub_window.graph.add_item(layer_data_item, style)
+
 
 def run():
     app = QtGui.QApplication(sys.argv)

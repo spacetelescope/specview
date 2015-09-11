@@ -126,10 +126,8 @@ class DataTreeModel(QtGui.QStandardItemModel):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
             item.setData(value)
-            item.setText(str(value))
 
             if isinstance(item, ParameterDataTreeItem):
-
                 validated_value = float_check(value)
                 if validated_value:
                     item.setText(str(value))

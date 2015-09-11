@@ -272,23 +272,9 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             para_name.appendRow([attr_name, attr_value])
 
     def update_parameter(self, name, value):
-        old_value = getattr(self._model, name).value
-
-        # setting the parameter value itself is easy
         validated_value = float_check(value)
         if validated_value:
             setattr(self._model, name, validated_value)
-
-        # not so with its tree representation
-
-
-
-            # print("@@@@@@  file items.py; line 281 - ")
-            #
-            # self.setData(str(value))
-            # self.setText(str(value))
-
-        print("@@@@@@  file items.py; line 296 - "), name, value
 
         # self._parent.sig_update()
 

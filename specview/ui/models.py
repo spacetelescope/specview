@@ -6,7 +6,8 @@ from ..external.qt import QtGui, QtCore
 from ..analysis import model_fitting
 from ..ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
                         ModelDataTreeItem, LayerDataTreeItem,
-                        ParameterDataTreeItem, float_check)
+                        ParameterDataTreeItem, AttributeValueDataTreeItem,
+                        float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -34,6 +35,13 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
     @staticmethod
     def _item_changed(item):
+        if isinstance(item, AttributeValueDataTreeItem):
+
+            #TODO  In here, we should put the call to whoever
+            # handles changes in parameter attribute values
+            print("@@@@@@  file models.py; line 39 - "), item
+            return
+
         if isinstance(item, ParameterDataTreeItem):
             item.parent.update_parameter(item._name,
                                          item.data())

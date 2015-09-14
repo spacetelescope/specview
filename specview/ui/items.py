@@ -271,12 +271,20 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             attr_value = AttributeValueDataTreeItem(para_name, 'max', parameter.max)
             para_name.appendRow([attr_name, attr_value])
 
-    def update_parameter(self, name, value):
+    def update_parameter(self, name, value, parent_parameter_name=None):
         validated_value = float_check(value)
         if validated_value:
-            setattr(self._model, name, validated_value)
+            # this has to handle two cases: the parameter value is being set,
+            # or one of the parameter's attributes' values is being set. In
+            # that second case, the parameter name must be passed as the
+            # keyword argument.
+            if parent_parameter_name:
+                parameter = getattr(self._model, parent_parameter_name)
+                setattr(parameter, name, validated_value)
+            else:
+                setattr(self._model, name, validated_value)
 
-        # self._parent.sig_update()
+            # self._parent.sig_update()
 
     def refresh_parameters(self):
         print("Model refreshed")

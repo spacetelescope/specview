@@ -36,15 +36,11 @@ class DataTreeModel(QtGui.QStandardItemModel):
     @staticmethod
     def _item_changed(item):
         if isinstance(item, AttributeValueDataTreeItem):
+            item.parent.parent.update_parameter(item._name, item.data(), parent_parameter_name=item.parent._name)
 
-            #TODO  In here, we should put the call to whoever
-            # handles changes in parameter attribute values
-            print("@@@@@@  file models.py; line 39 - "), item
-            return
-
-        if isinstance(item, ParameterDataTreeItem):
-            item.parent.update_parameter(item._name,
-                                         item.data())
+        elif isinstance(item, ParameterDataTreeItem):
+            if hasattr(item.parent, 'update_parameter'):
+                item.parent.update_parameter(item._name, item.data())
 
     def remove_data_item(self, index, parent_index):
         item = index.model().itemFromIndex(index)

@@ -330,8 +330,7 @@ class ParameterValueDataTreeItem(ParameterDataTreeItem):
         a parameter attribute name/value pair.
     '''
     def __init__(self, parent, name, value):
-        super(ParameterValueDataTreeItem, self).__init__(parent, name, value)
-        self.setEditable(True)
+        super(ParameterValueDataTreeItem, self).__init__(parent, name, value, True)
 
     def setDataValue(self, name, value):
         self.setData(value)
@@ -370,6 +369,8 @@ class BooleanAttributeValueDataTreeItem(ParameterValueDataTreeItem):
     def __init__(self, parent, name, value):
         super(BooleanAttributeValueDataTreeItem, self).__init__(parent, name, value)
         self.setCheckable(True)
+
+        self.setDataValue(name, value)
 
     def setDataValue(self, name, value):
         # this method is necessary here to ensure that the proper role is

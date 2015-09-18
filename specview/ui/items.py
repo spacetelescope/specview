@@ -260,7 +260,7 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             parameter = getattr(self._model, key)
             attr_fixed = self._model.fixed[key]
             attr_name = ParameterDataTreeItem(para_name, 'fixed', attr_fixed)
-            attr_value = BooleanAttributeValueDataTreeItem(para_name, 'fixed', attr_fixed)
+            attr_value = BooleanAttributeValueDataTreeItem(para_name, 'FIXED', attr_fixed)
             para_name.appendRow([attr_name, attr_value])
 
             attr_name = ParameterDataTreeItem(para_name, 'min', parameter.min)
@@ -300,6 +300,7 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         name field in a tree row that displays either a parameter
         name/value pair, or a parameter attribute name/value pair.
      '''
+
     def __init__(self, parent, name, value, is_editable=False):
         super(ParameterDataTreeItem, self).__init__()
         self.setEditable(is_editable)
@@ -312,8 +313,11 @@ class ParameterDataTreeItem(QtGui.QStandardItem):
         if not is_editable:
             self.setData(str(name), role=QtCore.Qt.DisplayRole)
         else:
-            self.setData(str(value))
-            self.setText(str(value))
+            self.setDataField(value)
+
+    def setDataField(self, value):
+        self.setData(str(value))
+        self.setText(str(value))
 
     @property
     def parent(self):
@@ -368,16 +372,23 @@ class BooleanAttributeValueDataTreeItem(ParameterValueDataTreeItem):
     # is a child of a model.
     def __init__(self, parent, name, value):
         super(BooleanAttributeValueDataTreeItem, self).__init__(parent, name, value)
-        self.setCheckable(True)
 
-        self.setDataValue(name, value)
+        # ensure flags are properly set for editing the checkbox
 
-    def setDataValue(self, name, value):
-        # this method is necessary here to ensure that the proper role is
-        # assigned to the tree node. Otherwise we may see a 'True' or 'False'
-        # string displayed beside the checkbox (the default way Qt displays
-        # checkable nodes with other role types).
-        self.setData(value, role=QtCore.Qt.CheckStateRole)
+        #TODO something is still wrong. The checkbox does not respond to mouse clicks.
+
+        self.setFlags(self.flags() & QtCore.Qt.ItemIsUserCheckable &
+                      QtCore.Qt.ItemIsEditable &
+                      QtCore.Qt.ItemIsEnabled)
+
+    def setDataField(self, value):
+        # ensure that the proper role is assigned to the tree node. Otherwise
+        # we may see a 'True' or 'False' string displayed beside the checkbox
+        # (the default way Qt displays checkable nodes with other role types).
+        if value:
+            self.setData(QtCore.Qt.Checked, role=QtCore.Qt.CheckStateRole)
+        else:
+            self.setData(QtCore.Qt.Unchecked, role=QtCore.Qt.CheckStateRole)
 
     def update_value(self, name, value):
         # Both the passed name and value are ignored. We use the internally

@@ -6,7 +6,8 @@ from ..external.qt import QtGui, QtCore
 from ..analysis import model_fitting
 from ..ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
                         ModelDataTreeItem, LayerDataTreeItem,
-                        ParameterDataTreeItem, float_check)
+                        ParameterDataTreeItem, AttributeValueDataTreeItem,
+                        float_check)
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "qt", "img")
 
@@ -34,9 +35,12 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
     @staticmethod
     def _item_changed(item):
-        if isinstance(item, ParameterDataTreeItem):
-            item.parent.update_parameter(item._name,
-                                         item.data())
+        if isinstance(item, AttributeValueDataTreeItem):
+            item.parent.parent.update_parameter(item._name, item.data(), parent_parameter_name=item.parent._name)
+
+        elif isinstance(item, ParameterDataTreeItem):
+            if hasattr(item.parent, 'update_parameter'):
+                item.parent.update_parameter(item._name, item.data())
 
     def remove_data_item(self, index, parent_index):
         item = index.model().itemFromIndex(index)
@@ -126,10 +130,8 @@ class DataTreeModel(QtGui.QStandardItemModel):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
             item.setData(value)
-            item.setText(str(value))
 
             if isinstance(item, ParameterDataTreeItem):
-
                 validated_value = float_check(value)
                 if validated_value:
                     item.setText(str(value))

@@ -1,7 +1,8 @@
-from specview.external.qt import QtGui, QtCore
+# from PySide import QtGui, QtCore
+from ...external.qt import QtGui, QtCore
 from os import sys, path
-from specview.ui.qt.dialogs import PlotUnitsDialog, TopAxisDialog
-import specview.ui.qt.resources
+from .dialogs import PlotUnitsDialog, TopAxisDialog
+from ..qt import resources
 
 PATH = path.join(path.dirname(sys.modules[__name__].__file__), "img")
 
@@ -41,8 +42,6 @@ class BaseToolBar(QtGui.QToolBar):
 
     @QtCore.Slot(bool, bool)
     def toggle_actions(self, data_selected, layer_selected):
-        print("AND HERE")
-        print(data_selected, layer_selected)
         self.atn_new_plot.setDisabled(not (data_selected or not
         layer_selected))
         self.atn_add_plot.setDisabled(not layer_selected)
@@ -183,3 +182,52 @@ class SpectraPlotToolBar(QtGui.QToolBar):
 class ImageToolBar(BaseToolBar):
     def __init__(self):
         super(ImageToolBar, self).__init__()
+
+
+class MOSToolBar(QtGui.QToolBar):
+    def __init__(self, parent=None):
+        super(MOSToolBar, self).__init__(parent)
+        self.setFloatable(False)
+        self.setMovable(False)
+
+        self.atn_nav_right = QtGui.QAction("&Next Item", self)
+        self.atn_nav_right.setIcon(QtGui.QIcon(":/icons/arrow487.png"))
+        self.atn_nav_right.setToolTip('Load the next item in stack.')
+
+        self.atn_nav_left = QtGui.QAction("&Previous Item", self)
+        self.atn_nav_left.setIcon(QtGui.QIcon(":/icons/arrowhead7.png"))
+        self.atn_nav_left.setToolTip('Load the previous item in stack.')
+
+        self.wgt_stack_items = QtGui.QComboBox()
+
+        spacer = QtGui.QWidget()
+        spacer.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                             QtGui.QSizePolicy.Expanding)
+
+
+
+        self.atn_open_sv = QtGui.QAction("&Next Item", self)
+        self.atn_open_sv.setIcon(QtGui.QIcon(":/icons/document79.png"))
+        self.atn_open_sv.setToolTip('Open in SpecView')
+
+        self.atn_open_im = QtGui.QAction("&Next Item", self)
+        self.atn_open_im.setIcon(QtGui.QIcon(":/icons/document79.png"))
+        self.atn_open_im.setToolTip('Open in Image Viewer')
+
+        self.addAction(self.atn_open_sv)
+        self.addAction(self.atn_open_im)
+        self.addWidget(spacer)
+        self.addSeparator()
+        self.addAction(self.atn_nav_left)
+        self.addWidget(self.wgt_stack_items)
+        self.addAction(self.atn_nav_right)
+
+        self.atn_nav_left.setEnabled(False)
+        self.atn_nav_right.setEnabled(False)
+
+    def enable_all(self, enable):
+        self.atn_nav_left.setEnabled(enable)
+        self.atn_nav_right.setEnabled(enable)
+
+
+

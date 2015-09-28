@@ -6,7 +6,8 @@ import numpy as np
 
 import astropy.constants as const
 import astropy.units as u
-
+# from PySide import QtGui
+#
 from ...external.qt import QtGui, QtCore
 from .containers import SpectrumPlotContainer
 
@@ -235,25 +236,38 @@ class SpectraGraph(BaseGraph):
                 container.set_error_visibility(show)
 
 
-class ImageGraph(BaseGraph):
+class Graph2D(BaseGraph):
     def __init__(self):
-        super(ImageGraph, self).__init__()
+        super(Graph2D, self).__init__()
         # Add image window object
         data = np.random.normal(size=(100, 100))
 
+        pi = self.getPlotItem()
+
         self.image_item = pg.ImageItem()
+        self.image_item.setAutoDownsample(True)
         self.set_image(data)
 
         # Create graph object
-        self.view_box = self.w.addViewBox(lockAspect=True, row=1, col=0)
-
-        # Add to viewbox
-        g = pg.GridItem()
-        self.addItem(g)
-        self.addItem(self.image_item)
+        self.view_box = pi.getViewBox()
+        self.view_box.setAspectLocked()
+        self.view_box.addItem(self.image_item)
 
     def set_image(self, data):
         self.image_item.setImage(data)
+
+
+class Graph1D(BaseGraph):
+    def __init__(self):
+        super(Graph1D, self).__init__()
+
+        self.plot_item = self.getPlotItem()
+        self.plot_item.setDownsampling(True, True, 'peak')
+        self.plot = self.plot_item.plot()
+
+    def set_plot(self, y=None):
+        self.plot.setData(y=y)
+
 
 
 class DynamicAxisItem(pg.AxisItem):

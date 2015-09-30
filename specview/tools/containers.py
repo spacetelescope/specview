@@ -30,8 +30,7 @@ class SpectrumPlotContainer(object):
 
     @property
     def _x(self):
-        data = self.spec_data.get_dispersion(self._units[0])[
-            self.filter_mask]
+        data = self.spec_data.get_dispersion(self._units[0])[self.filter_mask]
 
         if self._style == 'histogram':
             return np.append(data.value, data.value[-1])

@@ -109,6 +109,12 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         self.atn_model_editor.setIcon(QtGui.QIcon(":/icons/map29.png"))
         self.atn_model_editor.setToolTip('Opens the model editor')
 
+        self.addAction(self.atn_insert_roi)
+        self.addSeparator()
+        self.addAction(self.atn_measure)
+        self.addAction(self.atn_equiv_width)
+        self.addAction(self.atn_model_editor)
+
         # ------
 
         self.unit_dialog = PlotUnitsDialog()
@@ -163,11 +169,6 @@ class SpectraPlotToolBar(QtGui.QToolBar):
         layer_opt_button.setPopupMode(QtGui.QToolButton.InstantPopup)
         layer_opt_button.setMenu(layer_opt_menu)
 
-        self.addAction(self.atn_insert_roi)
-        self.addSeparator()
-        self.addAction(self.atn_measure)
-        self.addAction(self.atn_equiv_width)
-        self.addAction(self.atn_model_editor)
         self.addSeparator()
         self.addWidget(plot_opt_button)
         self.addWidget(layer_opt_button)
@@ -203,8 +204,6 @@ class MOSToolBar(QtGui.QToolBar):
         spacer = QtGui.QWidget()
         spacer.setSizePolicy(QtGui.QSizePolicy.Expanding,
                              QtGui.QSizePolicy.Expanding)
-
-
 
         self.atn_open_sv = QtGui.QAction("&Next Item", self)
         self.atn_open_sv.setIcon(QtGui.QIcon(":/icons/document79.png"))

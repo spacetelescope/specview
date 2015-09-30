@@ -1,15 +1,16 @@
 from __future__ import print_function
 
 from itertools import cycle
+
 import pyqtgraph as pg
 import numpy as np
-
 import astropy.constants as const
 import astropy.units as u
+
 # from PySide import QtGui
 #
-from ...external.qt import QtGui, QtCore
-from .containers import SpectrumPlotContainer
+from ..external.qt import QtCore, QtGui
+from ..tools.containers import SpectrumPlotContainer
 
 # ignore divisions by zero
 ignored_states = np.seterr(divide='ignore')
@@ -210,6 +211,12 @@ class SpectraGraph(BaseGraph):
                 self.plot_window.removeItem(container.error_plot_item)
                 self._plot_containers.remove(container)
 
+    def remove_all(self):
+        for container in self._plot_containers:
+            self.plot_window.removeItem(container.plot_item)
+            self.plot_window.removeItem(container.error_plot_item)
+            self._plot_containers.remove(container)
+
     def set_labels(self):
         self.plot_window.setLabel('bottom',
                                   text='Wavelength [{}]'.format(
@@ -236,24 +243,30 @@ class SpectraGraph(BaseGraph):
                 container.set_error_visibility(show)
 
 
-class Graph2D(BaseGraph):
+class ImageGraph(pg.GraphicsLayoutWidget):
     def __init__(self):
-        super(Graph2D, self).__init__()
-        # Add image window object
-        data = np.random.normal(size=(100, 100))
+        super(ImageGraph, self).__init__()
+        self._pi = pg.PlotItem()
+        self.vb = self._pi.getViewBox()
+        self.vb.setAspectLocked()
+        self.addItem(self.vb)
 
-        pi = self.getPlotItem()
+        # Colorbar
+        grad = pg.GradientEditorItem(orientation='right')
+        self.addItem(grad, 0, 1)
 
+        # Image graph
         self.image_item = pg.ImageItem()
         self.image_item.setAutoDownsample(True)
-        self.set_image(data)
+        self.vb.addItem(self.image_item)
 
-        # Create graph object
-        self.view_box = pi.getViewBox()
-        self.view_box.setAspectLocked()
-        self.view_box.addItem(self.image_item)
+        def update():
+            lut = grad.getLookupTable(512)
+            self.image_item.setLookupTable(lut)
 
-    def set_image(self, data):
+        grad.sigGradientChanged.connect(update)
+
+    def set_data(self, data):
         self.image_item.setImage(data)
 
 

@@ -2,10 +2,9 @@ from astropy.units import Unit
 
 from ...external.qt import QtGui, QtCore
 # from PySide import QtGui, QtCore
-from .graphs import Graph2D, SpectraGraph, Graph1D
+from specview.tools.graphs import ImageGraph, SpectraGraph
 from .toolbars import (ImageToolBar, SpectraToolBar, SpectraPlotToolBar,
                        MOSToolBar)
-import pyqtgraph as pg
 
 
 class BaseMdiSubWindow(QtGui.QMdiSubWindow):
@@ -26,7 +25,7 @@ class ImageMdiSubWindow(BaseMdiSubWindow):
     def __init__(self, parent=None):
         super(ImageMdiSubWindow, self).__init__(parent)
 
-        self.graph = Graph2D()
+        self.graph = ImageGraph()
         self.toolbar = ImageToolBar()
 
         self.vb_layout.addWidget(self.toolbar)
@@ -88,11 +87,12 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
     def __init__(self, parent=None):
         super(MultiMdiSubWindow, self).__init__(parent)
         import numpy as np
-        self.graph1d = Graph1D()
-        self.graph1d.set_plot(y=np.random.normal(size=(100)))
-        self.graph2d = Graph2D()
-        self.graph2d.set_image(np.random.normal(size=(100, 10)))
-        self.graph_postage = Graph2D()
+        self.spec_view = SpectraMdiSubWindow()
+        self.spec_view.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        # self.graph1d.set_plot(y=np.random.normal(size=(100)))
+        self.graph2d = ImageGraph()
+        self.graph2d.set_data(np.random.normal(size=(100, 10)))
+        self.graph_postage = ImageGraph()
         self.toolbar = MOSToolBar()
         # self.test_iv = pg.ImageView(view=pg.PlotItem())
         # self.test_iv.setImage(np.random.sample(size=(100, 100)))
@@ -104,12 +104,12 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
 
         # Set margins
         self.info_area.setContentsMargins(10, 2, 2, 2)
-        self.graph1d.setContentsMargins(2, 2, 2, 2)
+        # self.graph1d.setContentsMargins(2, 2, 2, 2)
         self.graph2d.setContentsMargins(2, 2, 2, 2)
         self.graph_postage.setContentsMargins(2, 2, 2, 2)
 
         # Setup linked views
-        self.graph2d.setXLink(self.graph1d)
+        self.spec_view.graph.setXLink(self.graph2d.vb)
         # self.graph2d.setYLink(self.graph_postage)
 
         self.vb_layout.addWidget(self.toolbar)
@@ -126,7 +126,7 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
         left_split.addWidget(self.graph_postage)
         left_split.addWidget(self.info_area)
         right_split.addWidget(self.graph2d)
-        right_split.addWidget(self.graph1d)
+        right_split.addWidget(self.spec_view)
 
         hb_layout.setStretchFactor(0, 1)
         hb_layout.setStretchFactor(1, 3)
@@ -151,13 +151,15 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
         # self.grid.setRowStretch(1, 3)
 
     def set_image_data(self, data):
-        self.graph_postage.set_image(data)
+        self.graph_postage.set_data(data)
 
     def set_graph2d_data(self, data):
-        self.graph2d.set_image(data)
+        self.graph2d.set_data(data)
 
     def set_graph1d_data(self, data):
-        self.graph1d.set_plot(y=data)
+        self.spec_view.graph.remove_all()
+        self.spec_view.graph.add_item(data, pen={'color': 'k'})
+        # self.graph1d.set_plot(y=data)
 
     def set_items(self, items):
         # if len(items) > 1:

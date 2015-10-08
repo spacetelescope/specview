@@ -58,7 +58,7 @@ class SpectrumPlotContainer(object):
                                symbol='o' if self._style == 'scatter' else
                                None)
 
-        if 'IVAR' in self.spec_data.meta.get('hdu_ids'):
+        if 'IVAR' in (self.spec_data.meta.get('hdu_ids') or []):
             errs = (1 / self._err) ** 0.5
         else:
             errs = self._err ** 0.5

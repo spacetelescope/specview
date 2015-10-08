@@ -8,6 +8,7 @@ class SpectrumPlotContainer(object):
                  plot_pen=None, err_pen=None):
         self._style = style
         self._plot_pen = plot_pen if plot_pen is not None else pg.mkPen()
+        print(self._plot_pen)
         self._error_plot_pen = err_pen if err_pen is not None else pg.mkPen()
 
         self._visible = visible
@@ -57,11 +58,16 @@ class SpectrumPlotContainer(object):
                                symbol='o' if self._style == 'scatter' else
                                None)
 
+        if 'IVAR' in self.spec_data.meta.get('hdu_ids'):
+            errs = (1 / self._err) ** 0.5
+        else:
+            errs = self._err ** 0.5
+
         if self._err is not None:
             self.error_plot_item.setData(
                 x=self._x,
                 y=self._y,
-                height=self._err ** 0.5,  # TODO: This is an assumption
+                height=errs,  # TODO: This is an assumption
                 pen=pg.mkPen(0, 0, 0, 60),
                 beam=(self._x[5] - self._x[4])*0.5)
 

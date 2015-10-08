@@ -61,7 +61,7 @@ class SpectrumPlotContainer(object):
             self.error_plot_item.setData(
                 x=self._x,
                 y=self._y,
-                height=(1.0 / self._err) ** 0.5,  # TODO: This is an assumption
+                height=self._err ** 0.5,  # TODO: This is an assumption
                 pen=pg.mkPen(0, 0, 0, 60),
                 beam=(self._x[5] - self._x[4])*0.5)
 

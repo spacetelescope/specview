@@ -7,7 +7,7 @@ import numpy as np
 import astropy.constants as const
 import astropy.units as u
 
-# from PySide import QtGui
+# from PySide import QtGui, QtCore
 #
 from ..external.qt import QtCore, QtGui
 from ..tools.containers import SpectrumPlotContainer
@@ -129,7 +129,8 @@ class BaseGraph(pg.PlotWidget):
 
 
 class SpectraGraph(BaseGraph):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(SpectraGraph, self).__init__(*args, **kwargs)
         self._top_axis = DynamicAxisItem(self, orientation='top')
         super(SpectraGraph, self).__init__(axisItems={'top': self._top_axis})
         self.plot_window = self.getPlotItem()
@@ -244,43 +245,158 @@ class SpectraGraph(BaseGraph):
 
 
 class ImageGraph(pg.GraphicsLayoutWidget):
-    def __init__(self):
+    def __init__(self, show_iso=True):
         super(ImageGraph, self).__init__()
-        self._pi = pg.PlotItem()
-        self.vb = self._pi.getViewBox()
+        self._axes = {'left': ImageAxisItem(orientation='left'),
+                      'bottom': ImageAxisItem(orientation='bottom')}
+        self.p1 = self.addPlot()#axisItems={'left': self._axes['left'],
+                                #          'bottom': self._axes['bottom']})
+        self.p1.showGrid(True, True, 0.5)
+        self.vb = self.p1.getViewBox()
         self.vb.setAspectLocked()
-        self.addItem(self.vb)
-
-        # Colorbar
-        grad = pg.GradientEditorItem(orientation='right')
-        self.addItem(grad, 0, 1)
-
-        # Image graph
         self.image_item = pg.ImageItem()
-        self.image_item.setAutoDownsample(True)
-        self.vb.addItem(self.image_item)
+        self.p1.addItem(self.image_item)
+        self._r1 = QtGui.QGraphicsRectItem(0, 0, 0, 0)
+        self.vb.addItem(self._r1)
 
-        def update():
-            lut = grad.getLookupTable(512)
-            self.image_item.setLookupTable(lut)
+        self.p1.disableAutoRange(self.vb.YAxis)
+        self.p1.disableAutoRange(self.vb.XAxis)
 
-        grad.sigGradientChanged.connect(update)
+        # Contrast/color control
+        self.hist = pg.HistogramLUTItem()
+        self.hist.setImageItem(self.image_item)
 
-    def set_data(self, data):
-        self.image_item.setImage(data)
+        self.iso = pg.IsocurveItem(level=0.8, pen='g')
+        self.iso_line = pg.InfiniteLine(angle=0, movable=True, pen='g')
+
+        # Isocurve drawing
+        if show_iso:
+            self.iso.setParentItem(self.image_item)
+            self.iso.setZValue(5)
+
+            # Draggable line for settings isocurve level
+            self.hist.vb.addItem(self.iso_line)
+            self.hist.vb.setMouseEnabled(y=False)
+            self.iso_line.setValue(0.8)
+            self.iso_line.setZValue(1000)
+
+        def update_isocurve():
+            self.iso.setLevel(self.iso_line.value())
+
+        self.iso_line.sigDragged.connect(update_isocurve)
+        self.hist.hide()
+
+    def set_data(self, data, slit_shape=None, pix_scale=0.1):
+        self.image_item.setImage(data.quantity.value)
+        self.hist.setLevels(np.nanmin(data.quantity.value),
+                            np.nanmax(data.quantity.value))
+        self.iso.setData(pg.gaussianFilter(data.quantity.value, (2, 2)))
+        self.iso_line.setValue(np.median(data.quantity.value))
+
+        self.p1.setLabel('bottom', text="X [{}]".format(
+            u.Unit(data.wcs.wcs.cunit[0])))
+        self.p1.setLabel('left', text="Y [{}]".format(
+            u.Unit(data.wcs.wcs.cunit[1])))
+
+        if slit_shape is not None:
+            shape = data.shape
+            px_slit_shape = slit_shape[0]/pix_scale, slit_shape[1]/pix_scale
+
+            self._r1.setRect(shape[0] * 0.5 - px_slit_shape[0] * 0.5,
+                             shape[1] * 0.5 - px_slit_shape[1] * 0.5,
+                             px_slit_shape[0],
+                             px_slit_shape[1])
+            self._r1.setPen(pg.mkPen(None))
+            self._r1.setBrush(pg.mkBrush(255, 0, 0, 50))
+
+        # self._axes['left'].update_data(pix_scale)
+        # self._axes['bottom'].update_data(pix_scale)
+        # _disp = data.get_dispersion().value
+        # _cdisp = data.get_cross_dispersion().value
+        # self.image_item.setRect(QtCore.QRect(_disp[0], _cdisp[0]), )
+        # print(_disp[0], _cdisp[0])
+        # self.image_item.translate(_disp[0], _cdisp[0])
+        # self.image_item.scale(pix_scale, pix_scale)
+        # self.p1.autoRange()
+
+    def toggle_color_map(self, show):
+        if show:
+            self.addItem(self.hist)
+            self.hist.show()
+        else:
+            self.hist.hide()
+            self.removeItem(self.hist)
 
 
-class Graph1D(BaseGraph):
+class Graph1D(pg.PlotWidget):
     def __init__(self):
         super(Graph1D, self).__init__()
-
         self.plot_item = self.getPlotItem()
+        self.plot_item.showGrid(True, True, 0.5)
         self.plot_item.setDownsampling(True, True, 'peak')
+        self.vb = self.plot_item.getViewBox()
         self.plot = self.plot_item.plot()
+        self.error_plot_item = None
+        self.mask_plot_item = None
 
-    def set_plot(self, y=None):
-        self.plot.setData(y=y)
+    def set_data(self, data):
+        x = data.get_dispersion()
+        y = data.get_flux()
+        err = data.get_error()
+        mask = data.mask
 
+        if self.plot is None:
+            self.plot = pg.PlotDataItem(x.value, y.value,
+                                        pen=pg.mkPen(
+                'k'))
+            self.plot_item.addItem(self.plot)
+        else:
+            self.plot.setData(x.value, y.value,
+                              pen=pg.mkPen('k'))
+
+        if self.error_plot_item is None:
+            self.error_plot_item = pg.ErrorBarItem(
+                x=x.value,
+                y=y.value,
+                height=err.value ** 0.5,  # TODO: This is an assumption
+                pen=pg.mkPen(0, 0, 0, 60),
+                beam=(x.value[5] - x.value[4])*0.5)
+            self.plot_item.addItem(self.error_plot_item)
+        else:
+            self.error_plot_item.setData(
+                x=x.value,
+                y=y.value,
+                height=err.value ** 0.5,  # TODO: This is an
+                # assumption
+                pen=pg.mkPen(0, 0, 0, 60),
+                beam=(x.value[5] - x.value[4])*0.5)
+            self.error_plot_item.hide()
+
+        if self.mask_plot_item is None:
+            self.mask_plot_item = pg.ScatterPlotItem(
+                x=x.value[mask.astype(bool)],
+                y=y.value[mask.astype(bool)])
+            self.plot_item.addItem(self.mask_plot_item)
+            self.mask_plot_item.hide()
+        else:
+            self.mask_plot_item.setData(
+                x=x.value[mask.astype(bool)],
+                y=y.value[mask.astype(bool)])
+
+        self.setLabel('bottom', text="Dispersion [{0.unit}]".format(x))
+        self.setLabel('left', text="Flux [{0.unit}]".format(y))
+
+    def set_error_visibility(self, show=True):
+        if show:
+            self.error_plot_item.show()
+        else:
+            self.error_plot_item.hide()
+
+    def set_mask_visibility(self, show=True):
+        if show:
+            self.mask_plot_item.show()
+        else:
+            self.mask_plot_item.hide()
 
 
 class DynamicAxisItem(pg.AxisItem):
@@ -363,3 +479,21 @@ class DynamicAxisItem(pg.AxisItem):
                                                             spacing)
         else:
             print("[ERROR] Not such mode {}".format(self._mode))
+
+
+class ImageAxisItem(pg.AxisItem):
+    def __init__(self, *args, **kwargs):
+        super(ImageAxisItem, self).__init__(*args, **kwargs)
+        self._pix_scale = None
+
+    def update_data(self, pixel_scale):
+        self._pix_scale = pixel_scale
+
+    def tickStrings(self, values, scale, spacing):
+        if self._pix_scale is not None:
+
+            return [value * self._pix_scale for value in values]
+        else:
+            return super(ImageAxisItem, self).tickStrings(values, scale,
+                                                         spacing)
+

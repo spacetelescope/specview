@@ -185,11 +185,67 @@ class ImageToolBar(BaseToolBar):
         super(ImageToolBar, self).__init__()
 
 
+class Graph1DToolBar(QtGui.QToolBar):
+    def __init__(self):
+        super(Graph1DToolBar, self).__init__()
+        plot_opt_menu = QtGui.QMenu()
+
+        plot_opt_button = QtGui.QToolButton()
+        plot_opt_button.setText("&Plot Options")
+        plot_opt_button.setIcon(QtGui.QIcon(":/icons/open134.png"))
+        plot_opt_button.setPopupMode(QtGui.QToolButton.InstantPopup)
+        plot_opt_button.setMenu(plot_opt_menu)
+
+        self.atn_toggle_errs = QtGui.QAction("Show Errors", self,
+                                             checkable=True)
+        self.atn_toggle_errs.setChecked(True)
+        self.atn_toggle_errs.setToolTip("Toggle display of data uncertainty")
+
+        plot_opt_menu.addAction(self.atn_toggle_errs)
+
+        self.addWidget(plot_opt_button)
+
 class MOSToolBar(QtGui.QToolBar):
     def __init__(self, parent=None):
         super(MOSToolBar, self).__init__(parent)
         self.setFloatable(False)
         self.setMovable(False)
+
+        plot_opt_menu = QtGui.QMenu()
+
+        plot_opt_button = QtGui.QToolButton()
+        plot_opt_button.setText("&Plot Options")
+        plot_opt_button.setIcon(QtGui.QIcon(":/icons/open134.png"))
+        plot_opt_button.setPopupMode(QtGui.QToolButton.InstantPopup)
+        plot_opt_button.setMenu(plot_opt_menu)
+
+        self.atn_toggle_lock_x = QtGui.QAction("Toggle Lock X Axis", self,
+                                               checkable=True)
+        self.atn_toggle_lock_x.setToolTip("Toggle locking of X axes")
+        self.atn_toggle_lock_x.setChecked(True)
+
+        self.atn_toggle_lock_y = QtGui.QAction("Toggle Lock Y Axis", self,
+                                               checkable=True)
+        self.atn_toggle_lock_y.setToolTip("Toggle locking of Y axes")
+        # self.atn_toggle_lock_y.setChecked(True)
+
+        self.atn_toggle_errs = QtGui.QAction("Show Errors", self,
+                                             checkable=True)
+        self.atn_toggle_errs.setToolTip("Toggle display of data uncertainty")
+
+        self.atn_toggle_color_map = QtGui.QAction("Show Color Map", self,
+                                                  checkable=True)
+        self.atn_toggle_color_map.setToolTip("Toggle display of color maps")
+
+        self.atn_toggle_mask = QtGui.QAction("Show Quality Flags", self,
+                                             checkable=True)
+
+        plot_opt_menu.addAction(self.atn_toggle_lock_x)
+        plot_opt_menu.addAction(self.atn_toggle_lock_y)
+        plot_opt_menu.addSeparator()
+        plot_opt_menu.addAction(self.atn_toggle_errs)
+        plot_opt_menu.addAction(self.atn_toggle_color_map)
+        plot_opt_menu.addAction(self.atn_toggle_mask)
 
         self.atn_nav_right = QtGui.QAction("&Next Item", self)
         self.atn_nav_right.setIcon(QtGui.QIcon(":/icons/arrow487.png"))
@@ -205,16 +261,18 @@ class MOSToolBar(QtGui.QToolBar):
         spacer.setSizePolicy(QtGui.QSizePolicy.Expanding,
                              QtGui.QSizePolicy.Expanding)
 
-        self.atn_open_sv = QtGui.QAction("&Next Item", self)
+        self.atn_open_sv = QtGui.QAction("&SpecView", self)
         self.atn_open_sv.setIcon(QtGui.QIcon(":/icons/document79.png"))
         self.atn_open_sv.setToolTip('Open in SpecView')
 
-        self.atn_open_im = QtGui.QAction("&Next Item", self)
-        self.atn_open_im.setIcon(QtGui.QIcon(":/icons/document79.png"))
+        self.atn_open_im = QtGui.QAction("&ImageViewer", self)
+        self.atn_open_im.setIcon(QtGui.QIcon(":/icons/address19.png"))
         self.atn_open_im.setToolTip('Open in Image Viewer')
 
         self.addAction(self.atn_open_sv)
         self.addAction(self.atn_open_im)
+        self.addSeparator()
+        self.addWidget(plot_opt_button)
         self.addWidget(spacer)
         self.addSeparator()
         self.addAction(self.atn_nav_left)

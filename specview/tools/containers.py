@@ -58,12 +58,12 @@ class SpectrumPlotContainer(object):
                                symbol='o' if self._style == 'scatter' else
                                None)
 
-        if 'IVAR' in (self.spec_data.meta.get('hdu_ids') or []):
-            errs = (1 / self._err) ** 0.5
-        else:
-            errs = self._err ** 0.5
-
         if self._err is not None:
+            if 'IVAR' in (self.spec_data.meta.get('hdu_ids') or []):
+                errs = (1 / self._err) ** 0.5
+            else:
+                errs = self._err ** 0.5
+
             self.error_plot_item.setData(
                 x=self._x,
                 y=self._y,

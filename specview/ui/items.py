@@ -179,7 +179,7 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
         #TODO here is the place to add support for a compound model expression handler.
 
-        compound_model = np.sum(self._models)
+        compound_model = np.sum([x._model for x in self._model_items])
         return compound_model
 
     @property

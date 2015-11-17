@@ -2,9 +2,10 @@ from astropy.units import Unit
 
 from ...external.qt import QtGui, QtCore
 # from PySide import QtGui, QtCore
-from specview.tools.graphs import ImageGraph, SpectraGraph
+from specview.tools.graphs import ImageGraph, SpectraGraph, Graph1D
 from .toolbars import (ImageToolBar, SpectraToolBar, SpectraPlotToolBar,
-                       MOSToolBar)
+                       MOSToolBar, Graph1DToolBar)
+import astropy.units as u
 
 
 class BaseMdiSubWindow(QtGui.QMdiSubWindow):
@@ -86,31 +87,26 @@ class SpectraMdiSubWindow(BaseMdiSubWindow):
 class MultiMdiSubWindow(BaseMdiSubWindow):
     def __init__(self, parent=None):
         super(MultiMdiSubWindow, self).__init__(parent)
-        import numpy as np
-        self.spec_view = SpectraMdiSubWindow()
-        self.spec_view.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        # self.graph1d.set_plot(y=np.random.normal(size=(100)))
-        self.graph2d = ImageGraph()
-        self.graph2d.set_data(np.random.normal(size=(100, 10)))
-        self.graph_postage = ImageGraph()
-        self.toolbar = MOSToolBar()
-        # self.test_iv = pg.ImageView(view=pg.PlotItem())
-        # self.test_iv.setImage(np.random.sample(size=(100, 100)))
+        self.graph1d = Graph1D()  # SpectraGraph()
+        self.graph2d = ImageGraph(show_iso=False)
+        self.graph_cutout = ImageGraph()
 
-        self.info_area = QtGui.QLabel()
+        self.toolbar = MOSToolBar()
+
+        # self.info_area = QtGui.QLabel()
+        # self.info_area.setFrameStyle(QtGui.QFrame.Panel)
+        # self.info_area.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        # self.info_area.setScaledContents(True)
+        # self.info_area.setWordWrap(True)
+
+        self.info_area = QtGui.QTextEdit()
         self.info_area.setFrameStyle(QtGui.QFrame.Panel)
         self.info_area.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-        self.info_area.setScaledContents(True)
+        self.info_area.setReadOnly(True)
+        self.info_area.setWordWrapMode(QtGui.QTextOption.WrapAnywhere)
 
         # Set margins
         self.info_area.setContentsMargins(10, 2, 2, 2)
-        # self.graph1d.setContentsMargins(2, 2, 2, 2)
-        self.graph2d.setContentsMargins(2, 2, 2, 2)
-        self.graph_postage.setContentsMargins(2, 2, 2, 2)
-
-        # Setup linked views
-        self.spec_view.graph.setXLink(self.graph2d.vb)
-        # self.graph2d.setYLink(self.graph_postage)
 
         self.vb_layout.addWidget(self.toolbar)
 
@@ -123,10 +119,10 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
         hb_layout.addWidget(left_split)
         hb_layout.addWidget(right_split)
 
-        left_split.addWidget(self.graph_postage)
+        left_split.addWidget(self.graph_cutout)
         left_split.addWidget(self.info_area)
         right_split.addWidget(self.graph2d)
-        right_split.addWidget(self.spec_view)
+        right_split.addWidget(self.graph1d)
 
         hb_layout.setStretchFactor(0, 1)
         hb_layout.setStretchFactor(1, 3)
@@ -150,16 +146,19 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
         # self.grid.setColumnStretch(1, 3)
         # self.grid.setRowStretch(1, 3)
 
-    def set_image_data(self, data):
-        self.graph_postage.set_data(data)
+    def set_data(self, mos_object):
+        self.graph2d.set_data(mos_object.spec2d.flip(0, 1))
+        self.graph_cutout.set_data(mos_object.image, mos_object.slit_shape)
+        self.graph1d.set_data(mos_object.spec1d)
 
-    def set_graph2d_data(self, data):
-        self.graph2d.set_data(data)
+        if u.Unit(mos_object.spec1d.wcs.wcs.cunit[0]) == u.Unit(
+                mos_object.spec2d.wcs.wcs.cunit[0]):
+            # self.graph1d.setXLink(self.graph2d.vb)
+            self.graph1d.vb.setXLink(self.graph2d.vb)
 
-    def set_graph1d_data(self, data):
-        self.spec_view.graph.remove_all()
-        self.spec_view.graph.add_item(data, pen={'color': 'k'})
-        # self.graph1d.set_plot(y=data)
+        # if u.Unit(mos_object.spec2d.wcs.wcs.cunit[1]) == u.Unit(
+        #         mos_object.image.wcs.wcs.cunit[1]):
+        #     self.graph_cutout.vb.setYLink(self.graph2d.vb)
 
     def set_items(self, items):
         # if len(items) > 1:
@@ -168,19 +167,33 @@ class MultiMdiSubWindow(BaseMdiSubWindow):
 
         first_item = items.items()[0]
 
-        self.set_image_data(first_item[1]['img'])
+        self.set_cutout_data(first_item[1]['img'])
         self.set_graph2d_data(first_item[1]['2d'])
         self.set_graph1d_data(first_item[1]['1d'])
 
     def set_label(self, table):
         t = ""
-        print("setting label")
         for k, v in table.items():
-            print(k, v)
             t += "<tr><th align='left'>{}</th><td>{}</td></tr>".format(str(k),
                                                                        str(v))
-        self.info_area.setText("""
-<h3>Information</h3><br />
-<table>{}
-</table>
-""".format(t))
+        self.info_area.setText(
+            "<h3>Information</h3><table>{}</table>".format(t))
+
+    def toggle_color_maps(self, show):
+        self.graph2d.toggle_color_map(show)
+        self.graph_cutout.toggle_color_map(show)
+
+    def toggle_lock_x(self, lock):
+        if lock:
+            self.graph1d.vb.setXLink(self.graph2d.vb)
+        else:
+            print("Unlinking x axis")
+            self.graph1d.vb.setXLink(None)
+
+    def toggle_lock_y(self, lock):
+        if lock:
+            self.graph_cutout.vb.setYLink(self.graph2d.vb)
+        else:
+            print("Unlinking y axis")
+            self.graph_cutout.vb.setYLink(None)
+

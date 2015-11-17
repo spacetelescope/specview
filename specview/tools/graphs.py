@@ -91,7 +91,10 @@ class BaseGraph(pg.PlotWidget):
                                (y_data.value >= y1) & (y_data.value <= y2))
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
-        mask = reduce(np.logical_or, mask_holder)
+        try:
+            mask = reduce(np.logical_or, mask_holder)
+        except TypeError:
+            mask = []
         return mask
 
     def get_roi_data(self, layer_data_item):

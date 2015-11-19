@@ -18,6 +18,7 @@ ignored_states = np.seterr(divide='ignore')
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
+# pg.setConfigOption('useOpenGL', True)
 
 
 class BaseGraph(pg.PlotWidget):
@@ -89,12 +90,12 @@ class BaseGraph(pg.PlotWidget):
 
             mask_holder.append((x_data.value >= x1) & (x_data.value <= x2) &
                                (y_data.value >= y1) & (y_data.value <= y2))
+        else:
+            mask_holder.append(np.ones(shape=x_data.value.shape, dtype=bool))
 
         # mask = np.logical_not(reduce(np.logical_or, mask_holder))
-        try:
-            mask = reduce(np.logical_or, mask_holder)
-        except TypeError:
-            mask = []
+        mask = reduce(np.logical_or, mask_holder)
+
         return mask
 
     def get_roi_data(self, layer_data_item):

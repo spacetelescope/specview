@@ -8,7 +8,6 @@ class SpectrumPlotContainer(object):
                  plot_pen=None, err_pen=None):
         self._style = style
         self._plot_pen = plot_pen if plot_pen is not None else pg.mkPen()
-        print(self._plot_pen)
         self._error_plot_pen = err_pen if err_pen is not None else pg.mkPen()
 
         self._visible = visible

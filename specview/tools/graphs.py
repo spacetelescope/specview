@@ -199,7 +199,8 @@ class SpectraGraph(BaseGraph):
 
         self._plot_containers.append(spec_plot_container)
         self.plot_window.addItem(spec_plot_container.plot_item)
-        self.plot_window.addItem(spec_plot_container.error_plot_item)
+        if not (spec_plot_container._err is None):
+            self.plot_window.addItem(spec_plot_container.error_plot_item)
 
         if self._units is None:
             spec_data = layer_data_item.item

@@ -109,6 +109,11 @@ class DataTreeModel(QtGui.QStandardItemModel):
         return layer_data_item
 
     def create_fit_model(self, parent, model_name):
+
+
+        #TODO this will accept an optional text field and update the model expression in it.
+
+
         if not isinstance(parent, LayerDataTreeItem):
             return
 

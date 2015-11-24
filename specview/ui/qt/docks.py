@@ -209,6 +209,11 @@ class ModelDockWidget(BaseDockWidget):
         # hb_layout.addWidget(self.wgt_model_selector)
         # hb_layout.addWidget(self.btn_add_model)
 
+        self.expression_field = QtGui.QLineEdit('Expression goes here blah b;ah b;ah', self)
+        self.expression_field.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.expression_field.setToolTip('Model expression.')
+        self.expression_field.setFocusPolicy(QtCore.Qt.NoFocus)  # remove to enable editing
+
         # Create combo box for selecting fitter
         self.wgt_fit_selector = QtGui.QComboBox()
         self.wgt_fit_selector.addItems(model_fitting.all_fitters.keys())
@@ -219,6 +224,7 @@ class ModelDockWidget(BaseDockWidget):
         # self.add_layout(hb_layout)
         self.add_widget(self.wgt_model_selector)
         self.add_widget(self.wgt_model_tree)
+        self.add_widget(self.expression_field)
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)
         self.setMinimumSize(self.sizeHint())

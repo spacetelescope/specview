@@ -108,7 +108,7 @@ class DataTreeModel(QtGui.QStandardItemModel):
 
         return layer_data_item
 
-    def create_fit_model(self, parent, model_name):
+    def create_fit_model(self, parent, editor, model_name):
 
 
         #TODO this will accept an optional text field and update the model expression in it.
@@ -130,6 +130,21 @@ class DataTreeModel(QtGui.QStandardItemModel):
         parent.appendRow(model_data_item)
         self.sig_added_item.emit(model_data_item.index())
         self.sig_added_fit_model.emit(model_data_item)
+
+        compound_model = self._buildSummedCompoundModel(parent._model_items)
+        if editor and hasattr(compound_model, '_format_expression'):
+            editor.expression_field.setText(compound_model._format_expression())
+
+    # Temporarily put this in here. It probably belongs somewhere else,
+    # but for now we need it to just populate the expression text field.
+    def _buildSummedCompoundModel(self, components):
+        if len(components) < 1:
+            return None
+        result = components[0]._model
+        if len(components) > 1:
+            for component in components[1:]:
+                result += component._model
+        return result
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:

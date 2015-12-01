@@ -11,3 +11,11 @@ class SpectrumDataContextMenu(QtGui.QMenu):
         self.addAction(self.atn_export)
         self.addSeparator()
         self.addAction(self.atn_remove)
+
+class SpectrumModelDataContextMenu(QtGui.QMenu):
+    def __init__(self, parent=None):
+        super(SpectrumModelDataContextMenu, self).__init__(parent)
+
+        self.atn_remove = QtGui.QAction("&Remove", self)
+
+        self.addAction(self.atn_remove)

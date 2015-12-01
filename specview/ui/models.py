@@ -1,6 +1,8 @@
 from os import path, sys
 import numpy as np
 
+from astropy.modeling import Fittable1DModel
+
 from ..external.qt import QtGui, QtCore
 
 from ..analysis import model_fitting
@@ -60,8 +62,9 @@ class DataTreeModel(QtGui.QStandardItemModel):
             for layer in data.layers:
                 print("It's a model, removing")
                 layer.remove_model(item)
-
-        self.sig_removed_item.emit(item)
+                if isinstance(item.model, Fittable1DModel):
+                    # for now, emit signal just when an astropy model is being removed.
+                    self.sig_removed_item.emit(item)
 
     def create_spec_data_item(self, nddata, name="Spectrum Data"):
         spec_data_item = SpectrumDataTreeItem(nddata, name)
@@ -126,16 +129,19 @@ class DataTreeModel(QtGui.QStandardItemModel):
         self.sig_added_item.emit(model_data_item.index())
         self.sig_added_fit_model.emit(model_data_item)
 
-        components = []
-        for c in parent._model_items:
-            components.append(c._model)
-        compound_model = self.buildSummedCompoundModel(components)
-        if editor and hasattr(compound_model, '_format_expression'):
-            editor.expression_field.setText(compound_model._format_expression())
+        self.updateModelExpression(editor, parent)
 
     # Temporarily put this in here. It probably belongs somewhere else,
     # but for now we need it to just populate the expression text field.
-    def buildSummedCompoundModel(self, components):
+    def updateModelExpression(self, editor, parent):
+        components = []
+        for c in parent._model_items:
+            components.append(c._model)
+        compound_model = self._buildSummedCompoundModel(components)
+        if editor and hasattr(compound_model, '_format_expression'):
+            editor.expression_field.setText(compound_model._format_expression())
+
+    def _buildSummedCompoundModel(self, components):
         if (type(components) != type([])) or len(components) < 1:
             return None
         result = components[0]

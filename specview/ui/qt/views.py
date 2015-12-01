@@ -1,7 +1,7 @@
 from ...external.qt import QtGui, QtCore
 
 from ..models import LayerDataTreeItem, SpectrumDataTreeItem
-from .menus import SpectrumDataContextMenu
+from .menus import SpectrumDataContextMenu, SpectrumModelDataContextMenu
 
 
 class BaseDataTree(QtGui.QTreeView):
@@ -189,3 +189,19 @@ class ModelTree(BaseDataTree):
             selected_list.append(index.model().itemFromIndex(index).item)
 
         return selected_list
+
+    # Creates a context menu specific for the spectral model tree.
+    def contextMenuEvent(self, menu_event):
+        QtGui.QTreeView.contextMenuEvent(self, menu_event)
+
+        index = self.indexAt(menu_event.pos())
+        model = index.model()
+        item = model.itemFromIndex(index)
+        parent_index = model.indexFromItem(item.parent)
+
+        if isinstance(item, QtGui.QStandardItem):
+            context_menu = SpectrumModelDataContextMenu(self)
+            context_menu.atn_remove.triggered.connect(
+                lambda: model.remove_data_item(index, parent_index))
+            context_menu.exec_(menu_event.globalPos())
+

@@ -214,6 +214,13 @@ class ModelDockWidget(BaseDockWidget):
         self.expression_field.setToolTip('Model expression.')
         self.expression_field.setFocusPolicy(QtCore.Qt.NoFocus)  # remove to enable editing
 
+        # Create Read and Save buttons in a horizontal layout
+        io_layout = QtGui.QHBoxLayout()
+        self.btn_read = QtGui.QPushButton("&Read")
+        self.btn_save = QtGui.QPushButton("&Save")
+        io_layout.addWidget(self.btn_read)
+        io_layout.addWidget(self.btn_save)
+
         # Create combo box for selecting fitter
         self.wgt_fit_selector = QtGui.QComboBox()
         self.wgt_fit_selector.addItems(model_fitting.all_fitters.keys())
@@ -225,6 +232,7 @@ class ModelDockWidget(BaseDockWidget):
         self.add_widget(self.wgt_model_selector)
         self.add_widget(self.wgt_model_tree)
         self.add_widget(self.expression_field)
+        self.add_layout(io_layout)
         self.add_widget(self.wgt_fit_selector)
         self.add_widget(self.btn_perform_fit)
         self.setMinimumSize(self.sizeHint())

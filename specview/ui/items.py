@@ -2,8 +2,10 @@ import inspect
 import re
 import math
 
-from ..external.qt import QtGui, QtCore
 import numpy as np
+
+from ..external.qt import QtGui, QtCore
+from ..tools import model_registry
 
 
 # RE pattern to decode scientific and floating point notation.
@@ -178,8 +180,10 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         """This returns a class object."""
 
         #TODO here is the place to add support for a compound model expression handler.
+        # For now, just use the sum.
 
-        compound_model = np.sum([x._model for x in self._model_items])
+        compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
+
         return compound_model
 
     @property

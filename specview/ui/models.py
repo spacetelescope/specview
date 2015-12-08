@@ -6,6 +6,7 @@ from astropy.modeling import Fittable1DModel
 from ..external.qt import QtGui, QtCore
 
 from ..analysis import model_fitting
+from ..tools import model_registry
 from ..ui.items import (CubeDataTreeItem, SpectrumDataTreeItem,
                         ModelDataTreeItem, LayerDataTreeItem,
                         ParameterDataTreeItem, AttributeValueDataTreeItem,
@@ -137,18 +138,9 @@ class DataTreeModel(QtGui.QStandardItemModel):
         components = []
         for c in parent._model_items:
             components.append(c._model)
-        compound_model = self._buildSummedCompoundModel(components)
+        compound_model = model_registry.buildSummedCompoundModel(components)
         if editor and hasattr(compound_model, '_format_expression'):
             editor.expression_field.setText(compound_model._format_expression())
-
-    def _buildSummedCompoundModel(self, components):
-        if (type(components) != type([])) or len(components) < 1:
-            return None
-        result = components[0]
-        if len(components) > 1:
-            for component in components[1:]:
-                result += component
-        return result
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:

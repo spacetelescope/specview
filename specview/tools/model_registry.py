@@ -42,3 +42,16 @@ def get_component_path(function):
     index = module_path.rfind('.')
     module_path = module_path[:index]
     return module_path
+
+
+# This function is in here for convenience. It might as
+# well be moved to a better place when the need arises.
+def buildSummedCompoundModel(components):
+    if (type(components) != type([])) or len(components) < 1:
+        return None
+    result = components[0]
+    if len(components) > 1:
+        for component in components[1:]:
+            result += component
+    return result
+

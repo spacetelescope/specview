@@ -19,7 +19,7 @@ import model_registry
 
 # Builds a compound model specified in a .py file
 def buildModelFromFile(fname):
-    directory = os.path.dirname(str(fname))
+    directory = os.path.dirname(fname)
     sys.path.append(directory)
 
     f = os.path.basename(str(fname)).split('.')[0] # remove .py from end of file name so it can be imported
@@ -41,7 +41,7 @@ def buildModelFromFile(fname):
                     return compound_model, directory
         return None,None
     except Exception as e:
-        print("ERROR: " + e)
+        print("ERROR: " + str(e))
         return None,None
 
 

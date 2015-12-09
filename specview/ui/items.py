@@ -213,12 +213,6 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         # pass
         self.signal_updated.emit()
 
-    def remove_self(self):
-        self.parent.remove_layer(self)
-
-        if self._node_parent is not None:
-            self._node_parent.remove_layer(self)
-
     def remove_model(self, model):
         print("Trying to remove {} for {}".format(model, self))
         if model in self._model_items:

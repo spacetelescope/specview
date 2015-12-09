@@ -89,8 +89,9 @@ def saveModelToFile(parent, model, model_directory):
     prolog += "model1 = \\\n"
 
     # Write to file.
-    # Note that under glue, the QFileDialog returns a tuple. This is
-    # confusing, because under plain PyQt it returns just a string. Why???
+    # note that under glue, QFileDialog.getSaveFileName returns a tuple.
+    # Under plain PyQt it returns a simple QString. It is like it's
+    # overriding getSaveFileNameAndFilter, but why??
     fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
 
     if len(fname) > 0:

@@ -141,6 +141,8 @@ class DataTreeModel(QtGui.QStandardItemModel):
         compound_model = model_registry.buildSummedCompoundModel(components)
         if editor and hasattr(compound_model, '_format_expression'):
             editor.expression_field.setText(compound_model._format_expression())
+        else:
+            editor.expression_field.setText("")
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:

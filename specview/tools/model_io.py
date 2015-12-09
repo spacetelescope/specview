@@ -51,7 +51,8 @@ def saveModelToFile(parent, model, model_directory):
     # The following assumes that the formatted string expression
     # in an astropy compound model has operands of the form [0], [1],
     # etc, that is, a sequential number enclosed in square brackets.
-    expression = model.compound_model._format_expression()
+    # expression = model.compound_model._format_expression()
+    expression = model._format_expression()
     tokens = re.split(r'[0-9]+', expression)
 
     # this loop builds the main expression, and captures
@@ -59,7 +60,8 @@ def saveModelToFile(parent, model, model_directory):
     # the import statements go).
     expression_string = ""
     import_module_names = {}
-    for token, component in zip(tokens, model.items):
+    # for token, component in zip(tokens, model.items):
+    for token, component in zip(tokens, model._submodels):
         # clean up astropy-inserted characters
         token = token.replace('[','')
         token = token.replace(']','')
@@ -87,7 +89,9 @@ def saveModelToFile(parent, model, model_directory):
     prolog += "model1 = \\\n"
 
     # Write to file.
-    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)
+    # Note that under glue, the QFileDialog returns a tuple. This is
+    # confusing, because under plain PyQt it returns just a string. Why???
+    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
 
     if len(fname) > 0:
         f = os.open(fname, os.O_RDWR|os.O_CREAT)

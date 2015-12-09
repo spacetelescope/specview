@@ -59,6 +59,21 @@ def _gaussian_parameter_estimates(x, y, dy=0):
     return amplitude, mean, stddev
 
 
+def updateLayerItem(new_model, layer_data_item):
+    for model_idx in range(layer_data_item.rowCount()):
+        model_data_item = layer_data_item.child(model_idx)
+
+        for param_idx in range(model_data_item.rowCount()):
+            parameter_data_item = model_data_item.child(param_idx, 1)
+
+            if layer_data_item.rowCount() > 1:
+                value = new_model[model_idx].parameters[param_idx]
+            else:
+                value = new_model.parameters[param_idx]
+            parameter_data_item.setData(value)
+            parameter_data_item.setText(str(value))
+
+
 def fit_model(layer_data_item, fitter_name, roi_mask):
     if len(layer_data_item._model_items) == 0:
         return
@@ -89,17 +104,6 @@ def fit_model(layer_data_item, fitter_name, roi_mask):
                                  uncertainty=None)
 
     # Update using model approach
-    for model_idx in range(layer_data_item.rowCount()):
-        model_data_item = layer_data_item.child(model_idx)
-
-        for param_idx in range(model_data_item.rowCount()):
-            parameter_data_item = model_data_item.child(param_idx, 1)
-
-            if layer_data_item.rowCount() > 1:
-                value = fit_model[model_idx].parameters[param_idx]
-            else:
-                value = fit_model.parameters[param_idx]
-            parameter_data_item.setData(value)
-            parameter_data_item.setText(str(value))
+    updateLayerItem(fit_model, layer_data_item)
 
     return fit_spec_data

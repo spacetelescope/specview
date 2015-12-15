@@ -44,9 +44,13 @@ def get_component_path(function):
     return module_path
 
 
-# This function is in here for convenience. It might as
-# well be moved to a better place when the need arises.
+# Helper functions that handle compound models.
+# They are defined in here for convenience. They
+# might as well be moved to a better place if the
+# need ever arises.
+
 def buildSummedCompoundModel(components):
+    # build a compound model from a list of components
     if (type(components) != type([])) or len(components) < 1:
         return None
     result = components[0]
@@ -54,4 +58,10 @@ def buildSummedCompoundModel(components):
         for component in components[1:]:
             result += component
     return result
+
+
+def getComponents(compound_model):
+    # build a list of components from a compound model
+    return compound_model._submodels
+
 

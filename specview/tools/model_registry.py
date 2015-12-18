@@ -62,6 +62,9 @@ def buildSummedCompoundModel(components):
 
 def getComponents(compound_model):
     # build a list of components from a compound model
-    return compound_model._submodels
+    if hasattr(compound_model, '_submodels'):
+        return compound_model._submodels
+    else:
+        return [compound_model]
 
 

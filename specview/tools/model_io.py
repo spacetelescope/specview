@@ -45,27 +45,45 @@ def buildModelFromFile(fname):
         return None,None
 
 
-# Builds a model expression inside a string, and dumps string to file.
-def saveModelToFile(parent, model, model_directory):
+# Writes a compound model expression to file.  The 'header' string
+# contains the import statements that refer to each component type
+# that appear in the expression.
+def _writeToFile(expression_string, model_directory, parent, header):
 
-    # here we handle the case of a sole component. It's not strictly
-    # a compound model, but saving and retrieving isolated components
-    # sounds as a good idea. Unfortunately, isolated components cannot
-    # be added to an already existing compound model if that model was
-    # already fitted.
-    if not hasattr(model, '_format_expression'):
-        name = model_registry.get_component_name(model)
-        path = model_registry.get_component_path(model)
-        expression_string = "from " + path + " import " + name + "\n\n"
-        expression_string += "model1 = \\\n" +  _assemble_component_spec(model)
+    # note that under glue, QFileDialog.getSaveFileName returns a tuple.
+    # Under plain PyQt it returns a simple QString. It is like it's
+    # overriding getSaveFileNameAndFilter, but why??
+    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
 
-        print("@@@@@@  file model_io.py; line 58 - "), expression_string
-        return
+    if len(fname) > 0:
+        f = os.open(fname, os.O_RDWR | os.O_CREAT)
+        os.write(f, header)
+        os.write(f, expression_string)
+        os.close(f)
+
+
+# here we handle the case of a spectral model with a single component.
+# It's not strictly a compound model, but saving and retrieving isolated
+# components as if they were compound models sounds as a good idea.
+# Unfortunately, isolated components cannot be added to an already existing
+# compound model if that model was fitted already.
+def _writeSingleComponentModel(model, model_directory, parent):
+    name = model_registry.get_component_name(model)
+    path = model_registry.get_component_path(model)
+
+    header = "from " + path + " import " + name + "\n\n"
+    expression_string = "model1 = \\\n" + _assemble_component_spec(model)
+
+    _writeToFile(expression_string, model_directory, parent, header)
+
+
+# Builds a multi-component model expression inside a string,
+# and dumps string to file.
+def _writeCompoundModel(model, model_directory, parent):
 
     # The following assumes that the formatted string expression
     # in an astropy compound model has operands of the form [0], [1],
     # etc, that is, a sequential number enclosed in square brackets.
-    # expression = model.compound_model._format_expression()
     expression = model._format_expression()
     tokens = re.split(r'[0-9]+', expression)
 
@@ -74,11 +92,10 @@ def saveModelToFile(parent, model, model_directory):
     # the import statements go).
     expression_string = ""
     import_module_names = {}
-    # for token, component in zip(tokens, model.items):
     for token, component in zip(tokens, model._submodels):
         # clean up astropy-inserted characters
-        token = token.replace('[','')
-        token = token.replace(']','')
+        token = token.replace('[', '')
+        token = token.replace(']', '')
 
         expression_string += str(token) + _assemble_component_spec(component)
 
@@ -91,28 +108,28 @@ def saveModelToFile(parent, model, model_directory):
     # this loop now uses the captured information from above to
     # build a set of import statements that go at the beginning
     # of the file.
-    prolog = ""
+    header = ""
     for name, path in import_module_names.iteritems():
-        prolog += "from " + path + " import " + name + "\n"
-    prolog += "\n"
+        header += "from " + path + " import " + name + "\n"
+    header += "\n"
+
     # we need to add a reference to the model so it can actually
     # be used after imported. We just use 'model1' for the variable
     # name. This also implicitly assumes that only one model will be
     # stored in the file. It remains to be seen how useful this
     # assumption will be in practice.
-    prolog += "model1 = \\\n"
+    header += "model1 = \\\n"
 
-    # Write to file.
-    # note that under glue, QFileDialog.getSaveFileName returns a tuple.
-    # Under plain PyQt it returns a simple QString. It is like it's
-    # overriding getSaveFileNameAndFilter, but why??
-    fname = QFileDialog.getSaveFileName(parent, 'Write to file', model_directory)[0]
+    _writeToFile(expression_string, model_directory, parent, header)
 
-    if len(fname) > 0:
-        f = os.open(fname, os.O_RDWR|os.O_CREAT)
-        os.write(f, prolog)
-        os.write(f, expression_string)
-        os.close(f)
+
+# Saves spectral model to file. This is the main entry
+# point for the 'save to file' functionality.
+def saveModelToFile(parent, model, model_directory):
+    if not hasattr(model, '_format_expression'):
+        _writeSingleComponentModel(model, model_directory, parent)
+    else:
+        _writeCompoundModel(model, model_directory, parent)
 
 
 # Disassembles a tie callable. Ties read from a model

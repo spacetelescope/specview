@@ -2,5 +2,6 @@
 
 from specview import app as app
 
-app.run()
+# app.run()
+app.main()
 

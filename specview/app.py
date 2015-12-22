@@ -1,4 +1,6 @@
 import sys
+import argparse
+
 from cube_tools.core import SpectrumData
 
 from .external.qt import QtGui
@@ -7,8 +9,6 @@ from .external.qt import QtCore
 from .analysis import model_fitting
 from .ui.items import LayerDataTreeItem
 from .ui.viewer import MainWindow
-from .ui.qt.dialogs import FileEditDialog
-from .tools.preprocess import read_data
 from .ui.models import DataTreeModel
 from .ui.qt.proxies import DataProxyModel, LayerProxyModel
 
@@ -147,6 +147,19 @@ def run():
                 app, QtCore.SLOT("quit()"))
     app.exec_()
 
+def main():
+    """Main entry from command line instances."""
+
+    args = _define_arguments(sys.argv[1:])
+
+    print '@@@@@@     line: 157  - ',args
+
+def _define_arguments(argv=None):
+    """Define the command line arguments"""
+    parser = argparse.ArgumentParser('Interactive spectral exploration.')
+    parser.add_argument('datafile', nargs='?', help='Initial file to display.')
+
+    return parser.parse_args(argv)
 
 if __name__ == '__main__':
     run()

@@ -14,7 +14,7 @@ from .ui.qt.proxies import DataProxyModel, LayerProxyModel
 
 
 class Application(object):
-    def __init__(self):
+    def __init__(self, argv):
         self.viewer = MainWindow()
         self.viewer.show()
         self.model = DataTreeModel()
@@ -34,6 +34,9 @@ class Application(object):
         self.setup()
         self._connect_model_editor_dock()
 
+        if len(argv) > 1:
+            self._load_file(argv[1])
+
     def setup(self):
         # When the open action is triggered, pop up file dialogue
         self.viewer.tool_bar.atn_open_data.triggered.connect(
@@ -47,27 +50,28 @@ class Application(object):
         # visibility of that plot item
         self.model.sig_set_visibility.connect(self.viewer.set_layer_visibity)
 
+    def _load_file(self, fname):
+        # dialog = FileEditDialog(fname)
+        # dialog.exec_()
+        #
+        # if not dialog.result():
+        # return
+        #
+        # spec_data = read_data(fname, ext=dialog.ext, flux=dialog.flux,
+        #                       dispersion=dialog.dispersion,
+        #                       flux_unit=dialog.flux_unit,
+        #                       dispersion_unit=dialog.disp_unit)
+        spec_data = SpectrumData.read(fname)
+        name = fname.split('/')[-1].split('.')[-2]
+        self.add_data(spec_data, name)
+
     def load_file(self):
         fname = self.viewer.file_dialog.getOpenFileName(self.viewer, 'Open file')
 
         if not fname:
             return
 
-        # dialog = FileEditDialog(fname)
-        # dialog.exec_()
-        #
-        # if not dialog.result():
-        #     return
-        #
-        # spec_data = read_data(fname, ext=dialog.ext, flux=dialog.flux,
-        #                       dispersion=dialog.dispersion,
-        #                       flux_unit=dialog.flux_unit,
-        #                       dispersion_unit=dialog.disp_unit)
-
-        spec_data = SpectrumData.read(fname)
-
-        name = fname.split('/')[-1].split('.')[-2]
-        self.add_data(spec_data, name)
+        self._load_file(fname)
 
     def add_data(self, nddata, name="Data", parent=None):
         return self.model.create_spec_data_item(nddata, name)
@@ -142,24 +146,10 @@ class Application(object):
 
 def run():
     app = QtGui.QApplication(sys.argv)
-    win = Application()
+    win = Application(sys.argv)
     app.connect(app, QtCore.SIGNAL("lastWindowClosed()"),
                 app, QtCore.SLOT("quit()"))
     app.exec_()
-
-def main():
-    """Main entry from command line instances."""
-
-    args = _define_arguments(sys.argv[1:])
-
-    print '@@@@@@     line: 157  - ',args
-
-def _define_arguments(argv=None):
-    """Define the command line arguments"""
-    parser = argparse.ArgumentParser('Interactive spectral exploration.')
-    parser.add_argument('datafile', nargs='?', help='Initial file to display.')
-
-    return parser.parse_args(argv)
 
 if __name__ == '__main__':
     run()

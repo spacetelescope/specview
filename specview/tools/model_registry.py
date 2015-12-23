@@ -65,7 +65,7 @@ def getComponents(compound_model):
 
     #TODO
     #TODO   the simple construct below has a nasty behavior caused by a
-    #TODO   bug in astropy. When we submit a compound model to a fitter,
+    #TODO   feature in astropy. When we submit a compound model to a fitter,
     #TODO   such as in:
     #TODO
     #TODO   fitted_model = fitting.LevMarLSQFitter()(initial_model, x, y)
@@ -73,10 +73,10 @@ def getComponents(compound_model):
     #TODO   the fit results are used to populate the parameter values of each
     #TODO   component in the fitted_model compound model. These new parameeter
     #TODO   values are used everywhere, *except* to update the _submodels list
-    #TODO   in the compound model. The resulting fitted_model is thus internally
-    #TODO   inconsistent. Thus, if we use _submodels as a source for the new
-    #TODO   values, we will never get those, but will keep getting the original
-    #TODO   values used when the compound model was built.
+    #TODO   in the compound model. Thus, if we use _submodels as a source for
+    #TODO   the new values, we will never get those, but will keep getting the
+    #TODO   original values used when the compound model was built. We need a
+    #TODO   way more complicated code here to build the fitted list.
 
     if hasattr(compound_model, '_submodels'):
         return compound_model._submodels

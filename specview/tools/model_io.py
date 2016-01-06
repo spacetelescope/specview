@@ -26,7 +26,8 @@ def buildModelFromFile(fname):
     import_statement = "import " + f + " as module"
 
     try:
-        exec import_statement in locals(), locals()
+        # exec import_statement in locals(), locals()
+        exec import_statement
 
         # this will pick up the first model defined in the file. A different
         # mechanism is needed to handle files with multiple model definitions.
@@ -38,6 +39,24 @@ def buildModelFromFile(fname):
                 # passes is assumed to be a valid compound model definition.
                 if (str(type(module.__dict__[variable]))).find('astropy.modeling.core._ModelMeta') < 0:
                     compound_model = module.__dict__[variable]
+
+                    #TODO
+                    # The following demonstrates a bug: the first time this function is executed,
+                    # it correctly initializes the compound model. As long as that model is not
+                    # used in any fitting operation, this function can be called repeatedly on
+                    # files containing model specs, and will deliver compound models that are
+                    # properly initialized. But as soon as one such model is used by a fitter,
+                    # the next time this function is executed on the same input file that was
+                    # used to build the fitting initial model, the compound model created by
+                    # the above statement will have it's _submodels attribute filled up with
+                    # parameters with the *fitted* values, instead of the values in the file.
+                    # WHY???? This is hard to understand since the fitted values are never
+                    # used to rewrite the _submodels attribute anywhere, neither in astropy
+                    # code, nor in specview's code. I suspect it can be either related to some
+                    # subclassing or metaclassing quirk in astropy, or some namespace conflict
+                    # of sorts. Although I wasn't able to reproduce the bug in the command line.
+                    print("@@@@@@  file model_io.py; line 44 - "), compound_model._submodels
+
                     return compound_model, directory
         return None,None
     except Exception as e:

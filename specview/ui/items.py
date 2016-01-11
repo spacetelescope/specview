@@ -182,6 +182,8 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         #TODO here is the place to add support for a compound model expression handler.
         # For now, just use the sum.
 
+        #TODO  when fitting, self.model contains a CompoundModel or a single component. Just return it.
+
         compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
 
         return compound_model

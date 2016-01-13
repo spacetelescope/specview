@@ -137,6 +137,7 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         self._collapse = collapse
         self._name = name
         self._model_items = []
+        self._compound_model = None
 
         if isinstance(self.parent, CubeDataTreeItem):
             self._filter_mask_cube = filter_mask
@@ -184,9 +185,14 @@ class LayerDataTreeItem(QtGui.QStandardItem):
 
         #TODO  when fitting, self.model contains a CompoundModel or a single component. Just return it.
 
-        compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
+        # compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
+        #
+        # return compound_model
 
-        return compound_model
+        if not self._compound_model:
+            self._compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
+
+        return self._compound_model
 
     @property
     def item(self):
@@ -211,6 +217,11 @@ class LayerDataTreeItem(QtGui.QStandardItem):
     def add_model_item(self, model_data_item):
         self._model_items.append(model_data_item)
 
+        # self._compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
+
+    def setCompoundModel(self, compound_model):
+        self._compound_model = compound_model
+
     def sig_update(self):
         # pass
         self.signal_updated.emit()
@@ -220,6 +231,8 @@ class LayerDataTreeItem(QtGui.QStandardItem):
         if model in self._model_items:
             print("Model is removed")
             self._model_items.remove(model)
+
+            # self._compound_model = model_registry.buildSummedCompoundModel([x._model for x in self._model_items])
 
 
 class ModelDataTreeItem(QtGui.QStandardItem):

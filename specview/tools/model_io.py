@@ -41,22 +41,27 @@ def buildModelFromFile(fname):
                     compound_model = module.__dict__[variable]
 
                     #TODO
-                    # The following print statement demonstrates a bug: the first time this
-                    # function is executed, it correctly initializes the compound model. As
-                    # long as that model is not used in any fitting operation, this function
-                    # can be called repeatedly on files containing model specs, and will deliver
-                    # compound models that are properly initialized. But as soon as one such
-                    # model is used by a fitter, the next time this function is executed on the
-                    # same input file that was used to build the fitting initial model, the
-                    # compound model created by the above statement will have it's _submodels
-                    # attribute filled up with parameters with the *fitted* values, instead of
-                    # the values in the file. WHY???? This is hard to understand since the
-                    # fitted values are never used to rewrite the _submodels attribute anywhere,
-                    # neither in astropy code, nor in specview's code. I suspect it can be
-                    # either related to some subclassing or metaclassing quirk in astropy, or
-                    # some namespace conflict of sorts. Although I wasn't able to reproduce
-                    # the bug in the command line.
-                    # print("@@@@@@  file model_io.py; line 44 - "), compound_model._submodels
+                    # The following print statements demonstrate a bug: the first time this
+                    # function is executed, it correctly initializes a 1-component model such
+                    # as Gaussian1D. As long as that model is not used in any fitting operation,
+                    # this function can be called repeatedly on files containing different model
+                    # specs for a Gaussian1D, and will deliver instances that are properly
+                    # initialized. But as soon as one such model is used by a fitter, the next
+                    # time this function is executed on any input file with a Gaussian1D spec,
+                    # the model returned by the above statement will have it's _parameters
+                    # attribute filled up with *fitted* values, instead of the values in the file.
+                    # WHY???? I suspect it can be either related to some subclassing or metaclassing
+                    # quirk in astropy, or some namespace conflict of sorts. Although I wasn't able
+                    # to reproduce the bug both in the command line and from a simple script with
+                    # no Qt elements in it. This function is being called from within a glue object;
+                    # maybe this has to do with it. Need a complex test to check this hypothesis.
+                    #
+                    # The same behavior happens in the case of a multiple component compound model,
+                    # except that the affected attribute is _submodels.
+
+                    print("@@@@@@  file model_io.py; line 59 -  parameters: "), compound_model._parameters
+                    if hasattr(compound_model, '_submodels'):
+                        print("@@@@@@  file model_io.py; line 61 -  submodels: "), compound_model._submodels
 
                     return compound_model, directory
         return None,None

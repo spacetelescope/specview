@@ -62,9 +62,9 @@ def buildModelFromFile(fname):
                     #  Check getComponents in model_registry. It might be messing up wit the internal
                     #  structure of a compound model. _submodels shouldn't be used; it's private!
 
-                    print("@@@@@@  file model_io.py; line 59 -  parameters: "), compound_model._parameters
+                    print("@@@@@@  file model_io.py; line 59 -  just read these parameters from file:  "), compound_model._parameters
                     if hasattr(compound_model, '_submodels'):
-                        print("@@@@@@  file model_io.py; line 61 -  submodels: "), compound_model._submodels
+                        print("@@@@@@  file model_io.py; line 61 -  and _submodels looks like this:  "), compound_model._submodels
 
                     return compound_model, directory
         return None,None

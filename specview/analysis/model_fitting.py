@@ -59,7 +59,7 @@ def _gaussian_parameter_estimates(x, y, dy=0):
     return amplitude, mean, stddev
 
 
-def updateLayerItem(new_model, layer_data_item):
+def _updateLayerItem(new_model, layer_data_item):
     for model_idx in range(layer_data_item.rowCount()):
         model_data_item = layer_data_item.child(model_idx)
 
@@ -82,10 +82,16 @@ def fit_model(layer_data_item, fitter_name, roi_mask):
 
     init_model = layer_data_item.model
 
+    print("@@@@@@  file model_fitting.py; line 85 - initial model:  "), init_model
+
     x, y = layer_data_item.item.dispersion, layer_data_item.item.flux
 
-    fit_model = fitter(init_model, x.value[roi_mask], y.value[roi_mask])
-    new_y = fit_model(x.value[roi_mask])
+    fitted_model = fitter(init_model, x.value[roi_mask], y.value[roi_mask])
+
+    print("@@@@@@  file model_fitting.py; line 91 -  fitted model:  "), fitted_model
+
+
+    new_y = fitted_model(x.value[roi_mask])
 
     # It was decided not to carry around dispersion data, instead
     # letting it be calculated. This means we have to maintain the same
@@ -104,6 +110,6 @@ def fit_model(layer_data_item, fitter_name, roi_mask):
                                  uncertainty=None)
 
     # Update using model approach
-    updateLayerItem(fit_model, layer_data_item)
+    _updateLayerItem(fitted_model, layer_data_item)
 
     return fit_spec_data

@@ -70,7 +70,12 @@ def _updateLayerItem(new_model, layer_data_item):
                 value = new_model[model_idx].parameters[param_idx]
             else:
                 value = new_model.parameters[param_idx]
-            parameter_data_item.setData(value)
+            #TODO the following setData, when executed, messes up
+            # with the compound model in such a way that it can never
+            # be updated again by importing from a file. We leave it
+            # commented out, but wondering if this will have any
+            # further implication down the road.
+            # parameter_data_item.setData(value)
             parameter_data_item.setText(str(value))
 
 

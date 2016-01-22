@@ -75,7 +75,14 @@ def _updateLayerItem(new_model, layer_data_item):
             # be updated again by importing from a file. We leave it
             # commented out, but wondering if this will have any
             # further implication down the road.
+            # Mmm...yes, it will. Commenting out this statement makes
+            # parameter values impossible to change via user edits.
+            # It looks like when setData is executed, a signal gets
+            # propagated somewhere, and reaches rogue code that
+            # causes the model to break when importing from file.
+
             # parameter_data_item.setData(value)
+
             parameter_data_item.setText(str(value))
 
 

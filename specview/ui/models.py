@@ -159,6 +159,10 @@ class DataTreeModel(QtGui.QStandardItemModel):
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
+
+            #TODO  when dealing with models that can be both edited by the user on screen, as
+            # well as initialized from file, the command below causes a problem: if a model
+            # parameter value is edited by the user, the model can never be re-read from file.
             item.setData(value)
 
             if isinstance(item, ParameterDataTreeItem):

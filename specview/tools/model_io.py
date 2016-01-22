@@ -58,9 +58,6 @@ def buildModelFromFile(fname):
                     #
                     # The same behavior happens in the case of a multiple component compound model,
                     # except that the affected attribute is _submodels.
-                    #
-                    #  Check getComponents in model_registry. It might be messing up wit the internal
-                    #  structure of a compound model. _submodels shouldn't be used; it's private!
 
                     print("@@@@@@  file model_io.py; line 59 -  just read these parameters from file:  "), compound_model._parameters
                     if hasattr(compound_model, '_submodels'):

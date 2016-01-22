@@ -72,16 +72,29 @@ def _updateLayerItem(new_model, layer_data_item):
                 value = new_model.parameters[param_idx]
             #TODO the following setData, when executed, messes up
             # with the compound model in such a way that it can never
-            # be updated again by importing from a file. We leave it
-            # commented out, but wondering if this will have any
-            # further implication down the road.
-            # Mmm...yes, it will. Commenting out this statement makes
-            # parameter values impossible to change via user edits.
-            # It looks like when setData is executed, a signal gets
-            # propagated somewhere, and reaches rogue code that
-            # causes the model to break when importing from file.
+            # be updated again by importing from a file. The value passed
+            # as argument to setData somehow makes its way into the compound
+            # model *before* it even gets imported from the model file. HOW??
+            # A naive attempt to fix this by commenting out this statement 
+            # fixes the behavior described above, but makes parameter values
+            # impossible to change via user edits.
+            #
+            # It looks like when setData is executed, a signal gets propagated
+            # somewhere, and reaches rogue code that causes the model to break
+            # when importing from file. This will need yet more complex debugging...ouch.
 
-            # parameter_data_item.setData(value)
+            print("@@@@@@  file model_fitting.py; line 90 -    READ  1")
+            # compound_model, _model_directory = model_io.buildModelFromFile("/Users/busko/atest6.py")
+            exec "import atest6"
+            print("@@@@@@  file model_fitting.py; line 94 - "), atest6.model1
+
+            print("@@@@@@  file model_fitting.py; line 95 -   setting value:  "), value
+            parameter_data_item.setData(value)
+
+            print("@@@@@@  file model_fitting.py; line 95 -    READ  2")
+            # compound_model, _model_directory = model_io.buildModelFromFile("/Users/busko/atest6.py")
+            exec "import atest6"
+            print("@@@@@@  file model_fitting.py; line 102 - "), atest6.model1
 
             parameter_data_item.setText(str(value))
 
@@ -101,7 +114,6 @@ def fit_model(layer_data_item, fitter_name, roi_mask):
     fitted_model = fitter(init_model, x.value[roi_mask], y.value[roi_mask])
 
     print("@@@@@@  file model_fitting.py; line 91 -  fitted model:  "), fitted_model
-
 
     new_y = fitted_model(x.value[roi_mask])
 

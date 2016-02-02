@@ -23,10 +23,15 @@ def buildModelFromFile(fname):
     sys.path.append(directory)
 
     f = os.path.basename(str(fname)).split('.')[0] # remove .py from end of file name so it can be imported
-    import_statement = "import " + f + " as module"
+
+    # if already defined, force a reload.
+    import_statement = "import " + f
+    if f in sys.modules.keys():
+        import_statement = "reload(sys.modules['" + f + "'])"
 
     try:
-        exec import_statement in locals(), locals()
+        exec import_statement
+        module = sys.modules[f]
 
         # this will pick up the first model defined in the file. A different
         # mechanism is needed to handle files with multiple model definitions.

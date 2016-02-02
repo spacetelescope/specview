@@ -61,22 +61,27 @@ def buildSummedCompoundModel(components):
 
 
 def getComponents(compound_model):
-    # build a list of components from a compound model
+    # build a list of components from a compound model.
+    #
+    # Calling this function on a compound model that resulted
+    # from a fitting operation, will not work. This is so because
+    # the simple construct below has a nasty behavior caused by a
+    # feature in astropy. When we submit a compound model to a
+    # fitter, such as in:
+    #
+    #   fitted_model = fitting.LevMarLSQFitter()(initial_model, x, y)
+    #
+    # the fit results are used to populate the parameter values of each
+    # component in the fitted_model compound model. These new parameter
+    # values are used everywhere, *except* to update the _submodels list
+    # in the compound model. Thus, if we use _submodels as a source for
+    # the new values, we will never get those, but will keep getting the
+    # original values used when the compound model was built. We need a
+    # way more complicated code here to build the fitted list.
 
     #TODO
-    #TODO   the simple construct below has a nasty behavior caused by a
-    #TODO   feature in astropy. When we submit a compound model to a fitter,
-    #TODO   such as in:
-    #TODO
-    #TODO   fitted_model = fitting.LevMarLSQFitter()(initial_model, x, y)
-    #TODO
-    #TODO   the fit results are used to populate the parameter values of each
-    #TODO   component in the fitted_model compound model. These new parameeter
-    #TODO   values are used everywhere, *except* to update the _submodels list
-    #TODO   in the compound model. Thus, if we use _submodels as a source for
-    #TODO   the new values, we will never get those, but will keep getting the
-    #TODO   original values used when the compound model was built. We need a
-    #TODO   way more complicated code here to build the fitted list.
+    #  Check getComponents in model_registry. It might be messing up wit the internal
+    #  structure of a compound model. _submodels shouldn't be used; it's private!
 
     if hasattr(compound_model, '_submodels'):
         return compound_model._submodels

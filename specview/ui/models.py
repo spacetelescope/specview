@@ -135,18 +135,31 @@ class DataTreeModel(QtGui.QStandardItemModel):
     # Temporarily put this in here. It probably belongs somewhere else,
     # but for now we need it to just populate the expression text field.
     def updateModelExpression(self, editor, parent):
-        components = []
-        for c in parent._model_items:
-            components.append(c._model)
-        compound_model = model_registry.buildSummedCompoundModel(components)
-        if editor and hasattr(compound_model, '_format_expression'):
-            editor.expression_field.setText(compound_model._format_expression())
-        else:
+        # components = []
+        # for c in parent._model_items:
+        #     components.append(c._model)
+        #
+        # compound_model = model_registry.buildSummedCompoundModel(components)
+
+        #TODO  when reading from file, parent.model contains a CompoundModel. Use it to derive expression.
+        #TODO  when adding 1st component, parent.model contains a component. Expression is empty.
+        #TODO  when adding subsequent components, parent.model contains a CompoundModel. Derive expression as above.
+
+        compound_model = parent.model
+
+        if not compound_model:
+            return
+
+        if editor:
             editor.expression_field.setText("")
+            if hasattr(compound_model, '_format_expression'):
+                expression = compound_model._format_expression()
+                editor.expression_field.setText(expression)
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
+
             item.setData(value)
 
             if isinstance(item, ParameterDataTreeItem):

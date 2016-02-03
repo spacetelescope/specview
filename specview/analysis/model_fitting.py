@@ -83,7 +83,12 @@ def fit_model(layer_data_item, fitter_name, roi_mask):
     init_model = layer_data_item.model
     x, y = layer_data_item.item.dispersion, layer_data_item.item.flux
 
+    # print("@@@@@@  file model_fitting.py; line 86 -   initial model:  "), init_model
+
     fitted_model = fitter(init_model, x.value[roi_mask], y.value[roi_mask])
+
+    # print("@@@@@@  file model_fitting.py; line 90 -   fitted model:  "), fitted_model
+
     new_y = fitted_model(x.value[roi_mask])
 
     # It was decided not to carry around dispersion data, instead

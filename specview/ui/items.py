@@ -297,6 +297,11 @@ class ModelDataTreeItem(QtGui.QStandardItem):
             else:
                 setattr(self._model, name, validated_value)
 
+
+            # self._parent._compound_model.
+
+            pass
+
             # self._parent.sig_update()
 
     def refresh_parameters(self):

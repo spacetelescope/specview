@@ -78,11 +78,6 @@ def getComponents(compound_model):
     # the new values, we will never get those, but will keep getting the
     # original values used when the compound model was built. We need a
     # way more complicated code here to build the fitted list.
-
-    #TODO
-    #  Check getComponents in model_registry. It might be messing up wit the internal
-    #  structure of a compound model. _submodels shouldn't be used; it's private!
-
     if hasattr(compound_model, '_submodels'):
         return compound_model._submodels
     else:

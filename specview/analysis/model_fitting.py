@@ -70,32 +70,8 @@ def _updateLayerItem(new_model, layer_data_item):
                 value = new_model[model_idx].parameters[param_idx]
             else:
                 value = new_model.parameters[param_idx]
-            #TODO the following setData, when executed, messes up
-            # with the compound model in such a way that it can never
-            # be updated again by importing from a file. The value passed
-            # as argument to setData somehow makes its way into the compound
-            # model *before* it even gets imported from the model file. HOW??
-            # A naive attempt to fix this by commenting out this statement 
-            # fixes the behavior described above, but makes parameter values
-            # impossible to change via user edits.
-            #
-            # It looks like when setData is executed, a signal gets propagated
-            # somewhere, and reaches rogue code that causes the model to break
-            # when importing from file. This will need yet more complex debugging...ouch.
 
-            print("@@@@@@  file model_fitting.py; line 90 -    READ  1")
-            # compound_model, _model_directory = model_io.buildModelFromFile("/Users/busko/atest6.py")
-            exec "import atest6"
-            print("@@@@@@  file model_fitting.py; line 94 - "), atest6.model1
-
-            print("@@@@@@  file model_fitting.py; line 95 -   setting value:  "), value
             parameter_data_item.setData(value)
-
-            print("@@@@@@  file model_fitting.py; line 95 -    READ  2")
-            # compound_model, _model_directory = model_io.buildModelFromFile("/Users/busko/atest6.py")
-            exec "import atest6"
-            print("@@@@@@  file model_fitting.py; line 102 - "), atest6.model1
-
             parameter_data_item.setText(str(value))
 
 
@@ -104,17 +80,10 @@ def fit_model(layer_data_item, fitter_name, roi_mask):
         return
 
     fitter = get_fitter(fitter_name)
-
     init_model = layer_data_item.model
-
-    print("@@@@@@  file model_fitting.py; line 85 - initial model:  "), init_model
-
     x, y = layer_data_item.item.dispersion, layer_data_item.item.flux
 
     fitted_model = fitter(init_model, x.value[roi_mask], y.value[roi_mask])
-
-    print("@@@@@@  file model_fitting.py; line 91 -  fitted model:  "), fitted_model
-
     new_y = fitted_model(x.value[roi_mask])
 
     # It was decided not to carry around dispersion data, instead
